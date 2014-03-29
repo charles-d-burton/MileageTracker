@@ -16,6 +16,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:authorities=".database.TrackerContentProvider"
+            android:name="com.charles.mileagetracker.app.database.TrackerContentProvider">
+        </provider>
     </application>
 
 </manifest>
