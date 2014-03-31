@@ -1,4 +1,4 @@
-package com.charles.mileagetracker.app;
+package com.charles.mileagetracker.app.activities;
 
 import android.app.Activity;
 import android.app.LoaderManager;
@@ -6,6 +6,8 @@ import android.content.Loader;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.charles.mileagetracker.app.R;
 
 
 public class MainActivity extends Activity implements LoaderManager.LoaderCallbacks {
