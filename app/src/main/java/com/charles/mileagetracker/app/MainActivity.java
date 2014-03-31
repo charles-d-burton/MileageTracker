@@ -1,12 +1,14 @@
 package com.charles.mileagetracker.app;
 
 import android.app.Activity;
+import android.app.LoaderManager;
+import android.content.Loader;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements LoaderManager.LoaderCallbacks {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,6 +22,7 @@ public class MainActivity extends Activity {
         
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+        getLoaderManager().initLoader(0, null, this);
         return true;
     }
 
@@ -35,4 +38,18 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public Loader onCreateLoader(int id, Bundle args) {
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader loader, Object data) {
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader loader) {
+
+    }
 }

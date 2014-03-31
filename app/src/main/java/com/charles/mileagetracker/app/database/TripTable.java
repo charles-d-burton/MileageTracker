@@ -24,13 +24,13 @@ public class TripTable {
             + TABLE_TRIPS + "(" + COLUMN_ID
             + " integer primary key autoincrement, "
             + TIME_START + " DATETIME DEFAULT CURRENT_TIMESTAMP, "
-            + START_LAT + " DOUBLE, "
-            + START_LON + " DOUBLE, "
-            + TIME_END + " DATETIME DEFAULT CURRENT TIMESTAMP, "
-            + END_LAT + " DOUBLE, "
-            + END_LON + " DOUBLE, "
-            + TOTAL_DISTANCE + " INT, "
-            + TOTAL_TIME + " INT);";
+            + START_LAT + " REAL, "
+            + START_LON + " REAL, "
+            + TIME_END + " DATETIME DEFAULT CURRENT_TIMESTAMP, "
+            + END_LAT + " REAL, "
+            + END_LON + " REAL, "
+            + TOTAL_DISTANCE + " INTEGER, "
+            + TOTAL_TIME + " INTEGER);";
 
     public static void onCreate(SQLiteDatabase database) {
         Log.v("Creating DB: ", "TRIP TABLE");
