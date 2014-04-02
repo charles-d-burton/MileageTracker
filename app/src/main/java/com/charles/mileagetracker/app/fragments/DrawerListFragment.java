@@ -4,12 +4,14 @@ import android.app.ListFragment;
 import android.app.LoaderManager;
 import android.content.Loader;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.activities.MainActivity;
 
 /**
  * Created by charles on 3/31/14.
@@ -19,10 +21,15 @@ public class DrawerListFragment extends ListFragment implements LoaderManager.Lo
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        if (getActivity() instanceof MainActivity) {
+            Log.v("Started from Main: ", "Started from Main");
+        }
         View v = inflater.inflate(R.layout.drawer_list_view, null);
         mainView =v;
         return v;
     }
+
+
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
         return null;

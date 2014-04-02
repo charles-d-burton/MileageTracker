@@ -31,7 +31,7 @@
     </FrameLayout>
 
     <fragment
-        android:id="@+id/drawer_view"
+        android:id="@+id/drawer_view_main"
         android:name="com.charles.mileagetracker.app.fragments.DrawerListFragment"
         android:layout_width="200dp"
         android:layout_height="match_parent"
