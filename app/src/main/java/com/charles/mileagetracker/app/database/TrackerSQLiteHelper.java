@@ -19,10 +19,12 @@ public class TrackerSQLiteHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         TripTable.onCreate(db);
+        StartPoints.onCreate(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        TripTable.onUpgrade(db, oldVersion, newVersion);
         TripTable.onUpgrade(db, oldVersion, newVersion);
     }
 }

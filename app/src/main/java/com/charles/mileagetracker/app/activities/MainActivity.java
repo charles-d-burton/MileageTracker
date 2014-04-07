@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.database.TripTable;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
@@ -41,7 +42,6 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         getLoaderManager().initLoader(0, null, this);

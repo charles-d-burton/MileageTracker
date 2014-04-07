@@ -35,6 +35,22 @@
             android:enabled="true"
             android:exported="true" >
         </service>
+
+        <receiver
+            android:name="com.charles.mileagetracker.app.receivers.WifiReceiver"
+            android:enabled="true"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.net.wifi.STATE_CHANGE" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+"
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name="com.charles.mileagetracker.app.services.LearnLocationService"
+            android:exported="false" >
+        </service>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
