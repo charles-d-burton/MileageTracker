@@ -51,6 +51,7 @@
             android:name="com.charles.mileagetracker.app.services.LearnLocationService"
             android:exported="false" >
         </service>
+
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

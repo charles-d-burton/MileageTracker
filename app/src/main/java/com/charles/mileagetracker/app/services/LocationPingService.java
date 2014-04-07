@@ -13,19 +13,26 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.LatLng;
+
+import java.util.ArrayList;
+
 public class LocationPingService extends Service implements LocationListener {
     private boolean locationTimeExpired = false;
 
     private LocationManager lm;
-    private static double lat;
-    private static double lon;
-    private static double acc;
+    public static double lat;
+    public static double lon;
+    public static double acc;
 
     public static long updateInterval = 10000;//10 Second check
+
+    private ArrayList<LocationUpdates> listeners = null;
 
 
 
     public LocationPingService() {
+        listeners = new ArrayList<LocationUpdates>();
     }
 
     @Override
@@ -39,6 +46,10 @@ public class LocationPingService extends Service implements LocationListener {
         lat = location.getLatitude();
         lon = location.getLongitude();
         acc = location.getAccuracy();
+        LatLng update = new LatLng(lat, lon);
+        for (LocationUpdates lu : listeners) {
+            lu.locationUpdated(update);
+        }
     }
 
     @Override
@@ -55,6 +66,10 @@ public class LocationPingService extends Service implements LocationListener {
     public void onProviderDisabled(String provider) {
         Log.d("Location Manager: ", "onProviderDisabled");
         Toast.makeText(getApplicationContext(),"Attempted to ping your location, and GPS was disabled.",Toast.LENGTH_LONG).show();
+    }
+
+    public void addLocationListener(LocationUpdates lu) {
+        listeners.add(lu);
     }
 
 
@@ -103,5 +118,9 @@ public class LocationPingService extends Service implements LocationListener {
                 onDestroy();
             }
         }
+    }
+
+    public interface LocationUpdates {
+        public void locationUpdated(LatLng location);
     }
 }

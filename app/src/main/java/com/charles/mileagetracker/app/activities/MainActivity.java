@@ -15,11 +15,13 @@ import android.widget.Button;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.TripTable;
+import com.charles.mileagetracker.app.services.LocationPingService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
 
-public class MainActivity extends Activity implements LoaderManager.LoaderCallbacks {
+public class MainActivity extends Activity implements
+        LoaderManager.LoaderCallbacks {
 
     private final static int
             CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
@@ -37,6 +39,7 @@ public class MainActivity extends Activity implements LoaderManager.LoaderCallba
                 startActivity(intent);
             }
         });
+        startService(new Intent(this, LocationPingService.class));
     }
 
 
