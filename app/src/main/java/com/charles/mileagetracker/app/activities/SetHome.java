@@ -8,6 +8,7 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.SimpleCursorAdapter;
 
 import com.charles.mileagetracker.app.R;
@@ -69,8 +70,10 @@ public class SetHome extends Activity implements
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        Log.v("Loader: " , "Callback");
         switch(loader.getId()) {
             case LOADER_ID:
+                Log.v("Loader: ", "Loader finished loading");
                 new ShowHomes().execute(cursor);
                 break;
         }
@@ -108,7 +111,6 @@ public class SetHome extends Activity implements
 
                 }
             }
-            c.close();
             return homes;
         }
 

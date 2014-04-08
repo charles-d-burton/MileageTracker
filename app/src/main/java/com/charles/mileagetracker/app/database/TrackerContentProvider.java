@@ -79,6 +79,7 @@ public class TrackerContentProvider extends ContentProvider {
         Cursor cursor = queryBuilder.query(db, projection, selection, selectionArgs, null, null, sortOrder);
         //make sure that potential listeners are getting notified
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
+        getContext().getContentResolver().notifyChange(uri, null);
         return cursor;
 
     }
