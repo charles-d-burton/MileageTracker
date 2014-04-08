@@ -10,7 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class TrackerSQLiteHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "trips.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 4;
 
     public TrackerSQLiteHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -25,6 +25,6 @@ public class TrackerSQLiteHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         TripTable.onUpgrade(db, oldVersion, newVersion);
-        TripTable.onUpgrade(db, oldVersion, newVersion);
+        StartPoints.onUpgrade(db, oldVersion, newVersion);
     }
 }

@@ -1,6 +1,5 @@
 package com.charles.mileagetracker.app.database;
 
-import android.app.PendingIntent;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.UriMatcher;
@@ -26,15 +25,21 @@ public class TrackerContentProvider extends ContentProvider {
     private static final int STARTS = 30;
     private static final int STARTS_ID = 40;
 
-    private static final String AUTHORITY = "com.charles.mileagetrcker.app.database.TrackerContentProvider";
+    private static final String AUTHORITY = "com.charles.mileagetracker.app.database.TrackerContentProvider";
 
     private static final String TRIP_PATH = TripTable.TABLE_TRIPS;
-    private static final Uri TRIP_URI = Uri.parse("content://" + AUTHORITY + "/" + TRIP_PATH);
+    public static final Uri TRIP_URI = Uri.parse("content://" + AUTHORITY + "/" + TRIP_PATH);
 
     private static final String STARTS_PATH = StartPoints.TABLE_START_POINTS;
-    private static final Uri STARTS_URI = Uri.parse("content://" + AUTHORITY + "/" + STARTS_PATH);
+    public static final Uri STARTS_URI = Uri.parse("content://" + AUTHORITY + "/" + STARTS_PATH);
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+    static {
+        sURIMatcher.addURI(AUTHORITY, TRIP_PATH, TRIPS);
+        sURIMatcher.addURI(AUTHORITY, TRIP_PATH + "/#", TRIPS_ID);
+        sURIMatcher.addURI(AUTHORITY, STARTS_PATH, STARTS);
+        sURIMatcher.addURI(AUTHORITY, STARTS_PATH + "/#", STARTS_ID);
+    }
 
 
     public boolean onCreate() {
@@ -46,6 +51,7 @@ public class TrackerContentProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+
         checkColumns(projection);
 
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
@@ -187,7 +193,7 @@ public class TrackerContentProvider extends ContentProvider {
     private final void checkColumns(String projection[]) {
         String available[] = {TripTable.COLUMN_ID, TripTable.END_LAT, TripTable.END_LON, TripTable.START_LAT,
         TripTable.START_LON, TripTable.TIME_START, TripTable.TIME_END, TripTable.TOTAL_DISTANCE, TripTable.TOTAL_TIME,
-        StartPoints.COLUMN_ID, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS};
+        StartPoints.COLUMN_ID, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS, StartPoints.NAME};
 
         if (projection != null) {
             HashSet<String> requestedColumns = new HashSet<String>(Arrays.asList(projection));

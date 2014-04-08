@@ -22,8 +22,9 @@
         </activity>
 
         <provider
-            android:name="com.charles.mileagetracker.app.database.TrackerContentProvider"
-            android:authorities=".database.TrackerContentProvider" >
+            android:authorities="com.charles.mileagetracker.app.database.TrackerContentProvider"
+            android:name=".database.TrackerContentProvider"
+            android:exported="true">
         </provider>
 
         <meta-data
