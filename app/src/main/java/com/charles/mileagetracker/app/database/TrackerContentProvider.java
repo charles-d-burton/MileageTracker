@@ -92,6 +92,8 @@ public class TrackerContentProvider extends ContentProvider {
     @Override
     public Uri insert(Uri uri, ContentValues values) {
         int uriType = sURIMatcher.match(uri);
+        Log.v("CONTENT PROVIDER: ", Integer.toString(uriType));
+
         SQLiteDatabase db = database.getWritableDatabase();
         int rowsDeleted = 0;
         Uri returnUri = null;

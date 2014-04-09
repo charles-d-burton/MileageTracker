@@ -6,10 +6,12 @@ import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.StartPoints;
@@ -23,21 +25,27 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Created by charles on 3/31/14.
  */
 public class SetHome extends Activity implements
         GoogleMap.OnMapLongClickListener,
-        LoaderManager.LoaderCallbacks<Cursor> {
+        LoaderManager.LoaderCallbacks<Cursor>,
+        GoogleMap.OnMarkerDragListener{
 
-    private GoogleMap gmap = null;
-    private LatLng coords = null;
+    private static GoogleMap gmap = null;
+    private static LatLng coords = null;
 
     private final int LOADER_ID = 1;
-    private SimpleCursorAdapter mAdapter;
+    private static SimpleCursorAdapter mAdapter;
 
-    private ArrayList<Marker> markerArrayList = new ArrayList<Marker>();
+   //private ArrayList<Home> homeList = new ArrayList<Home>();
+    private HashMap<Integer, Home> homeMap = new HashMap<Integer, Home>();
+
+    private static AsyncTask task;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,12 +62,33 @@ public class SetHome extends Activity implements
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        task.cancel(true);//Prevent the app from crashing if the Activity is closed before this can run
+        getLoaderManager().destroyLoader(LOADER_ID);
+        super.onDestroy();
+    }
+
+    @Override
     public void onMapLongClick(LatLng latLng) {
-        ContentValues values = new ContentValues();
-        values.put(StartPoints.START_LAT, latLng.latitude);
-        values.put(StartPoints.START_LON, latLng.longitude);
-        values.put(StartPoints.NAME, "Test");
-        getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
+        if (!tooClose(latLng)) {
+            getLoaderManager().initLoader(LOADER_ID, null, this);
+            ContentValues values = new ContentValues();
+            values.put(StartPoints.START_LAT, latLng.latitude);
+            values.put(StartPoints.START_LON, latLng.longitude);
+            values.put(StartPoints.NAME, "Test");
+            getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
+        } else {
+            //Need to add a dialog here to prompt
+            Toast.makeText(this, "Too close", Toast.LENGTH_LONG).show();
+            Log.v("TOO CLOSE: ", "Too close");
+        }
+
     }
 
     @Override
@@ -74,9 +103,10 @@ public class SetHome extends Activity implements
         switch(loader.getId()) {
             case LOADER_ID:
                 Log.v("Loader: ", "Loader finished loading");
-                new ShowHomes().execute(cursor);
+                task = new ShowHomes().execute(cursor);
                 break;
         }
+
     }
 
     @Override
@@ -84,40 +114,156 @@ public class SetHome extends Activity implements
         switch(loader.getId()) {
             case LOADER_ID:
                 break;
+
         }
     }
 
-    private class ShowHomes extends AsyncTask<Cursor, Integer, ArrayList<Marker>> {
+    private synchronized void addHomes(ArrayList<Home> homes) {
+        for (Home home : homes) {
+            Log.v("HOMES: ", "Adding new home");
+            home.instantiateMarker();
+        }
+        ((Object)this).notify();
+    }
+
+    //I don't think it will be necessary for people to create starting points less than a km apart
+    private boolean tooClose(LatLng point) {
+        Iterator it = homeMap.values().iterator();
+        while (it.hasNext()) {
+            Home home = (Home)it.next();
+            Location a = new Location("point A");
+            a.setLatitude(point.latitude);
+            a.setLongitude(point.longitude);
+
+            Location b = new Location("Point b");
+            b.setLatitude(home.getLatLng().latitude);
+            b.setLongitude(home.getLatLng().longitude);
+
+            double distance = a.distanceTo(b);
+            if (distance < 1000) return true;//If it's less than a kilometer away
+        }
+        return false;
+    }
+
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker marker) {
+
+    }
+
+
+    private class ShowHomes extends AsyncTask<Cursor, Home, ArrayList<Home>> {
         @Override
         protected ArrayList doInBackground(Cursor... params) {
             Cursor c = params[0];
-            ArrayList<Marker> homes = new ArrayList<Marker>();
+            ArrayList<Home> homes = new ArrayList<Home>();
             for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                Log.v("SHOW HOME: ", "iterating through cursor");
+
+                Integer id = c.getInt(c.getColumnIndexOrThrow(StartPoints.COLUMN_ID));
 
                 String name = c.getString(c.getColumnIndexOrThrow(StartPoints.NAME));
                 double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
                 double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
 
-                for (Marker m : markerArrayList) {
-
-                    double markerLat = m.getPosition().latitude;
-                    double markerLon = m.getPosition().longitude;
-                    if (lat != markerLat && lon != markerLon) {
-                        LatLng latlng = new LatLng(lat, lon);
-
-                        Marker newMarker = gmap.addMarker(new MarkerOptions().position(latlng).draggable(true).title(name));
-                        homes.add(newMarker);
-                    }
-
+                Home home = new Home(id, name, new LatLng(lat, lon));
+                homes.add(home);
+                if (!homeMap.containsKey(id)) {
+                    homeMap.put(id, home);
+                    publishProgress(home);  //This will update the UI thread to display the marker
                 }
+
             }
-            return homes;
+            return homes;  //Return a complete list of homes that are in the database
         }
 
+        /*
+        Modify the UI thread to add the homes that are not displayed.  Once the loop above finishes
+        it will flip the boolean and pass the ArrayList generated to remove any homes that were not
+        in the database.  This means that an action was taken to remove them.
+         */
         @Override
-        protected void onPostExecute(ArrayList<Marker> result) {
-            markerArrayList.clear();
-            markerArrayList.addAll(result);
+        protected void onProgressUpdate(Home... homes) {
+            Home home = homes[0];
+            home.instantiateMarker();
+        }
+
+        /*
+        Remove the homes deleted from map from the database here.  Or maybe I need to just do
+        that somewhere else.  At any rate I can remove the unused markers here.
+         */
+        @Override
+        protected void onPostExecute(ArrayList<Home> result) {
+            Iterator it = homeMap.keySet().iterator();
+            while (it.hasNext()) {
+                Integer key = (Integer)it.next();
+                boolean matched = false;
+                for (Home home : result) {
+                    if (home.getId() == key ) {
+                        matched = true;
+                        break;//Break out of the for loop, no need to waste any more time here
+                    }
+                }
+
+                if (!matched) { //Means there wasn't a match and it doesn't exist anymore, remove it
+                    Home home = homeMap.get(key);
+                    if (home.getMarker() != null) {
+                        Marker marker = home.getMarker();
+                        marker.remove();
+                    }
+                    homeMap.remove(key);
+                }
+            }
+            getLoaderManager().destroyLoader(LOADER_ID);
+        }
+    }
+
+    private class Home {
+
+        private Marker marker = null;
+
+        public Home(int id, String name, LatLng location){
+            this.id = id;
+            this.name = name;
+            this.loc = location;
+        }
+
+        private int id = 0;
+        private String name = null;
+        private LatLng loc = null;
+
+        public int getId() {
+            return id;
+        }
+
+
+        public String getName() {
+            return name;
+        }
+
+        public void setLatLng(double lat, double lon) {
+            this.loc = new LatLng(lat, lon);
+        }
+
+        public LatLng getLatLng() {
+            return loc;
+        }
+
+        protected void instantiateMarker() {
+            marker = gmap.addMarker(new MarkerOptions().draggable(true).position(loc).title(name));
+        }
+
+        protected Marker getMarker() {
+            return marker;
         }
     }
 }

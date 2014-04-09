@@ -20,7 +20,7 @@ public class StartPoints {
             + NAME + " TEXT, "
             + START_LAT + " REAL, "
             + START_LON + " REAL, "
-            + ATTRS + " TEXT);";
+            + ATTRS + " TEXT DEFAULT NULL);";
 
     public static void onCreate(SQLiteDatabase database) {
         Log.v("Creating DB: ", "Start Points");

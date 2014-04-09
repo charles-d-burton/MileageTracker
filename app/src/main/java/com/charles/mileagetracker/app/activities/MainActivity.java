@@ -77,7 +77,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onLoadFinished(Loader loader, Object data) {
-
+        Log.v("MAIN ACTIVITY LOADER: ", "Loader finished");
     }
 
     @Override
