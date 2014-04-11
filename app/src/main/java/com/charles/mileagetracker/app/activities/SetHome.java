@@ -1,9 +1,11 @@
 package com.charles.mileagetracker.app.activities;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Loader;
 import android.database.Cursor;
 import android.location.Location;
@@ -34,7 +36,7 @@ import java.util.Iterator;
 public class SetHome extends Activity implements
         GoogleMap.OnMapLongClickListener,
         LoaderManager.LoaderCallbacks<Cursor>,
-        GoogleMap.OnMarkerDragListener{
+        GoogleMap.OnMarkerDragListener {
 
     private static GoogleMap gmap = null;
     private static LatLng coords = null;
@@ -74,19 +76,45 @@ public class SetHome extends Activity implements
         super.onDestroy();
     }
 
+    //THis determmines whether or not a marker will be dropped on the map.  It's based on distance from
+    //other markers
     @Override
-    public void onMapLongClick(LatLng latLng) {
-        if (!tooClose(latLng)) {
+    public void onMapLongClick(final LatLng latLng) {
+        double distance = tooClose(latLng);
+
+        if (homeMap.size() <= 1 || distance > 1000) {
             getLoaderManager().initLoader(LOADER_ID, null, this);
             ContentValues values = new ContentValues();
             values.put(StartPoints.START_LAT, latLng.latitude);
             values.put(StartPoints.START_LON, latLng.longitude);
             values.put(StartPoints.NAME, "Test");
             getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
-        } else {
+        } else if (distance > 500) {
             //Need to add a dialog here to prompt
-            Toast.makeText(this, "Too close", Toast.LENGTH_LONG).show();
-            Log.v("TOO CLOSE: ", "Too close");
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    getLoaderManager().initLoader(LOADER_ID, null, SetHome.this);
+                    ContentValues values = new ContentValues();
+                    values.put(StartPoints.START_LAT, latLng.latitude);
+                    values.put(StartPoints.START_LON, latLng.longitude);
+                    values.put(StartPoints.NAME, "Test");
+                    getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
+                }
+            });
+            builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+            builder.setMessage("That's pretty close to another start point.  Are you sure you want to" +
+                    " add a new one?");
+            builder.create();
+            builder.show();
+        } else if (distance > 0 && distance < 500) {
+           Toast.makeText(this,"That's much too close", Toast.LENGTH_LONG).show();
         }
 
     }
@@ -126,23 +154,34 @@ public class SetHome extends Activity implements
         ((Object)this).notify();
     }
 
+    private void createMarke(LatLng latLng) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Set Name");
+
+    }
+
     //I don't think it will be necessary for people to create starting points less than a km apart
-    private boolean tooClose(LatLng point) {
+    private double tooClose(LatLng point) {
         Iterator it = homeMap.values().iterator();
+        double distance = 0;
         while (it.hasNext()) {
             Home home = (Home)it.next();
             Location a = new Location("point A");
             a.setLatitude(point.latitude);
             a.setLongitude(point.longitude);
-
             Location b = new Location("Point b");
             b.setLatitude(home.getLatLng().latitude);
             b.setLongitude(home.getLatLng().longitude);
 
-            double distance = a.distanceTo(b);
-            if (distance < 1000) return true;//If it's less than a kilometer away
+            double newDistance = a.distanceTo(b);
+            //Finding the shortest distance between two points
+            if (distance == 0) {
+                distance = newDistance;
+            } else if (newDistance < distance ) {
+                distance = newDistance;
+            }
         }
-        return false;
+        return distance;
     }
 
     @Override

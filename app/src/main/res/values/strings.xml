@@ -9,4 +9,6 @@
     <string name="sched_report">Schedule Report</string>
     <string name="main_activity">main_activity</string>
     <string name="map_activity">map_activity</string>
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
 </resources>
