@@ -2,6 +2,7 @@ package com.charles.mileagetracker.app.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DialogFragment;
 import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.CursorLoader;
@@ -12,6 +13,8 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
@@ -83,30 +86,32 @@ public class SetHome extends Activity implements
         double distance = tooClose(latLng);
 
         if (homeMap.size() <= 1 || distance > 1000) {
-            getLoaderManager().initLoader(LOADER_ID, null, this);
+            createMarker(latLng);
+            /*getLoaderManager().initLoader(LOADER_ID, null, this);
             ContentValues values = new ContentValues();
             values.put(StartPoints.START_LAT, latLng.latitude);
             values.put(StartPoints.START_LON, latLng.longitude);
             values.put(StartPoints.NAME, "Test");
-            getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
+            getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);*/
         } else if (distance > 500) {
             //Need to add a dialog here to prompt
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    getLoaderManager().initLoader(LOADER_ID, null, SetHome.this);
+                    createMarker(latLng);
+                    /*getLoaderManager().initLoader(LOADER_ID, null, SetHome.this);
                     ContentValues values = new ContentValues();
                     values.put(StartPoints.START_LAT, latLng.latitude);
                     values.put(StartPoints.START_LON, latLng.longitude);
                     values.put(StartPoints.NAME, "Test");
-                    getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
+                    getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);*/
                 }
             });
             builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-
+                    Log.d("DEBUG: ", "Location Cancel Clicked");
                 }
             });
             builder.setMessage("That's pretty close to another start point.  Are you sure you want to" +
@@ -154,10 +159,32 @@ public class SetHome extends Activity implements
         ((Object)this).notify();
     }
 
-    private void createMarke(LatLng latLng) {
+    private void createMarker(final LatLng latLng) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LinearLayout nameFieldLayout = (LinearLayout)getLayoutInflater().inflate(R.layout.marker_title_layout, null);
+        final EditText nameField = (EditText)nameFieldLayout.findViewById(R.id.marker_name);
         builder.setTitle("Set Name");
+        builder.setView(nameFieldLayout);
+        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                getLoaderManager().initLoader(LOADER_ID, null, SetHome.this);
+                ContentValues values = new ContentValues();
+                values.put(StartPoints.START_LAT, latLng.latitude);
+                values.put(StartPoints.START_LON, latLng.longitude);
+                values.put(StartPoints.NAME, nameField.getText().toString());
+                getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
+            }
+        });
 
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.create();
+        builder.show();
     }
 
     //I don't think it will be necessary for people to create starting points less than a km apart
