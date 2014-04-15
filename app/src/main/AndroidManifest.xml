@@ -22,9 +22,9 @@
         </activity>
 
         <provider
+            android:name="com.charles.mileagetracker.app.database.TrackerContentProvider"
             android:authorities="com.charles.mileagetracker.app.database.TrackerContentProvider"
-            android:name=".database.TrackerContentProvider"
-            android:exported="true">
+            android:exported="true" >
         </provider>
 
         <meta-data
@@ -50,9 +50,9 @@
 
         <service
             android:name="com.charles.mileagetracker.app.services.LearnLocationService"
-            android:exported="false" >
+            android:enabled="true"
+            android:exported="true" >
         </service>
-
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

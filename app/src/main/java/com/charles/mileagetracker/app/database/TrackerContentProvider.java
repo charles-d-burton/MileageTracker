@@ -164,7 +164,7 @@ public class TrackerContentProvider extends ContentProvider {
 
         switch (uriType) {
             case TRIPS:
-                rowsUpdated = db.update(TripTable.TABLE_TRIPS, values, TripTable.COLUMN_ID + "=" + id, null);
+                rowsUpdated = db.update(TripTable.TABLE_TRIPS, values, selection, null);
                 break;
             case TRIPS_ID:
                 id = uri.getLastPathSegment();
@@ -175,9 +175,11 @@ public class TrackerContentProvider extends ContentProvider {
                 }
                 break;
             case STARTS:
-                rowsUpdated = db.update(StartPoints.TABLE_START_POINTS, values, StartPoints.COLUMN_ID + "=" + id, null);
+                Log.v("UPDATING DB: ", "Updating Starts");
+                rowsUpdated = db.update(StartPoints.TABLE_START_POINTS, values, selection, null);
                 break;
             case STARTS_ID:
+                Log.v("UPDATING DB: " , "Updating Starts ID");
                 id = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
                     rowsUpdated = db.update(StartPoints.TABLE_START_POINTS, values, StartPoints.COLUMN_ID + "=" + id, null);

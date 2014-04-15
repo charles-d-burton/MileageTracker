@@ -12,6 +12,7 @@ import android.widget.ListView;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
+import com.charles.mileagetracker.app.activities.SetHome;
 
 /**
  * Created by charles on 3/31/14.
@@ -23,6 +24,8 @@ public class DrawerListFragment extends ListFragment implements LoaderManager.Lo
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (getActivity() instanceof MainActivity) {
             Log.v("Started from Main: ", "Started from Main");
+        } else if (getActivity() instanceof SetHome) {
+
         }
         View v = inflater.inflate(R.layout.drawer_list_view, null);
         mainView =v;

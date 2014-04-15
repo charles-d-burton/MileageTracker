@@ -13,6 +13,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SimpleCursorAdapter;
@@ -29,6 +30,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.nio.channels.spi.AbstractSelectionKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,7 +41,8 @@ import java.util.Iterator;
 public class SetHome extends Activity implements
         GoogleMap.OnMapLongClickListener,
         LoaderManager.LoaderCallbacks<Cursor>,
-        GoogleMap.OnMarkerDragListener {
+        GoogleMap.OnMarkerDragListener,
+        GoogleMap.OnMarkerClickListener{
 
     private static GoogleMap gmap = null;
     private static LatLng coords = null;
@@ -62,6 +65,8 @@ public class SetHome extends Activity implements
         coords = new LatLng(LocationPingService.lat, LocationPingService.lon);
         gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(coords, 16));
         gmap.setOnMapLongClickListener(this);
+        gmap.setOnMarkerClickListener(this);
+        gmap.setOnMarkerDragListener(this);
         getLoaderManager().initLoader(LOADER_ID, null, this);
 
     }
@@ -87,12 +92,6 @@ public class SetHome extends Activity implements
 
         if (homeMap.size() <= 1 || distance > 1000) {
             createMarker(latLng);
-            /*getLoaderManager().initLoader(LOADER_ID, null, this);
-            ContentValues values = new ContentValues();
-            values.put(StartPoints.START_LAT, latLng.latitude);
-            values.put(StartPoints.START_LON, latLng.longitude);
-            values.put(StartPoints.NAME, "Test");
-            getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);*/
         } else if (distance > 500) {
             //Need to add a dialog here to prompt
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -100,12 +99,6 @@ public class SetHome extends Activity implements
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     createMarker(latLng);
-                    /*getLoaderManager().initLoader(LOADER_ID, null, SetHome.this);
-                    ContentValues values = new ContentValues();
-                    values.put(StartPoints.START_LAT, latLng.latitude);
-                    values.put(StartPoints.START_LON, latLng.longitude);
-                    values.put(StartPoints.NAME, "Test");
-                    getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);*/
                 }
             });
             builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -223,10 +216,83 @@ public class SetHome extends Activity implements
 
     @Override
     public void onMarkerDragEnd(Marker marker) {
+        getLoaderManager().initLoader(LOADER_ID, null, this);
+        int id = getMarkerId(marker);
+        Home home = (Home)homeMap.get(id);
+        home.loc = marker.getPosition();
+        ContentValues values = new ContentValues();
+        values.put(StartPoints.START_LAT, marker.getPosition().latitude);
+        values.put(StartPoints.START_LON, marker.getPosition().longitude);
+        getContentResolver().update(TrackerContentProvider.STARTS_URI,values, StartPoints.COLUMN_ID + "=" + id, null);
+    }
 
+    /*
+    When you tap a marker it opens a dialog that lets you rename or delete the marker.
+     */
+    @Override
+    public boolean onMarkerClick(final Marker marker) {
+        LinearLayout modifyMarkerLayout = (LinearLayout)getLayoutInflater().inflate(R.layout.marker_modify_layout, null);
+        final EditText modifyMarkerText = (EditText)modifyMarkerLayout.findViewById(R.id.marker_name);
+        final CheckBox removeMarkerCheckBox = (CheckBox)modifyMarkerLayout.findViewById(R.id.delete_marker_checkbox);
+
+        final int id = getMarkerId(marker);
+        final String markerText = homeMap.get(id).getName();
+        modifyMarkerText.setText(markerText);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(modifyMarkerLayout);
+        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                getLoaderManager().initLoader(LOADER_ID, null, SetHome.this);
+                //Remove a marker from the map, homeList, and database
+                if (removeMarkerCheckBox.isChecked()) {
+                    marker.remove();
+                    homeMap.remove(id);
+                    getContentResolver().delete(TrackerContentProvider.STARTS_URI, StartPoints.COLUMN_ID + "=" + id, null);
+                } else if (!modifyMarkerText.getText().toString().equals(markerText)) {
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(StartPoints.NAME, modifyMarkerText.getText().toString());
+                    int rowsUpdated = getContentResolver().update(TrackerContentProvider.STARTS_URI,contentValues ,StartPoints.COLUMN_ID + "=" + id, null);
+                    Log.v("ROWS UPDATED: ", Integer.toString(rowsUpdated));
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.create();
+        builder.show();
+        return false;
     }
 
 
+    //Helper method to find the id of a marker.  Tests against the tracking HashMap homeMap
+    private int getMarkerId(Marker marker) {
+        int id = 0;
+        Iterator it = homeMap.keySet().iterator();
+        while (it.hasNext()) {
+            int testId = (Integer)it.next();
+            Marker m = homeMap.get(testId).getMarker();
+            if (marker.equals(m)) {
+                id = testId;
+                break;//Exit the loop, we're done here
+            }
+        }
+        return id;
+    }
+
+
+
+
+    /*Get the markers from the database and put them on the map asynchronously.  This spawns
+    a background thread that reads the database values and updates the map in the background.
+    Considering that there probably won't be that many markers on the map, this is probably overkill
+    but it's generally a good practice.
+    */
     private class ShowHomes extends AsyncTask<Cursor, Home, ArrayList<Home>> {
         @Override
         protected ArrayList doInBackground(Cursor... params) {
@@ -276,6 +342,11 @@ public class SetHome extends Activity implements
                 for (Home home : result) {
                     if (home.getId() == key ) {
                         matched = true;
+                        Home mappedHome = homeMap.get(key);
+                        if (mappedHome.name != home.name) {//Rename the marker on the map if it changed
+                            mappedHome.name = home.name;
+                            mappedHome.marker.setTitle(home.name);
+                        }
                         break;//Break out of the for loop, no need to waste any more time here
                     }
                 }
@@ -303,9 +374,9 @@ public class SetHome extends Activity implements
             this.loc = location;
         }
 
-        private int id = 0;
-        private String name = null;
-        private LatLng loc = null;
+        protected int id = 0;
+        protected String name = null;
+        protected LatLng loc = null;
 
         public int getId() {
             return id;
