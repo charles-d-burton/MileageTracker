@@ -4,8 +4,12 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.LoaderManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -18,6 +22,9 @@ import com.charles.mileagetracker.app.database.TripTable;
 import com.charles.mileagetracker.app.services.LocationPingService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.maps.model.LatLng;
+
+import java.util.ArrayList;
 
 
 public class MainActivity extends Activity implements
@@ -26,20 +33,22 @@ public class MainActivity extends Activity implements
     private final static int
             CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
+    private LocationManager lm;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         servicesConnected();
         setContentView(R.layout.activity_main);
-        Button b = (Button)findViewById(R.id.set_home);
+        Button b = (Button) findViewById(R.id.set_home);
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this,SetHome.class);
+                Intent intent = new Intent(MainActivity.this, SetHome.class);
                 startActivity(intent);
             }
         });
-        startService(new Intent(this, LocationPingService.class));
+        //startService(new Intent(this, LocationPingService.class));
     }
 
 
@@ -50,6 +59,17 @@ public class MainActivity extends Activity implements
         getLoaderManager().initLoader(0, null, this);
         return true;
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
 
     @Override
     public void onDestroy() {
@@ -94,15 +114,18 @@ public class MainActivity extends Activity implements
     public static class ErrorDialogFragment extends DialogFragment {
         // Global field to contain the error dialog
         private Dialog mDialog;
+
         // Default constructor. Sets the dialog field to null
         public ErrorDialogFragment() {
             super();
             mDialog = null;
         }
+
         // Set the dialog to display
         public void setDialog(Dialog dialog) {
             mDialog = dialog;
         }
+
         // Return a Dialog to the DialogFragment.
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -155,18 +178,19 @@ public class MainActivity extends Activity implements
             int requestCode, int resultCode, Intent data) {
         // Decide what to do based on the original request code
         switch (requestCode) {
-            case CONNECTION_FAILURE_RESOLUTION_REQUEST :
+            case CONNECTION_FAILURE_RESOLUTION_REQUEST:
             /*
              * If the result code is Activity.RESULT_OK, try
              * to connect again
              */
                 switch (resultCode) {
-                    case Activity.RESULT_OK :
+                    case Activity.RESULT_OK:
                     /*
                      * Try the request again
                      */
                         break;
                 }
         }
+
     }
 }

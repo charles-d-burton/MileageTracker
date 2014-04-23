@@ -53,6 +53,24 @@
             android:enabled="true"
             android:exported="true" >
         </service>
+        <service
+            android:name="com.charles.mileagetracker.app.services.LearnLocationIntentService"
+            android:exported="false" >
+        </service>
+
+        <receiver
+            android:name="com.charles.mileagetracker.app.receivers.BluetoothReceiver"
+            android:enabled="true"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.bluetooth.device.action.FOUND"/>
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="com.charles.mileagetracker.app.receivers.CellTowerReceiver"
+            android:enabled="true"
+            android:exported="true" >
+        </receiver>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -61,6 +79,11 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <uses-feature
         android:glEsVersion="0x00020000"

@@ -25,9 +25,11 @@ public class LocationPingService extends Service implements LocationListener {
     public static double lon;
     public static double acc;
 
-    public static long updateInterval = 10000;//10 Second check
+
 
     private ArrayList<LocationUpdates> listeners = null;
+
+    private int updateInterval = 0;
 
 
 

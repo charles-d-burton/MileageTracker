@@ -2,14 +2,19 @@ package com.charles.mileagetracker.app.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.DialogFragment;
 import android.app.LoaderManager;
+import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,7 +27,9 @@ import android.widget.Toast;
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
+import com.charles.mileagetracker.app.services.LearnLocationIntentService;
 import com.charles.mileagetracker.app.services.LocationPingService;
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -30,10 +37,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.nio.channels.spi.AbstractSelectionKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by charles on 3/31/14.
@@ -42,7 +49,8 @@ public class SetHome extends Activity implements
         GoogleMap.OnMapLongClickListener,
         LoaderManager.LoaderCallbacks<Cursor>,
         GoogleMap.OnMarkerDragListener,
-        GoogleMap.OnMarkerClickListener{
+        GoogleMap.OnMarkerClickListener,
+        LocationListener{
 
     private static GoogleMap gmap = null;
     private static LatLng coords = null;
@@ -53,17 +61,22 @@ public class SetHome extends Activity implements
    //private ArrayList<Home> homeList = new ArrayList<Home>();
     private HashMap<Integer, Home> homeMap = new HashMap<Integer, Home>();
 
+    private static LocationManager lm;
+    private static Location location = null;
+
     private static AsyncTask task;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+        lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         gmap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map_view)).getMap();
 
         gmap.setMyLocationEnabled(true);
         coords = new LatLng(LocationPingService.lat, LocationPingService.lon);
-        gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(coords, 16));
+        zoomToLocation(getLastKnownLocation());
+
         gmap.setOnMapLongClickListener(this);
         gmap.setOnMarkerClickListener(this);
         gmap.setOnMarkerDragListener(this);
@@ -72,7 +85,15 @@ public class SetHome extends Activity implements
     }
 
     @Override
+    protected void onPause() {
+        lm.removeUpdates(this);
+        super.onPause();
+    }
+
+
+    @Override
     protected void onResume() {
+        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10f, this);
         super.onResume();
 
     }
@@ -88,7 +109,7 @@ public class SetHome extends Activity implements
     //other markers
     @Override
     public void onMapLongClick(final LatLng latLng) {
-        double distance = tooClose(latLng);
+        double distance = getDistance(latLng);
 
         if (homeMap.size() <= 1 || distance > 1000) {
             createMarker(latLng);
@@ -152,6 +173,11 @@ public class SetHome extends Activity implements
         ((Object)this).notify();
     }
 
+
+    /*
+    There's a bug in here somewhere that's not checking the very first added point.  I need to find
+    it sometime.
+     */
     private void createMarker(final LatLng latLng) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LinearLayout nameFieldLayout = (LinearLayout)getLayoutInflater().inflate(R.layout.marker_title_layout, null);
@@ -166,7 +192,28 @@ public class SetHome extends Activity implements
                 values.put(StartPoints.START_LAT, latLng.latitude);
                 values.put(StartPoints.START_LON, latLng.longitude);
                 values.put(StartPoints.NAME, nameField.getText().toString());
-                getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
+
+                Uri uri = getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
+                int id = Integer.parseInt(uri.getLastPathSegment());
+
+                if (location != null) {
+                    double lat = location.getLatitude();
+                    double lon = location.getLongitude();
+                    LatLng currentLocation = new LatLng(lat, lon);
+                    double distance = getDistance(currentLocation, latLng);
+                    Log.d("DEBUG: ", "Distance is: " + Double.toString(distance));
+                    if (distance > 500) {
+                        addProximityAlert(latLng, id);
+                    } else if (distance < 500) {
+                        Log.v("DEBUG: ", "Starting LearnLocation Intent");
+                        Intent intent = new Intent(SetHome.this, LearnLocationIntentService.class);
+                        intent.putExtra("id", id);
+                        startService(intent);
+                    }
+                } else if (location == null) {
+                    addProximityAlert(latLng, id);
+                }
+
             }
         });
 
@@ -181,14 +228,17 @@ public class SetHome extends Activity implements
     }
 
     //I don't think it will be necessary for people to create starting points less than a km apart
-    private double tooClose(LatLng point) {
+    private double getDistance(LatLng point) {
+
+        double distance = 0f;
+        Location a = new Location("point A");
+        a.setLatitude(point.latitude);
+        a.setLongitude(point.longitude);
+
         Iterator it = homeMap.values().iterator();
-        double distance = 0;
         while (it.hasNext()) {
             Home home = (Home)it.next();
-            Location a = new Location("point A");
-            a.setLatitude(point.latitude);
-            a.setLongitude(point.longitude);
+
             Location b = new Location("Point b");
             b.setLatitude(home.getLatLng().latitude);
             b.setLongitude(home.getLatLng().longitude);
@@ -202,6 +252,38 @@ public class SetHome extends Activity implements
             }
         }
         return distance;
+    }
+
+    private double getDistance(LatLng pointA, LatLng pointB) {
+        double distance = 0f;
+
+        Location a = new Location("pointA");
+        a.setLatitude(pointA.latitude);
+        a.setLongitude(pointA.longitude);
+
+        Location b = new Location("pointB");
+        b.setLatitude(pointB.latitude);
+        b.setLongitude(pointB.longitude);
+
+        distance = a.distanceTo(b);
+
+        return distance;
+    }
+
+
+    //Not close enough to a fixed point to learn anything about it, add a proximity alert that will run
+    //when we get close.
+    private void addProximityAlert(LatLng latLng, int id) {
+        Intent intent = new Intent(this, LearnLocationIntentService.class);
+        intent.putExtra("id", id);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
+        Geofence fence = new Geofence.Builder().setRequestId(Integer.toString(id))
+                .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                .setCircularRegion(latLng.latitude, latLng.longitude, 500)
+                .build();
+
+        lm.addProximityAlert(latLng.latitude, latLng.longitude, 500, -1, pendingIntent);
+        Log.d("DEBUG: ", "Adding proximity alert");
     }
 
     @Override
@@ -285,7 +367,75 @@ public class SetHome extends Activity implements
         return id;
     }
 
+    /*
+    Location code, this listens for location changes.
+     */
 
+    @Override
+    public void onLocationChanged(Location location) {
+        /*double lat = location.getLatitude();
+        double lon = location.getLongitude();
+        double acc = location.getAccuracy();
+        LatLng update = new LatLng(lat, lon);*/
+        this.location = location;
+        zoomToLocation(location);
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+        zoomToLocation(getLastKnownLocation());
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+        if (provider.equals(LocationManager.GPS_PROVIDER)) {
+            Log.d("Location Manager: ", "onProviderDisabled");
+            Toast.makeText(getApplicationContext(), "GPS Disabled, location inaccurate.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+    //Method that iterates through all availale location providers looking for a good last known
+    //location.  If one is found return that location, if not return null.
+    private Location getLastKnownLocation() {
+        List<String> providers = lm.getProviders(true);
+        Location bestLocation = null;
+        for (String provider : providers) {
+            Location l = lm.getLastKnownLocation(provider);
+            Log.d("last known location, provider: %s, location: %s", provider);
+
+            if (l == null) {
+                continue;
+            }
+            if (bestLocation == null
+                    || l.getAccuracy() < bestLocation.getAccuracy()) {
+                Log.d("found best last known location: %s", " found");
+                bestLocation = l;
+            }
+        }
+        if (bestLocation == null) {
+            return null;
+        }
+        return bestLocation;
+    }
+
+
+    //Convenient way to zoom to location on map
+    private void zoomToLocation(Location loc) {
+        if (loc != null ){
+            double lat = loc.getLatitude();
+            double lon = loc.getLongitude();
+            LatLng lastKnown = new LatLng(lat, lon);
+            gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastKnown, 16));
+
+        }
+    }
 
 
     /*Get the markers from the database and put them on the map asynchronously.  This spawns
@@ -299,7 +449,6 @@ public class SetHome extends Activity implements
             Cursor c = params[0];
             ArrayList<Home> homes = new ArrayList<Home>();
             for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                Log.v("SHOW HOME: ", "iterating through cursor");
 
                 Integer id = c.getInt(c.getColumnIndexOrThrow(StartPoints.COLUMN_ID));
 
