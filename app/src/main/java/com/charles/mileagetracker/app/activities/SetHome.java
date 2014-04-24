@@ -164,6 +164,9 @@ public class SetHome extends Activity implements
 
     }
 
+    /*
+    Loader methods that handle interfacing with the database.
+     */
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         String projection[] = {StartPoints.COLUMN_ID, StartPoints.NAME, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS};
@@ -203,6 +206,7 @@ public class SetHome extends Activity implements
     /*
     There's a bug in here somewhere that's not checking the very first added point.  I need to find
     it sometime.
+    This method creates a marker on the given LatLng.  It prompts with a Dialog to name the marker.
      */
     private void createMarker(final LatLng latLng) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -282,6 +286,7 @@ public class SetHome extends Activity implements
         return distance;
     }
 
+    //Another convenience method that just lets me get the distance between two points.
     private double getDistance(LatLng pointA, LatLng pointB) {
         double distance = 0f;
 
@@ -414,7 +419,8 @@ public class SetHome extends Activity implements
     }
 
     /*
-    Methods for handling connection to Google Play Services
+    Methods for handling connection to Google Play Services and notifications about the addition
+    or removal of Geofences.
      */
 
     @Override
@@ -523,6 +529,13 @@ public class SetHome extends Activity implements
         }
     }
 
+
+    /*
+    Container class for the different Home locations.  I probably need to rename this class to something
+    a little more obvious, but it was the best thing I could think of at the time.  This just stores
+    various parameters about the Marker/Home when it's dropped on the map.  It also manages the creation
+    of the marker itself for display on the map.
+     */
     private class Home {
 
         private Marker marker = null;
@@ -555,7 +568,9 @@ public class SetHome extends Activity implements
         }
 
         protected void instantiateMarker() {
-            marker = gmap.addMarker(new MarkerOptions().draggable(true).position(loc).title(name));
+            if (marker == null) {
+                marker = gmap.addMarker(new MarkerOptions().draggable(true).position(loc).title(name));
+            }
         }
 
         protected Marker getMarker() {
@@ -563,6 +578,10 @@ public class SetHome extends Activity implements
         }
     }
 
+
+    /*
+    Helper class that listens for location change events.
+     */
     private final class MyLocationListener implements LocationListener {
 
         @Override
