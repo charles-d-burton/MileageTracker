@@ -40,8 +40,10 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by charles on 3/31/14.
@@ -52,6 +54,7 @@ public class SetHome extends Activity implements
         GoogleMap.OnMarkerDragListener,
         GoogleMap.OnMarkerClickListener,
         LocationClient.OnAddGeofencesResultListener,
+        LocationClient.OnRemoveGeofencesResultListener,
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener{
 
@@ -226,12 +229,14 @@ public class SetHome extends Activity implements
                     double distance = getDistance(currentLocation, latLng);
                     Log.d("DEBUG: ", "Distance is: " + Double.toString(distance));
                     if (distance > 500) {
+                        Log.v("DEBUG: ", "ID To add Proximity Alert Is: " + Integer.toString(id));
                         addProximityAlert(latLng, id);
                     } else if (distance < 500) {
-                        Log.v("DEBUG: ", "Starting LearnLocation Intent");
+                        Log.v("DEBUG: ", "ID To add Proximity Alert Is: " + Integer.toString(id));
                         Intent intent = new Intent(SetHome.this, LearnLocationIntentService.class);
                         intent.putExtra("id", id);
                         startService(intent);
+                        addProximityAlert(latLng, id);
                     }
                 } else if (location == null) {
                     addProximityAlert(latLng, id);
@@ -297,15 +302,17 @@ public class SetHome extends Activity implements
     //Not close enough to a fixed point to learn anything about it, add a proximity alert that will run
     //when we get close.
     private void addProximityAlert(LatLng latLng, int id) {
-        Intent intent = new Intent(this, LearnLocationIntentService.class);
+        Intent intent = new Intent("com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE");
         intent.putExtra("id", id);
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         Geofence fence = new Geofence.Builder().setRequestId(Integer.toString(id))
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setCircularRegion(latLng.latitude, latLng.longitude, 500)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build();
-
-
+        List fencesList = new ArrayList();
+        fencesList.add(fence);
+        locationClient.addGeofences(fencesList, pendingIntent, this);
         Log.d("DEBUG: ", "Adding proximity alert");
     }
 
@@ -355,6 +362,9 @@ public class SetHome extends Activity implements
                     marker.remove();
                     homeMap.remove(id);
                     getContentResolver().delete(TrackerContentProvider.STARTS_URI, StartPoints.COLUMN_ID + "=" + id, null);
+                    Log.v("DEBUG: ", "Prepping to remove Geofence: " + Integer.toString(id));
+                    List listOfGeofences = Collections.singletonList(Integer.toString(id));
+                    locationClient.removeGeofences(listOfGeofences, SetHome.this);
                 } else if (!modifyMarkerText.getText().toString().equals(markerText)) {
                     ContentValues contentValues = new ContentValues();
                     contentValues.put(StartPoints.NAME, modifyMarkerText.getText().toString());
@@ -372,6 +382,7 @@ public class SetHome extends Activity implements
         builder.create();
         builder.show();
         return false;
+
     }
 
 
@@ -423,6 +434,16 @@ public class SetHome extends Activity implements
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onRemoveGeofencesByRequestIdsResult(int i, String[] strings) {
+        Log.v("DEBUG: ", "Removed Geofence: " + Integer.toString(i));
+    }
+
+    @Override
+    public void onRemoveGeofencesByPendingIntentResult(int i, PendingIntent pendingIntent) {
 
     }
 

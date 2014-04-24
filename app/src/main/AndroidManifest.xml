@@ -63,13 +63,21 @@
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
-                <action android:name="android.bluetooth.device.action.FOUND"/>
+                <action android:name="android.bluetooth.device.action.FOUND" />
             </intent-filter>
         </receiver>
         <receiver
             android:name="com.charles.mileagetracker.app.receivers.CellTowerReceiver"
             android:enabled="true"
             android:exported="true" >
+        </receiver>
+        <receiver
+            android:name="com.charles.mileagetracker.app.receivers.GeofenceReceiver"
+            android:enabled="true"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE"/>
+            </intent-filter>
         </receiver>
     </application>
 
@@ -81,7 +89,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
