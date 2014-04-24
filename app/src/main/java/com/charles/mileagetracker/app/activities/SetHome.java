@@ -5,15 +5,12 @@ import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -29,7 +26,12 @@ import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.services.LearnLocationIntentService;
 import com.charles.mileagetracker.app.services.LocationPingService;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -40,7 +42,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by charles on 3/31/14.
@@ -50,7 +51,9 @@ public class SetHome extends Activity implements
         LoaderManager.LoaderCallbacks<Cursor>,
         GoogleMap.OnMarkerDragListener,
         GoogleMap.OnMarkerClickListener,
-        LocationListener{
+        LocationClient.OnAddGeofencesResultListener,
+        GooglePlayServicesClient.ConnectionCallbacks,
+        GooglePlayServicesClient.OnConnectionFailedListener{
 
     private static GoogleMap gmap = null;
     private static LatLng coords = null;
@@ -61,8 +64,11 @@ public class SetHome extends Activity implements
    //private ArrayList<Home> homeList = new ArrayList<Home>();
     private HashMap<Integer, Home> homeMap = new HashMap<Integer, Home>();
 
-    private static LocationManager lm;
+    //private static LocationManager lm;
     private static Location location = null;
+    private static LocationRequest locationRequest = null;
+    private static LocationClient locationClient = null;
+    private static LocationListener locationListner = null;
 
     private static AsyncTask task;
 
@@ -70,12 +76,19 @@ public class SetHome extends Activity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-        lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(5000);
+        locationRequest.setFastestInterval(1000);
+
+        locationClient = new LocationClient(this, this, this);
+        locationListner = new MyLocationListener();
+
         gmap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map_view)).getMap();
 
         gmap.setMyLocationEnabled(true);
         coords = new LatLng(LocationPingService.lat, LocationPingService.lon);
-        zoomToLocation(getLastKnownLocation());
 
         gmap.setOnMapLongClickListener(this);
         gmap.setOnMarkerClickListener(this);
@@ -85,15 +98,25 @@ public class SetHome extends Activity implements
     }
 
     @Override
+    protected void onStart() {
+        //locationClient.connect();
+        super.onStart();
+    }
+
+    @Override
     protected void onPause() {
-        lm.removeUpdates(this);
+        if (locationClient.isConnected()) {
+            locationClient.removeLocationUpdates(locationListner);
+        }
+        locationClient.disconnect();
+        Log.v("DEBUG: ", "Location Client Disconnected");
         super.onPause();
     }
 
 
     @Override
     protected void onResume() {
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10f, this);
+        locationClient.connect();
         super.onResume();
 
     }
@@ -282,7 +305,7 @@ public class SetHome extends Activity implements
                 .setCircularRegion(latLng.latitude, latLng.longitude, 500)
                 .build();
 
-        lm.addProximityAlert(latLng.latitude, latLng.longitude, 500, -1, pendingIntent);
+
         Log.d("DEBUG: ", "Adding proximity alert");
     }
 
@@ -367,64 +390,6 @@ public class SetHome extends Activity implements
         return id;
     }
 
-    /*
-    Location code, this listens for location changes.
-     */
-
-    @Override
-    public void onLocationChanged(Location location) {
-        /*double lat = location.getLatitude();
-        double lon = location.getLongitude();
-        double acc = location.getAccuracy();
-        LatLng update = new LatLng(lat, lon);*/
-        this.location = location;
-        zoomToLocation(location);
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-        zoomToLocation(getLastKnownLocation());
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-        if (provider.equals(LocationManager.GPS_PROVIDER)) {
-            Log.d("Location Manager: ", "onProviderDisabled");
-            Toast.makeText(getApplicationContext(), "GPS Disabled, location inaccurate.", Toast.LENGTH_LONG).show();
-        }
-    }
-
-
-    //Method that iterates through all availale location providers looking for a good last known
-    //location.  If one is found return that location, if not return null.
-    private Location getLastKnownLocation() {
-        List<String> providers = lm.getProviders(true);
-        Location bestLocation = null;
-        for (String provider : providers) {
-            Location l = lm.getLastKnownLocation(provider);
-            Log.d("last known location, provider: %s, location: %s", provider);
-
-            if (l == null) {
-                continue;
-            }
-            if (bestLocation == null
-                    || l.getAccuracy() < bestLocation.getAccuracy()) {
-                Log.d("found best last known location: %s", " found");
-                bestLocation = l;
-            }
-        }
-        if (bestLocation == null) {
-            return null;
-        }
-        return bestLocation;
-    }
-
 
     //Convenient way to zoom to location on map
     private void zoomToLocation(Location loc) {
@@ -435,6 +400,30 @@ public class SetHome extends Activity implements
             gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastKnown, 16));
 
         }
+    }
+
+    /*
+    Methods for handling connection to Google Play Services
+     */
+
+    @Override
+    public void onAddGeofencesResult(int i, String[] strings) {
+
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        locationClient.requestLocationUpdates(locationRequest, locationListner);
+    }
+
+    @Override
+    public void onDisconnected() {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
     }
 
 
@@ -550,6 +539,15 @@ public class SetHome extends Activity implements
 
         protected Marker getMarker() {
             return marker;
+        }
+    }
+
+    private final class MyLocationListener implements LocationListener {
+
+        @Override
+        public void onLocationChanged(Location location) {
+            SetHome.this.location = location;
+            zoomToLocation(location);
         }
     }
 }
