@@ -7,10 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.util.Log;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
 import com.charles.mileagetracker.app.services.LearnLocationIntentService;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.LocationClient;
 
 public class GeofenceReceiver extends BroadcastReceiver {
     public GeofenceReceiver() {
@@ -18,10 +21,17 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        int transitionType = LocationClient.getGeofenceTransition(intent);
+        String message = "WTF?";
+        if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
+            message = "Leaving Fence";
+        } else if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER) {
+            message = "Entering fence";
+        }
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("Test")
-                .setContentText("Geofence Triggered");
+                .setContentText(message);
         Intent resultIntent = new Intent(context, MainActivity.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MainActivity.class);
@@ -34,5 +44,6 @@ public class GeofenceReceiver extends BroadcastReceiver {
         Intent locationServerIntent = new Intent(context, LearnLocationIntentService.class);
         locationServerIntent.putExtra("id", intent.getIntExtra("id", -1));
         context.startService(locationServerIntent);
+        Log.v("Fenced: ", "Running geofence code");
     }
 }

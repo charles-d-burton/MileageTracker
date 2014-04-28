@@ -32,6 +32,7 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationStatusCodes;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -310,7 +311,8 @@ public class SetHome extends Activity implements
         Intent intent = new Intent("com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE");
         intent.putExtra("id", id);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        Geofence fence = new Geofence.Builder().setRequestId(Integer.toString(id))
+        Geofence fence = new Geofence.Builder()
+                .setRequestId(Integer.toString(id))
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setCircularRegion(latLng.latitude, latLng.longitude, 500)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
@@ -425,7 +427,28 @@ public class SetHome extends Activity implements
 
     @Override
     public void onAddGeofencesResult(int i, String[] strings) {
-
+        if (LocationStatusCodes.SUCCESS == i) {
+            Log.v("DEBUG: ", "Successfully Added Geofence");
+        } else {
+            switch (i) {
+                case LocationStatusCodes.ERROR:
+                    Log.v("Debug:", "Generic Error, really not helpful");
+                    break;
+                case LocationStatusCodes.GEOFENCE_NOT_AVAILABLE:
+                    Log.v("DEBUG: ", "Geofence not available");
+                    break;
+                case LocationStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES:
+                    Log.v("DEBUG: ", "Too many geofences");
+                    break;
+                case LocationStatusCodes.GEOFENCE_TOO_MANY_PENDING_INTENTS:
+                    Log.v("DEBUG: ", "Too many pending intents");
+                    break;
+                default:
+                    Log.v("DEBUG: ", "Other unknown error");
+                    Log.v("Error Code: ", Integer.toString(i));
+                    break;
+            }
+        }
     }
 
     @Override
@@ -587,7 +610,7 @@ public class SetHome extends Activity implements
         @Override
         public void onLocationChanged(Location location) {
             SetHome.this.location = location;
-            zoomToLocation(location);
+            //zoomToLocation(location);
         }
     }
 }
