@@ -12,6 +12,7 @@ import android.util.Log;
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
 import com.charles.mileagetracker.app.services.LearnLocationIntentService;
+import com.charles.mileagetracker.app.services.RecordTrackService;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 
@@ -41,9 +42,9 @@ public class GeofenceReceiver extends BroadcastReceiver {
         NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(0, builder.build());
 
-        Intent locationServerIntent = new Intent(context, LearnLocationIntentService.class);
-        locationServerIntent.putExtra("id", intent.getIntExtra("id", -1));
-        context.startService(locationServerIntent);
+        Intent recordTrackService = new Intent(context, RecordTrackService.class);
+        recordTrackService.putExtra("id", intent.getIntExtra("id", -1));
+        context.startService(recordTrackService);
         Log.v("Fenced: ", "Running geofence code");
     }
 }

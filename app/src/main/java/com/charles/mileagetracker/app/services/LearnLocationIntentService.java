@@ -7,12 +7,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
+import android.net.Uri;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.charles.mileagetracker.app.database.StartPoints;
+import com.charles.mileagetracker.app.database.TrackerContentProvider;
+import com.charles.mileagetracker.app.database.WifiAccessPoints;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -35,6 +40,7 @@ public class LearnLocationIntentService extends IntentService {
 
     private HashMap locationInformation = new HashMap();
 
+
     public LearnLocationIntentService() {
         super("LearnLocationIntentService");
     }
@@ -45,15 +51,25 @@ public class LearnLocationIntentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+
         id = intent.getIntExtra("id", -1);
         if (intent != null && id != -1) {
             Log.v("LEARNING LOCATION: ", "Learning location for: " + Integer.toString(id));
             getWifi();
             getBluetooth();
         }
+
     }
 
+    //Load the JSON from the database
+    private void loadJson() {
+
+    }
+
+    //Find the nearby WIFI access points
     private void getWifi() {
+        HashMap wifiAttrs = getWifiMap(id);
+
         int state = wifiManager.getWifiState();
         boolean wasWifiEnabled = true;
         if (state == WifiManager.WIFI_STATE_DISABLED || state == WifiManager.WIFI_STATE_DISABLING) {
@@ -66,6 +82,7 @@ public class LearnLocationIntentService extends IntentService {
         ArrayList<ScanResult> apList = (ArrayList)wifiManager.getScanResults();
         for (ScanResult result: apList) {
             //Log.v("SCAN Result: ", result.SSID);
+
         }
 
         if (!wasWifiEnabled) {
@@ -73,6 +90,7 @@ public class LearnLocationIntentService extends IntentService {
         }
     }
 
+    //Get a bluetooth adapater and learn about the nearby bluetooth
     private void getBluetooth() {
         if (mBtAdapter == null || !mBtAdapter.isEnabled()) {
             new DisplayToast(this, "Bluetooth off or not available, location less precise");
@@ -86,9 +104,9 @@ public class LearnLocationIntentService extends IntentService {
 
     }
 
+    //Probably not going to do this one, it's really covered by the Geofence
     private void getTowerInfo() {
         TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-        
     }
 
 
@@ -108,6 +126,48 @@ public class LearnLocationIntentService extends IntentService {
         public void run() {
             Toast.makeText(mContext, mText, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public HashMap getWifiMap(Integer id) {
+        HashMap<Integer, HashMap<String,String>> wifiMap = new HashMap<Integer, HashMap<String, String>>();
+        Uri uri = TrackerContentProvider.WIFI_URI;
+        String projection[] = {
+                WifiAccessPoints.COLUMN_ID,
+                WifiAccessPoints.REFRENCE_ID,
+                WifiAccessPoints.LAST_CONTACTED,
+                WifiAccessPoints.SSID,
+                WifiAccessPoints.BSSID
+        };
+        String selectionClause = WifiAccessPoints.REFRENCE_ID + "= ? ";
+        String selectionArgs[] = {Integer.toString(id)};
+
+        Cursor c = getContentResolver().query(uri, projection, selectionClause, selectionArgs, null);
+
+        if (!(c == null) && !(c.getCount() < 1)) {
+            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                HashMap wifiAttrs = new HashMap();
+                Integer cId = c.getInt(c.getColumnIndexOrThrow(WifiAccessPoints.COLUMN_ID));
+                Integer reference = c.getInt(c.getColumnIndexOrThrow(WifiAccessPoints.REFRENCE_ID));
+                Log.v("DEBUG: ", "Reference ID: " + cId.toString());
+                String bssid = c.getString(c.getColumnIndexOrThrow(WifiAccessPoints.BSSID));
+                String ssid = c.getString(c.getColumnIndexOrThrow(WifiAccessPoints.SSID));
+                Double lastContact = c.getDouble(c.getColumnIndexOrThrow(WifiAccessPoints.LAST_CONTACTED));
+                Integer quality = c.getInt(c.getColumnIndexOrThrow(WifiAccessPoints.QUALITY));
+
+                wifiAttrs.put("bssid", bssid);
+                wifiAttrs.put("ssid", ssid);
+                wifiAttrs.put("last_content", lastContact);
+                wifiAttrs.put("quality", quality);
+                wifiAttrs.put("reference", reference);
+
+                wifiMap.put(cId, wifiAttrs);
+            }
+        } else if (c.getCount() == 0) {
+            Log.v("DEBUG: ", "Nothing in the database");
+        } else {
+            Log.v("DEBUG: ", "Something went horribly wrong getting Curstor");
+        }
+        return wifiMap;
     }
 
 

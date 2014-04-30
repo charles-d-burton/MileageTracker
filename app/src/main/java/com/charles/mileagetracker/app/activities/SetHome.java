@@ -72,7 +72,7 @@ public class SetHome extends Activity implements
     private static Location location = null;
     private static LocationRequest locationRequest = null;
     private static LocationClient locationClient = null;
-    private static LocationListener locationListner = null;
+    private static LocationListener locationListener = null;
 
     private static AsyncTask task;
 
@@ -87,7 +87,7 @@ public class SetHome extends Activity implements
         locationRequest.setFastestInterval(1000);
 
         locationClient = new LocationClient(this, this, this);
-        locationListner = new MyLocationListener();
+        locationListener = new MyLocationListener();
 
         gmap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map_view)).getMap();
 
@@ -110,7 +110,7 @@ public class SetHome extends Activity implements
     @Override
     protected void onPause() {
         if (locationClient.isConnected()) {
-            locationClient.removeLocationUpdates(locationListner);
+            locationClient.removeLocationUpdates(locationListener);
         }
         locationClient.disconnect();
         Log.v("DEBUG: ", "Location Client Disconnected");
@@ -453,7 +453,7 @@ public class SetHome extends Activity implements
 
     @Override
     public void onConnected(Bundle bundle) {
-        locationClient.requestLocationUpdates(locationRequest, locationListner);
+        locationClient.requestLocationUpdates(locationRequest, locationListener);
     }
 
     @Override

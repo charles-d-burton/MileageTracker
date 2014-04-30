@@ -76,9 +76,15 @@
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
-                <action android:name="com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE"/>
+                <action android:name="com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name="com.charles.mileagetracker.app.services.RecordTrackService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
