@@ -23,10 +23,10 @@ public class TripTable {
     private static final String DATABASE_CREATE = "create table "
             + TABLE_TRIPS + "(" + COLUMN_ID
             + " integer primary key autoincrement, "
-            + TIME_START + " DATETIME DEFAULT CURRENT_TIMESTAMP, "
+            + TIME_START + " INTEGER, "
             + START_LAT + " REAL, "
             + START_LON + " REAL, "
-            + TIME_END + " DATETIME DEFAULT CURRENT_TIMESTAMP, "
+            + TIME_END + " INTEGER, "
             + END_LAT + " REAL, "
             + END_LON + " REAL, "
             + TOTAL_DISTANCE + " INTEGER, "

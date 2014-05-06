@@ -1,5 +1,6 @@
 package com.charles.mileagetracker.app.receivers;
 
+import android.app.ActivityManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -24,11 +25,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         int transitionType = LocationClient.getGeofenceTransition(intent);
         String message = "WTF?";
-        if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
-            message = "Leaving Fence";
-        } else if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER) {
-            message = "Entering fence";
-        }
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("Test")
@@ -42,9 +39,23 @@ public class GeofenceReceiver extends BroadcastReceiver {
         NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(0, builder.build());
 
-        Intent recordTrackService = new Intent(context, RecordTrackService.class);
-        recordTrackService.putExtra("id", intent.getIntExtra("id", -1));
-        context.startService(recordTrackService);
+
+        if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
+            message = "Leaving Fence";
+            Intent recordTrackService = new Intent(context, RecordTrackService.class);
+            recordTrackService.putExtra("id", intent.getIntExtra("id", -1));
+            context.startService(recordTrackService);
+        } else if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER) {
+            message = "Entering fence";
+            ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
+            for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
+                if (RecordTrackService.class.getName().equals(service.service.getClassName())) {
+                    Log.v("DEBUG: ", "Killing Running Record Service");
+                    context.stopService(new Intent(context, RecordTrackService.class));
+                }
+            }
+        }
+
         Log.v("Fenced: ", "Running geofence code");
     }
 }

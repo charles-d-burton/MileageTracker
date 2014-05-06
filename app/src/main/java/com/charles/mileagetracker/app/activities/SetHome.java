@@ -25,7 +25,6 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.services.LearnLocationIntentService;
-import com.charles.mileagetracker.app.services.LocationPingService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.Geofence;
@@ -92,7 +91,7 @@ public class SetHome extends Activity implements
         gmap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map_view)).getMap();
 
         gmap.setMyLocationEnabled(true);
-        coords = new LatLng(LocationPingService.lat, LocationPingService.lon);
+        //coords = new LatLng(LocationPingService.lat, LocationPingService.lon);
 
         gmap.setOnMapLongClickListener(this);
         gmap.setOnMarkerClickListener(this);

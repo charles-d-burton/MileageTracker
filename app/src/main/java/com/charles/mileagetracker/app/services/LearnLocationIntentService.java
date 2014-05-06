@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 
 /**
@@ -77,16 +78,22 @@ public class LearnLocationIntentService extends IntentService {
             //new DisplayToast(this, "Wifi off, location less precise");
             wifiManager.setWifiEnabled(true);
             wasWifiEnabled = false;
+            return;
         }
 
         ArrayList<ScanResult> apList = (ArrayList)wifiManager.getScanResults();
-        for (ScanResult result: apList) {
-            //Log.v("SCAN Result: ", result.SSID);
+        if (wifiAttrs.isEmpty()) {
 
-        }
+        } else {
+            Iterator it = wifiAttrs.values().iterator();
+            while (it.hasNext()) {
+                HashMap<String, String> apMap = (HashMap<String, String>)it.next();
+                checkScanResult(apList, apMap);
+            }
 
-        if (!wasWifiEnabled) {
-            wifiManager.setWifiEnabled(false);
+            if (!wasWifiEnabled) {
+                wifiManager.setWifiEnabled(false);
+            }
         }
     }
 
@@ -160,7 +167,7 @@ public class LearnLocationIntentService extends IntentService {
                 wifiAttrs.put("quality", quality);
                 wifiAttrs.put("reference", reference);
 
-                wifiMap.put(cId, wifiAttrs);
+                wifiMap.put(cId, wifiAttrs); //Top Level HashMap
             }
         } else if (c.getCount() == 0) {
             Log.v("DEBUG: ", "Nothing in the database");
@@ -170,32 +177,14 @@ public class LearnLocationIntentService extends IntentService {
         return wifiMap;
     }
 
+    public void checkScanResult(ArrayList<ScanResult> results, HashMap apMap) {
+        for (ScanResult result : results ) {
+            Iterator it = apMap.keySet().iterator();
 
-    /*public class BluetoothReceiver extends BroadcastReceiver {
-        public BluetoothReceiver() {
         }
+    }
 
-        private HashMap bluetoothMap = new HashMap();
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            // When discovery finds a device
-            Log.v("DEBUG: ", "Receiving Bluetooth Broadcasts");
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                // Get the BluetoothDevice object from the Intent
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                bluetoothMap.put(device.getAddress(), device.getName());
-                Log.v("Device Address: " , device.getAddress());
-                Log.v("Device Name: " , device.getName());
-                // Add the name and address to an array adapter to show in a ListView
-                //mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
-
-            }
-            Log.d("DEBUG LEARN LOCATION: ", "Unregistering");
-            unregisterReceiver(this);
-        }
-    }*/
 }
 
 
