@@ -1,4 +1,4 @@
-package com.charles.mileagetracker.app.services;
+package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
 import android.bluetooth.BluetoothAdapter;

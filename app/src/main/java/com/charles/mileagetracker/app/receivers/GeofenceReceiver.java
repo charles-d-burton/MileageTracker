@@ -13,7 +13,6 @@ import android.util.Log;
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
-import com.charles.mileagetracker.app.services.LearnLocationIntentService;
 import com.charles.mileagetracker.app.services.RecordTrackService;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;

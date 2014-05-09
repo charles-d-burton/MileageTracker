@@ -4,14 +4,13 @@ import android.app.IntentService;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.content.Context;
 import android.os.Bundle;
 import android.os.IBinder;
 
+import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.ActivityRecognitionClient;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in

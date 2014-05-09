@@ -24,7 +24,6 @@ import android.widget.Toast;
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.services.LearnLocationIntentService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.Geofence;

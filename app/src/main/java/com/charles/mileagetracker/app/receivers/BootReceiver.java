@@ -11,7 +11,7 @@ import android.util.Log;
 
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.services.PostBootGeofenceService;
+import com.charles.mileagetracker.app.services.intentservices.PostBootGeofenceService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.Geofence;
