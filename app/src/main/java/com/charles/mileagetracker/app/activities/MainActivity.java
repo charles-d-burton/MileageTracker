@@ -19,7 +19,6 @@ import android.widget.Button;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.TripTable;
-import com.charles.mileagetracker.app.services.LocationPingService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.model.LatLng;
@@ -73,7 +72,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onDestroy() {
-        stopService(new Intent(this, LocationPingService.class));
+        //stopService(new Intent(this, LocationPingService.class));
         super.onDestroy();
     }
 

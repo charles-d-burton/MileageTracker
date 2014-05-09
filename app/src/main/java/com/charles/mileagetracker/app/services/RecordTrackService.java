@@ -1,5 +1,7 @@
 package com.charles.mileagetracker.app.services;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentValues;
 import android.content.Context;
@@ -8,10 +10,15 @@ import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.activities.MainActivity;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
+import com.charles.mileagetracker.app.database.TripTable;
 import com.charles.mileagetracker.app.database.WifiAccessPoints;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
@@ -99,6 +106,8 @@ public class RecordTrackService extends Service {
 
         @Override
         public void onLocationChanged(Location location) {
+            Log.v("DEBUG: ", "Location Update");
+            generateNotification("Location Updated");
             if (RecordTrackService.this.location == null) {
                 RecordTrackService.this.lastUpdate = System.currentTimeMillis();
                 RecordTrackService.this.startTime = System.currentTimeMillis();
@@ -141,6 +150,8 @@ public class RecordTrackService extends Service {
     private HashMap createPathSegment(Location start, Location end, long startTime, long endTime){
 
         String distance = getDistance(start.getLatitude(), start.getLongitude(), end.getLatitude(), end.getLongitude());
+        if (distance.equals("")) distance = "0";
+
         int distanceInt = Double.valueOf(distance).intValue();
 
         double startLat = start.getLatitude();
@@ -151,7 +162,17 @@ public class RecordTrackService extends Service {
 
         long totalTime = (endTime - startTime)/1000;
 
+        HashMap segment = new HashMap();
+        segment.put(TripTable.TIME_START, startTime);
+        segment.put(TripTable.START_LAT, startLat);
+        segment.put(TripTable.START_LON, startLon);
+        segment.put(TripTable.TIME_END, endTime);
+        segment.put(TripTable.END_LAT, endLat);
+        segment.put(TripTable.END_LON, endLon);
+        segment.put(TripTable.TOTAL_DISTANCE, distanceInt);
+        segment.put(TripTable.TOTAL_TIME, totalTime);
 
+        generateNotification(segment);
 
         Log.v("DEBUG: ", "Distance from maps between two points: " + distance);
 
@@ -226,6 +247,43 @@ public class RecordTrackService extends Service {
         distance = a.distanceTo(b);
 
         return distance;
+    }
+
+    /*
+    Temporary method for testing purposes, it's a verbose notification system.
+     */
+
+    private void generateNotification(HashMap map) {
+        String message = "Generating Path Segment, distance: " + Integer.toString((Integer)map.get(TripTable.TOTAL_DISTANCE));
+        Context context = this.getApplicationContext();
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("Test")
+                .setContentText(message);
+        Intent resultIntent = new Intent(context, MainActivity.class);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(resultPendingIntent);
+        NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.notify(0, builder.build());
+    }
+
+    private void generateNotification(String message) {
+        Context context = getApplicationContext();
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("Test")
+                .setContentText(message);
+        Intent resultIntent = new Intent(context, MainActivity.class);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(resultPendingIntent);
+        NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.notify(0, builder.build());
     }
 
 }

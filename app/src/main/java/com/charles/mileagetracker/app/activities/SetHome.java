@@ -75,6 +75,8 @@ public class SetHome extends Activity implements
 
     private static AsyncTask task;
 
+    private boolean mapStarted = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -237,9 +239,9 @@ public class SetHome extends Activity implements
                         addProximityAlert(latLng, id);
                     } else if (distance < 500) {
                         Log.v("DEBUG: ", "ID To add Proximity Alert Is: " + Integer.toString(id));
-                        Intent intent = new Intent(SetHome.this, LearnLocationIntentService.class);
-                        intent.putExtra("id", id);
-                        startService(intent);
+                        //Intent intent = new Intent(SetHome.this, LearnLocationIntentService.class);
+                        //intent.putExtra("id", id);
+                        //startService(intent);
                         addProximityAlert(latLng, id);
                     }
                 } else if (location == null) {
@@ -609,7 +611,11 @@ public class SetHome extends Activity implements
         @Override
         public void onLocationChanged(Location location) {
             SetHome.this.location = location;
-            //zoomToLocation(location);
+            if (!mapStarted) {
+                zoomToLocation(location);
+                mapStarted = true;
+            }
+
         }
     }
 }
