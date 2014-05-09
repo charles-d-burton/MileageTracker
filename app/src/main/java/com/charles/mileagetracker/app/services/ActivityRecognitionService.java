@@ -25,10 +25,6 @@ public class ActivityRecognitionService extends Service implements
     private boolean mInProgress = false;
     private boolean mClientConnected = false;
 
-    /*
-     * Store the PendingIntent used to send activity recognition events
-     * back to the app
-     */
     private PendingIntent mActivityRecognitionPendingIntent;
     // Store the current activity recognition client
     private com.google.android.gms.location.ActivityRecognitionClient mActivityRecognitionClient;
@@ -70,6 +66,11 @@ public class ActivityRecognitionService extends Service implements
 
     @Override
     public void onDisconnected() {
+
+        // Turn off the request flag
+        mInProgress = false;
+        // Delete the client
+        mActivityRecognitionClient = null;
 
     }
 

@@ -12,6 +12,7 @@ import android.util.Log;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
+import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.charles.mileagetracker.app.services.LearnLocationIntentService;
 import com.charles.mileagetracker.app.services.RecordTrackService;
 import com.google.android.gms.location.Geofence;
@@ -27,25 +28,13 @@ public class GeofenceReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         this.context = context;
         int transitionType = LocationClient.getGeofenceTransition(intent);
-        String message = "WTF?";
 
-        /*NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentTitle("Test")
-                .setContentText(message);
-        Intent resultIntent = new Intent(context, MainActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-        builder.setContentIntent(resultPendingIntent);
-        NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(0, builder.build());*/
+        String message = "";
 
 
         if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
             message = "Leaving Fence";
-            Intent recordTrackService = new Intent(context, RecordTrackService.class);
+            Intent recordTrackService = new Intent(context, ActivityRecognitionService.class);
             recordTrackService.putExtra("id", intent.getIntExtra("id", -1));
             context.startService(recordTrackService);
             generateNotification(message);
