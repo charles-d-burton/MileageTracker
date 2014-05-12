@@ -21,20 +21,37 @@ public class ActivityRecognitionIntentService extends IntentService {
         super("ActivityRecognitionIntentService");
     }
 
+    private static int secondsElapsed = 0;
+
+    private static long lastDrivingUpdate = 0l;
+
+    private enum ACTIVITY_TYPE {DRIVING, WALKING, BIKING, STILL, TILTING, UNKNOWN }
+    private ACTIVITY_TYPE mActivityType;
+
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             if (ActivityRecognitionResult.hasResult(intent)) {
+
+                if (lastDrivingUpdate == 0) {
+                    lastDrivingUpdate = System.currentTimeMillis();//Means it was just initialized
+                }
+
                 ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
                 DetectedActivity mostProbableActivity = result.getMostProbableActivity();
 
                 int confidence = mostProbableActivity.getConfidence();
 
-                int activityType = mostProbableActivity.getType();
+                activityUpdate(mostProbableActivity.getType(), confidence);
 
-                String activityName = getNameFromType(activityType);
+                //int activityType = mostProbableActivity.getType();
 
-                Log.v("DEBUG: ", "Activity Name: " + activityName);
+                //String activityName = getNameFromType(activityType);
+                //mActivityType = getNameFromType(activityType);
+
+                //activityUpdate(activityName);
+
+                //Log.v("DEBUG: ", "Activity Name: " + activityName);
 
 
             }
@@ -46,21 +63,52 @@ public class ActivityRecognitionIntentService extends IntentService {
      *@param activityType The detected activity type
      *@return A user-readable name for the type
      */
-    private String getNameFromType(int activityType) {
+    private ACTIVITY_TYPE getNameFromType(int activityType) {
         switch(activityType) {
             case DetectedActivity.IN_VEHICLE:
-                return "in_vehicle";
+                return ACTIVITY_TYPE.DRIVING;
+
             case DetectedActivity.ON_BICYCLE:
-                return "on_bicycle";
+                return ACTIVITY_TYPE.BIKING;
+
             case DetectedActivity.ON_FOOT:
-                return "on_foot";
+                return ACTIVITY_TYPE.WALKING;
+
             case DetectedActivity.STILL:
-                return "still";
+                return ACTIVITY_TYPE.STILL;
+
             case DetectedActivity.UNKNOWN:
-                return "unknown";
+                return ACTIVITY_TYPE.UNKNOWN;
+
             case DetectedActivity.TILTING:
-                return "tilting";
+                return ACTIVITY_TYPE.TILTING;
+            default:
+                return ACTIVITY_TYPE.UNKNOWN;
         }
-        return "unknown";
     }
+
+    private void activityUpdate(int activityType, int confidence) {
+        Log.v("DEBUG: ", "Confidence level: " + Integer.toString(confidence));
+        if (confidence < 75) { //Less than really sure
+            return;
+        }
+        switch (activityType) {
+            case DetectedActivity.IN_VEHICLE:
+                driving();
+                break;
+            default:
+                notDriving();
+                break;
+        }
+
+    }
+
+    private void driving() {
+
+    }
+
+    private void notDriving() {
+
+    }
+
 }

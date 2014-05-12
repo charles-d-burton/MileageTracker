@@ -44,12 +44,13 @@ public class GeofenceReceiver extends BroadcastReceiver {
                 if (RecordTrackService.class.getName().equals(service.service.getClassName())) {
                     Log.v("DEBUG: ", "Killing Running Record Service");
                     generateNotification("Killing Running Record Service");
+                    context.stopService(new Intent(context, ActivityRecognitionService.class));
                     //context.stopService(new Intent(context, RecordTrackService.class));
                 }
             }
         }
 
-        Log.v("Fenced: ", "Running geofence code");
+        //Log.v("Fenced: ", "Running geofence code");
     }
 
     private void generateNotification(String message) {

@@ -28,6 +28,9 @@ public class ActivityRecognitionService extends Service implements
     // Store the current activity recognition client
     private com.google.android.gms.location.ActivityRecognitionClient mActivityRecognitionClient;
 
+    public enum REQUEST_TYPE {START, STOP}
+    private REQUEST_TYPE mRequestType;
+
 
     public ActivityRecognitionService() {
 
@@ -57,10 +60,29 @@ public class ActivityRecognitionService extends Service implements
     }
 
     @Override
+    public void onDestroy() {
+        stopUpdates();
+        super.onDestroy();
+    }
+
+
+    @Override
     public void onConnected(Bundle bundle) {
-        mActivityRecognitionClient.requestActivityUpdates(60000,mActivityRecognitionPendingIntent);
-        mInProgress = false;
-        mActivityRecognitionClient.disconnect();
+
+        switch (mRequestType) {
+            case START:
+                mActivityRecognitionClient.requestActivityUpdates(60000,mActivityRecognitionPendingIntent);
+                mInProgress = false;
+                mActivityRecognitionClient.disconnect();
+                break;
+            case STOP:
+                mActivityRecognitionClient.removeActivityUpdates(mActivityRecognitionPendingIntent);
+                break;
+            default :
+                //throw new Exception("Unknown request type in onConnected().");
+                break;
+        }
+
     }
 
     @Override
@@ -98,9 +120,9 @@ public class ActivityRecognitionService extends Service implements
      * detection interval.
      *
      */
-    public void startUpdates() {
+    private void startUpdates() {
         // Check for Google Play services
-
+        mRequestType = REQUEST_TYPE.START;
         if (!servicesConnected()) {
             return;
         }
@@ -118,6 +140,19 @@ public class ActivityRecognitionService extends Service implements
              * re-setting the flag, and then re-trying the
              * request.
              */
+        }
+    }
+
+    private void stopUpdates() {
+        mRequestType = REQUEST_TYPE.STOP;
+
+        if(!servicesConnected()) {
+            return;
+        }
+
+        if (!mInProgress) {
+            mInProgress = true;
+            mActivityRecognitionClient.connect();
         }
     }
 }
