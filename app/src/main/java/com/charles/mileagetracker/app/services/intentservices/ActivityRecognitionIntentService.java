@@ -94,13 +94,14 @@ public class ActivityRecognitionIntentService extends IntentService {
         }
         switch (activityType) {
             case DetectedActivity.IN_VEHICLE:
+                Log.v("DEBUG: " , "Driving");
                 driving();
                 break;
             default:
+                Log.v("DEBUG: ", "Not Driving");
                 notDriving();
                 break;
         }
-
     }
 
     private void driving() {

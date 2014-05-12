@@ -32,26 +32,37 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
 
         if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
-            message = "Leaving Fence";
-            Intent recordTrackService = new Intent(context, ActivityRecognitionService.class);
-            recordTrackService.putExtra("id", intent.getIntExtra("id", -1));
-            context.startService(recordTrackService);
-            generateNotification(message);
+            message = "Leaving Fence, starting record";
+            boolean running = isServiceRunning();
+            if (!running){
+                Intent recordTrackService = new Intent(context, ActivityRecognitionService.class);
+                recordTrackService.putExtra("id", intent.getIntExtra("id", -1));
+                context.startService(recordTrackService);
+                generateNotification(message);
+            }
+
         } else if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER) {
             message = "Entering fence";
-            ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
-            for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
-                if (RecordTrackService.class.getName().equals(service.service.getClassName())) {
-                    Log.v("DEBUG: ", "Killing Running Record Service");
-                    generateNotification("Killing Running Record Service");
-                    context.stopService(new Intent(context, ActivityRecognitionService.class));
-                    //context.stopService(new Intent(context, RecordTrackService.class));
-                }
+            boolean running = isServiceRunning();
+            if (running) {
+                Log.v("DEBUG: ", "Killing Running Record Service");
+                generateNotification("Killing Running Record Service");
+                context.stopService(new Intent(context, ActivityRecognitionService.class));
+            }
+
+        }
+    }
+
+    private boolean isServiceRunning() {
+        ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
+            if (RecordTrackService.class.getName().equals(service.service.getClassName())) {
+                return true;
             }
         }
-
-        //Log.v("Fenced: ", "Running geofence code");
+        return false;
     }
+
 
     private void generateNotification(String message) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
