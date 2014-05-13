@@ -145,6 +145,8 @@ public class PostBootGeofenceService extends IntentService implements
                 recordTrackService.putExtra("id", 0);//TODO: I may need to fix this.
                 context.startService(recordTrackService);
                 startedActivityRecognition = true;
+            } else {
+                Log.v("DEBUG: ", "Inside Geofence, sleepy time");
             }
         }
         return false;

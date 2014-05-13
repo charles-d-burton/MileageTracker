@@ -56,7 +56,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
     private boolean isServiceRunning() {
         ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
-            if (RecordTrackService.class.getName().equals(service.service.getClassName())) {
+            if (ActivityRecognitionService.class.getName().equals(service.service.getClassName())) {
                 return true;
             }
         }
