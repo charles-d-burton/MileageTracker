@@ -10,6 +10,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -38,11 +40,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by charles on 3/31/14.
@@ -612,9 +616,25 @@ public class SetHome extends Activity implements
             SetHome.this.location = location;
             if (!mapStarted) {
                 zoomToLocation(location);
+                //checkLocation(new LatLng(location.getLatitude(), location.getLongitude()));
                 mapStarted = true;
             }
 
         }
+    }
+
+    private void checkLocation(LatLng location) {
+        Geocoder geoCoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+        try {
+            List<Address> addresses = geoCoder.getFromLocation(location.latitude, location.longitude, 1);
+            for (Address address : addresses) {
+                //Log.v("DEBUG: ", "Thoroughfare: " + address.getThoroughfare());
+                Log.v("DEBUG: ", "Address line: " + address.getAddressLine(0));
+                Log.v("DEBUG: ", "Feature Name: " + address.getFeatureName());
+            }
+        } catch (IOException ioe) {
+
+        }
+        //locationUpdateInProgress = false;//Done checking current location
     }
 }

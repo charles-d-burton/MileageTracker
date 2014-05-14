@@ -6,11 +6,14 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+
+import java.util.Iterator;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -68,7 +71,10 @@ public class ActivityRecognitionService extends Service implements
 
     @Override
     public void onConnected(Bundle bundle) {
-
+        Iterator it = bundle.keySet().iterator();
+        while (it.hasNext()) {
+            Log.v("BUNDLE KEY: ", (String) it.next());
+        }
         switch (mRequestType) {
             case START:
                 mActivityRecognitionClient.requestActivityUpdates(60000,mActivityRecognitionPendingIntent);

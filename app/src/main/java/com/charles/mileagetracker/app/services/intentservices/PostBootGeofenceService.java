@@ -146,7 +146,7 @@ public class PostBootGeofenceService extends IntentService implements
                 context.startService(recordTrackService);
                 startedActivityRecognition = true;
             } else {
-                Log.v("DEBUG: ", "Inside Geofence, sleepy time");
+                //Log.v("DEBUG: ", "Inside Geofence, sleepy time");
             }
         }
         return false;

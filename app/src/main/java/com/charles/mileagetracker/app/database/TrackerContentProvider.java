@@ -30,6 +30,8 @@ public class TrackerContentProvider extends ContentProvider {
     private static final int BLUETOOTH_ID = 60;
     private static final int WIFI = 70;
     private static final int WIFI_ID = 80;
+    private static final int PENDING = 90;
+    private static final int PENDING_ID = 100;
 
     private static final String AUTHORITY = "com.charles.mileagetracker.app.database.TrackerContentProvider";
 
@@ -45,6 +47,10 @@ public class TrackerContentProvider extends ContentProvider {
     private static final String WIFI_PATH = WifiAccessPoints.TABLE_WIFI;
     public static final Uri WIFI_URI = Uri.parse("content://" + AUTHORITY + "/" + WIFI_PATH);
 
+    private static final String PENDING_PATH = PendingSegmentTable.PENDING_TABLE;
+    public static final Uri PENDING_URI = Uri.parse("content://" + AUTHORITY + "/" + PENDING_PATH);
+
+
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
         sURIMatcher.addURI(AUTHORITY, TRIP_PATH, TRIPS);
@@ -55,6 +61,8 @@ public class TrackerContentProvider extends ContentProvider {
         sURIMatcher.addURI(AUTHORITY, BLUETOOTH_PATH +"/#", BLUETOOTH_ID);
         sURIMatcher.addURI(AUTHORITY, WIFI_PATH, WIFI);
         sURIMatcher.addURI(AUTHORITY, WIFI_PATH + "/#", WIFI_ID);
+        sURIMatcher.addURI(AUTHORITY, PENDING_PATH, PENDING);
+        sURIMatcher.addURI(AUTHORITY, PENDING_PATH + "/#", PENDING_ID);
     }
 
 
@@ -98,6 +106,12 @@ public class TrackerContentProvider extends ContentProvider {
                 break;
             case WIFI:
                 queryBuilder.setTables(WifiAccessPoints.TABLE_WIFI);
+                break;
+            case PENDING_ID:
+                queryBuilder.appendWhere(PendingSegmentTable.COLUMN_ID + "=" + uri.getLastPathSegment());
+                break;
+            case PENDING:
+                queryBuilder.setTables(PendingSegmentTable.PENDING_TABLE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -152,6 +166,10 @@ public class TrackerContentProvider extends ContentProvider {
                 } else {
                     id = db.insert(WifiAccessPoints.TABLE_WIFI, null, values);
                 }
+                break;
+            case PENDING:
+                id = db.insert(PendingSegmentTable.PENDING_TABLE, null, values);
+                returnUri = Uri.parse(PENDING + "/" + id);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -212,6 +230,17 @@ public class TrackerContentProvider extends ContentProvider {
                     rowsDeleted = db.delete(WifiAccessPoints.TABLE_WIFI, WifiAccessPoints.COLUMN_ID + "=" + id, null);
                 } else {
                     rowsDeleted = db.delete(WifiAccessPoints.TABLE_WIFI, WifiAccessPoints.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
+                }
+                break;
+            case PENDING:
+                rowsDeleted = db.delete(PendingSegmentTable.PENDING_TABLE, selection, selectionArgs);
+                break;
+            case PENDING_ID:
+                id = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection)) {
+                    rowsDeleted = db.delete(PendingSegmentTable.PENDING_TABLE, PendingSegmentTable.COLUMN_ID + "=" + id, null);
+                } else {
+                    rowsDeleted = db.delete(PendingSegmentTable.PENDING_TABLE, PendingSegmentTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
                 }
                 break;
             default:
@@ -275,6 +304,16 @@ public class TrackerContentProvider extends ContentProvider {
                     rowsUpdated = db.update(WifiAccessPoints.TABLE_WIFI, values, WifiAccessPoints.COLUMN_ID + "=" + id + " and " +  selection, selectionArgs);
                 }
                 break;
+            case PENDING:
+                rowsUpdated = db.update(PendingSegmentTable.PENDING_TABLE, values, selection, null);
+                break;
+            case PENDING_ID:
+                id = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection)) {
+                    rowsUpdated = db.update(PendingSegmentTable.PENDING_TABLE, values, PendingSegmentTable.COLUMN_ID + "=" + id, null);
+                } else {
+                    rowsUpdated = db.update(PendingSegmentTable.PENDING_TABLE, values, PendingSegmentTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
+                }
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -286,9 +325,14 @@ public class TrackerContentProvider extends ContentProvider {
     private final void checkColumns(String projection[]) {
         String available[] = {TripTable.COLUMN_ID, TripTable.END_LAT, TripTable.END_LON, TripTable.START_LAT,
         TripTable.START_LON, TripTable.TIME_START, TripTable.TIME_END, TripTable.TOTAL_DISTANCE, TripTable.TOTAL_TIME,
+        TripTable.END_ADDRESS, TripTable.START_ADDRESS,
+
         StartPoints.COLUMN_ID, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS, StartPoints.NAME,
+
         WifiAccessPoints.COLUMN_ID, WifiAccessPoints.REFRENCE_ID, WifiAccessPoints.BSSID, WifiAccessPoints.SSID,
-        WifiAccessPoints.LAST_CONTACTED, BluetoothDevices.COLUMN_ID, BluetoothDevices.REFRENCE_ID, BluetoothDevices.DEVICE_NAME,
+        WifiAccessPoints.LAST_CONTACTED,
+
+        BluetoothDevices.COLUMN_ID, BluetoothDevices.REFRENCE_ID, BluetoothDevices.DEVICE_NAME,
         BluetoothDevices.DEVICE_ADDRESS, BluetoothDevices.LAST_CONTACTED};
 
         if (projection != null) {

@@ -54,7 +54,7 @@
             android:exported="true" >
         </service>
         <service
-            android:name=".services.intentservices.LearnLocationIntentService"
+            android:name="com.charles.mileagetracker.app.services.intentservices.LearnLocationIntentService"
             android:exported="false" >
         </service>
 
@@ -96,7 +96,7 @@
         </receiver>
 
         <service
-            android:name=".services.intentservices.PostBootGeofenceService"
+            android:name="com.charles.mileagetracker.app.services.intentservices.PostBootGeofenceService"
             android:exported="false" >
         </service>
         <service
@@ -104,7 +104,11 @@
             android:exported="false" >
         </service>
         <service
-            android:name=".services.intentservices.ActivityRecognitionIntentService"
+            android:name="com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService"
+            android:exported="false" >
+        </service>
+        <service
+            android:name=".services.intentservices.CreatePathSegment"
             android:exported="false" >
         </service>
     </application>

@@ -11,9 +11,11 @@ public class TripTable {
     public static final String TIME_START = "time_start";
     public static final String START_LAT = "start_lat";
     public static final String START_LON = "start_lon";
+    public static final String START_ADDRESS = "start_address";
     public static final String TIME_END = "time_end";
     public static final String END_LAT = "end_lat";
     public static final String END_LON = "end_lon";
+    public static final String END_ADDRESS = "end_address";
     public static final String TOTAL_DISTANCE = "total_distance";
     public static final String TOTAL_TIME = "total_time";
 
@@ -26,9 +28,11 @@ public class TripTable {
             + TIME_START + " INTEGER, "
             + START_LAT + " REAL, "
             + START_LON + " REAL, "
+            + START_ADDRESS + " TEXT, "
             + TIME_END + " INTEGER, "
             + END_LAT + " REAL, "
             + END_LON + " REAL, "
+            + END_ADDRESS + " TEXT, "
             + TOTAL_DISTANCE + " INTEGER, "
             + TOTAL_TIME + " INTEGER);";
 
