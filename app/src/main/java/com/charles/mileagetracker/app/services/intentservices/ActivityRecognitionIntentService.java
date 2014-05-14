@@ -1,13 +1,19 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
+import android.app.ActivityManager;
 import android.app.IntentService;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.ActivityRecognitionResult;
@@ -43,6 +49,9 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private enum ACTIVITY_TYPE {DRIVING, WALKING, BIKING, STILL, TILTING, UNKNOWN }
     private ACTIVITY_TYPE mActivityType;
+
+    private CreatePathSegment mService = null;
+    private boolean mBound = false;
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -118,7 +127,7 @@ public class ActivityRecognitionIntentService extends IntentService {
        if (notInVehicleCounter >= 2 && notInVehicleCounter < 10) {//Want to check for a quick update, if it's been more than 10 though not interested because you're stopped
            if (!locationUpdateInProgress) {
                locationUpdateInProgress = true;
-               Log.v("DEBUG: ", Integer.toString(notInVehicleCounter) + " Requests not driving, getting current location");
+               //Log.v("DEBUG: ", Integer.toString(notInVehicleCounter) + " Requests not driving, getting current location");
 
            }
        }
@@ -140,7 +149,40 @@ public class ActivityRecognitionIntentService extends IntentService {
     }
 
     private void createPathSegment() {
+        if (!isCreatePathSegmentRunning()) {
+            Intent intent = new Intent(getApplicationContext(), CreatePathSegment.class);
+            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+            mService.getLocationUpdate();
+        }
 
     }
 
+    private boolean isCreatePathSegmentRunning() {
+        ActivityManager activityManager = (ActivityManager)getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
+            if (CreatePathSegment.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            CreatePathSegment.LocalBinder binder = (CreatePathSegment.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+            Log.v("DEBUG: ", "Bound CreatPathSegment Service");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
 }

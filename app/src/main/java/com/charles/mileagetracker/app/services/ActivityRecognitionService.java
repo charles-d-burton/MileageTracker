@@ -71,10 +71,6 @@ public class ActivityRecognitionService extends Service implements
 
     @Override
     public void onConnected(Bundle bundle) {
-        Iterator it = bundle.keySet().iterator();
-        while (it.hasNext()) {
-            Log.v("BUNDLE KEY: ", (String) it.next());
-        }
         switch (mRequestType) {
             case START:
                 mActivityRecognitionClient.requestActivityUpdates(60000,mActivityRecognitionPendingIntent);
@@ -83,6 +79,7 @@ public class ActivityRecognitionService extends Service implements
                 break;
             case STOP:
                 mActivityRecognitionClient.removeActivityUpdates(mActivityRecognitionPendingIntent);
+                getApplicationContext().stopService(new Intent(getApplicationContext(), ActivityRecognitionIntentService.class));
                 break;
             default :
                 //throw new Exception("Unknown request type in onConnected().");

@@ -14,6 +14,7 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.charles.mileagetracker.app.services.RecordTrackService;
+import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 
@@ -48,6 +49,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
                 Log.v("DEBUG: ", "Killing Running Record Service");
                 generateNotification("Killing Running Record Service");
                 context.stopService(new Intent(context, ActivityRecognitionService.class));
+                //context.stopService(new Intent(context, ActivityRecognitionIntentService.class)):
             }
 
         }
