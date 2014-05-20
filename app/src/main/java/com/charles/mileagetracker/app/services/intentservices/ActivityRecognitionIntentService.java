@@ -53,6 +53,9 @@ public class ActivityRecognitionIntentService extends IntentService {
     private CreatePathSegment mService = null;
     private boolean mBound = false;
 
+    /*
+    Initialize some variables and get the calling Intent to retrieve the most likely activity
+     */
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
@@ -76,6 +79,8 @@ public class ActivityRecognitionIntentService extends IntentService {
      * Map detected activity types to strings
      *@param activityType The detected activity type
      *@return A user-readable name for the type
+     * then using the confidence attempt to be sure that the current activity we think is happening
+     * is actually happening.
      */
 
     private void activityUpdate(int activityType, int confidence) {
@@ -87,14 +92,11 @@ public class ActivityRecognitionIntentService extends IntentService {
             case DetectedActivity.IN_VEHICLE:
                 Log.v("DEBUG: " , "Driving");
                 notInVehicleCounter = 0;
+                secondsElapsed = 0;
                 driving();
                 break;
             case DetectedActivity.ON_FOOT:
-                notInVehicleCounter = notInVehicleCounter +1;
-                if (confidence > 90 ) {
-                    createPathSegment();
-                }
-                notDriving();
+                notDriving(confidence);
                 break;
             case DetectedActivity.UNKNOWN:
                 Log.v("DEBUG: ", "Unknown");
@@ -103,11 +105,8 @@ public class ActivityRecognitionIntentService extends IntentService {
                 Log.v("DEBUG:", "Bike");
                 break;
             case DetectedActivity.STILL:
-                notInVehicleCounter = notInVehicleCounter +1;
-                if (confidence > 80 ) {
-                    createPathSegment();
-                }
-                notDriving();
+                Log.v("DEBUG: ", "Sitting Still");
+                notDriving(confidence);
                 break;
             case DetectedActivity.TILTING:
                 Log.v("DEBUG: ", "Tilting at windmills");
@@ -123,40 +122,46 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     }
 
-    private void notDriving() {
+    /*
+    Take the current time and calculate what the last time there was a not driving event was.  Use that
+    time to get the time elapsed for not driving.  This is partly a safety check to help reduce false
+    positives for things like sitting in traffic.
+     */
+    private void notDriving(int confidence) {
+       notInVehicleCounter = notInVehicleCounter +1;
+       long currentTime = System.currentTimeMillis();
+       if (lastDrivingUpdate == 0) lastDrivingUpdate = currentTime + 1;
+       int difference = Double.valueOf((currentTime - lastDrivingUpdate)/1000).intValue();
+       secondsElapsed = secondsElapsed + difference;
+       Log.v("DEBUG: ", "Seconds not driving: " + Integer.toString(secondsElapsed));
        if (notInVehicleCounter >= 2 && notInVehicleCounter < 10) {//Want to check for a quick update, if it's been more than 10 though not interested because you're stopped
            if (!locationUpdateInProgress) {
                locationUpdateInProgress = true;
+               createPathSegment();
                //Log.v("DEBUG: ", Integer.toString(notInVehicleCounter) + " Requests not driving, getting current location");
 
            }
        }
     }
 
-    private void checkLocation(LatLng location) {
-        Geocoder geoCoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-        try {
-            List<Address> addresses = geoCoder.getFromLocation(location.latitude, location.longitude, 1);
-            for (Address address : addresses) {
-                //Log.v("DEBUG: ", "Thoroughfare: " + address.getThoroughfare());
-                Log.v("DEBUG: ", "Address line: " + address.getAddressLine(0));
-                address.getThoroughfare();
-            }
-        } catch (IOException ioe) {
-
-        }
-        locationUpdateInProgress = false;//Done checking current location
-    }
-
+    /*
+    Start the intent to get the current location and update the database
+     */
     private void createPathSegment() {
         if (!isCreatePathSegmentRunning()) {
             Intent intent = new Intent(getApplicationContext(), CreatePathSegment.class);
+
+            //startService(intent);
             bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-            mService.getLocationUpdate();
+//            mService.getLocationUpdate();
         }
 
     }
 
+    /*
+    Safety check to make sure that another instance of the @CreatePathSegment is not running.
+    Don't want to creat a memory leak or other problems by having a lot of them running.
+     */
     private boolean isCreatePathSegmentRunning() {
         ActivityManager activityManager = (ActivityManager)getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
@@ -176,8 +181,9 @@ public class ActivityRecognitionIntentService extends IntentService {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             CreatePathSegment.LocalBinder binder = (CreatePathSegment.LocalBinder) service;
             mService = binder.getService();
+            mService.getLocationUpdate();
             mBound = true;
-            Log.v("DEBUG: ", "Bound CreatPathSegment Service");
+            Log.v("DEBUG: ", "Bound CreatePathSegment Service");
         }
 
         @Override

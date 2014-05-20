@@ -6,17 +6,22 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
+import com.charles.mileagetracker.app.database.PendingSegmentTable;
+import com.charles.mileagetracker.app.database.StartPoints;
+import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.charles.mileagetracker.app.services.RecordTrackService;
 import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.maps.model.LatLng;
 
 public class GeofenceReceiver extends BroadcastReceiver {
 
@@ -47,8 +52,9 @@ public class GeofenceReceiver extends BroadcastReceiver {
             boolean running = isServiceRunning();
             if (running) {
                 Log.v("DEBUG: ", "Killing Running Record Service");
-                generateNotification("Killing Running Record Service");
+                generateNotification(getAddresses());
                 context.stopService(new Intent(context, ActivityRecognitionService.class));
+
                 //context.stopService(new Intent(context, ActivityRecognitionIntentService.class)):
             }
 
@@ -63,6 +69,20 @@ public class GeofenceReceiver extends BroadcastReceiver {
             }
         }
         return false;
+    }
+
+    private String getAddresses() {
+
+        String projection[] = {PendingSegmentTable.COLUMN_ID, PendingSegmentTable.END_ADDRESS};
+
+        Cursor c = context.getContentResolver().query(TrackerContentProvider.STARTS_URI, projection, null, null, null);
+        String addresses = "";
+        if (!(c == null) && !(c.getCount() < 1)) {
+            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                addresses = addresses + "\n" + c.getString(c.getColumnIndexOrThrow(PendingSegmentTable.END_ADDRESS));
+            }
+        }
+        return addresses;
     }
 
 

@@ -108,7 +108,17 @@
             android:exported="false" >
         </service>
         <service
-            android:name=".services.intentservices.CreatePathSegment"
+            android:name="com.charles.mileagetracker.app.services.intentservices.CreatePathSegment"
+            android:exported="false" >
+        </service>
+
+        <activity
+            android:name="com.charles.mileagetracker.app.activities.PathSelectorActivity"
+            android:label="@string/title_activity_path_selector" >
+        </activity>
+
+        <service
+            android:name="com.charles.mileagetracker.app.services.intentservices.RecordAllPathSegments"
             android:exported="false" >
         </service>
     </application>

@@ -247,7 +247,7 @@ public class SetHome extends Activity implements
                         //startService(intent);
                         addProximityAlert(latLng, id);
                     }
-                } else if (location == null) {
+                } else {
                     addProximityAlert(latLng, id);
                 }
 

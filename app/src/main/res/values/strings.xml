@@ -11,4 +11,7 @@
     <string name="map_activity">map_activity</string>
     <string name="ok">Ok</string>
     <string name="cancel">Cancel</string>
+    <string name="title_activity_path_selector">PathSelectorActivity</string>
+    <string name="hello_world">Hello world!</string>
+
 </resources>
