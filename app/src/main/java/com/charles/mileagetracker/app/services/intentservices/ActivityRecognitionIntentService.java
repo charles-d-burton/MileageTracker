@@ -138,7 +138,7 @@ public class ActivityRecognitionIntentService extends IntentService {
            if (!locationUpdateInProgress) {
                locationUpdateInProgress = true;
                createPathSegment();
-               //Log.v("DEBUG: ", Integer.toString(notInVehicleCounter) + " Requests not driving, getting current location");
+               Log.v("DEBUG: ", Integer.toString(notInVehicleCounter) + " Requests not driving, getting current location");
 
            }
        }
@@ -151,8 +151,8 @@ public class ActivityRecognitionIntentService extends IntentService {
         if (!isCreatePathSegmentRunning()) {
             Intent intent = new Intent(getApplicationContext(), CreatePathSegment.class);
 
-            //startService(intent);
-            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+            startService(intent);
+            //bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 //            mService.getLocationUpdate();
         }
 

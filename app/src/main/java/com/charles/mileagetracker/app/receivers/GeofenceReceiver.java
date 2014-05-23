@@ -31,7 +31,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        this.context = context;
+        this.context = context.getApplicationContext().getApplicationContext();
         int transitionType = LocationClient.getGeofenceTransition(intent);
 
         String message = "";
@@ -41,9 +41,11 @@ public class GeofenceReceiver extends BroadcastReceiver {
             message = "Leaving Fence, starting record";
             boolean running = isServiceRunning();
             if (!running){
-                Intent recordTrackService = new Intent(context, ActivityRecognitionService.class);
-                recordTrackService.putExtra("id", intent.getIntExtra("id", -1));
-                context.startService(recordTrackService);
+                Intent activityRecognitionService = new Intent(this.context, ActivityRecognitionService.class);
+                activityRecognitionService.putExtra("id", intent.getIntExtra("id", -1));
+                activityRecognitionService.putExtra("lat", intent.getDoubleExtra("lat", -1));
+                activityRecognitionService.putExtra("lon", intent.getDoubleExtra("lon", -1));
+                this.context.startService(activityRecognitionService);
                 generateNotification(message);
             }
 
@@ -53,7 +55,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
             if (running) {
                 Log.v("DEBUG: ", "Killing Running Record Service");
                 generateNotification(getAddresses());
-                context.stopService(new Intent(context, ActivityRecognitionService.class));
+                this.context.stopService(new Intent(context, ActivityRecognitionService.class));
 
                 //context.stopService(new Intent(context, ActivityRecognitionIntentService.class)):
             }
@@ -75,7 +77,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
         String projection[] = {PendingSegmentTable.COLUMN_ID, PendingSegmentTable.END_ADDRESS};
 
-        Cursor c = context.getContentResolver().query(TrackerContentProvider.STARTS_URI, projection, null, null, null);
+        Cursor c = context.getContentResolver().query(TrackerContentProvider.PENDING_URI, projection, null, null, null);
         String addresses = "";
         if (!(c == null) && !(c.getCount() < 1)) {
             for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {

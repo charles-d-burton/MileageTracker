@@ -43,6 +43,8 @@ public class ActivityRecognitionService extends Service implements
     public static long startTime = 0;
 
     private int id = 0;
+    private double lat = 0;
+    private double lon = 0;
 
 
     public ActivityRecognitionService() {
@@ -57,12 +59,15 @@ public class ActivityRecognitionService extends Service implements
 
         mActivityRecognitionClient = new com.google.android.gms.location.ActivityRecognitionClient(getApplicationContext(), this, this);
         Intent pendingIntent = new Intent(getApplicationContext(), ActivityRecognitionIntentService.class);
+
         mActivityRecognitionPendingIntent = PendingIntent.getService(getApplicationContext(),0, pendingIntent,PendingIntent.FLAG_UPDATE_CURRENT);
         startTime = System.currentTimeMillis();
     }
 
     @Override
     public IBinder onBind(Intent intent) {
+        Log.v("DEBUG: ", "Binding ActivityRecognition Class");
+        Log.v("DEBUG: ", Integer.toString(intent.getIntExtra("id", -1)));
         return null;
     }
 
@@ -70,11 +75,13 @@ public class ActivityRecognitionService extends Service implements
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         id = intent.getIntExtra("id", -1);
+        lat = intent.getDoubleExtra("lat", -1);
+        lon = intent.getDoubleExtra("lon", -1);
         Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
 
         setStartPoint(id);
         startUpdates();
-        return 0;
+        return START_REDELIVER_INTENT;
     }
 
     @Override

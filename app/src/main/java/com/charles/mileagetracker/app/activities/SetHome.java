@@ -314,7 +314,9 @@ public class SetHome extends Activity implements
     private void addProximityAlert(LatLng latLng, int id) {
         Intent intent = new Intent("com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE");
         intent.putExtra("id", id);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        intent.putExtra("lat", latLng.latitude);
+        intent.putExtra("Lon", latLng.longitude);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         Geofence fence = new Geofence.Builder()
                 .setRequestId(Integer.toString(id))
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
