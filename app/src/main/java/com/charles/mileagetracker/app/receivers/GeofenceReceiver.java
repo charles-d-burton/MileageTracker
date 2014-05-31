@@ -13,6 +13,7 @@ import android.util.Log;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
+import com.charles.mileagetracker.app.activities.PathSelectorActivity;
 import com.charles.mileagetracker.app.database.PendingSegmentTable;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
@@ -26,12 +27,13 @@ import com.google.android.gms.maps.model.LatLng;
 public class GeofenceReceiver extends BroadcastReceiver {
 
     private Context context = null;
+
     public GeofenceReceiver() {
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        this.context = context.getApplicationContext().getApplicationContext();
+        this.context = context.getApplicationContext();
         int transitionType = LocationClient.getGeofenceTransition(intent);
 
         String message = "";
@@ -45,8 +47,10 @@ public class GeofenceReceiver extends BroadcastReceiver {
                 activityRecognitionService.putExtra("id", intent.getIntExtra("id", -1));
                 activityRecognitionService.putExtra("lat", intent.getDoubleExtra("lat", -1));
                 activityRecognitionService.putExtra("lon", intent.getDoubleExtra("lon", -1));
+                activityRecognitionService.putExtra("transition", "exit");
+
                 this.context.startService(activityRecognitionService);
-                generateNotification(message);
+                generateNotification(message, Geofence.GEOFENCE_TRANSITION_EXIT);
             }
 
         } else if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER) {
@@ -54,11 +58,14 @@ public class GeofenceReceiver extends BroadcastReceiver {
             boolean running = isServiceRunning();
             if (running) {
                 Log.v("DEBUG: ", "Killing Running Record Service");
-                generateNotification(getAddresses());
+
                 this.context.stopService(new Intent(context, ActivityRecognitionService.class));
+
 
                 //context.stopService(new Intent(context, ActivityRecognitionIntentService.class)):
             }
+            generateNotification(getAddresses(), Geofence.GEOFENCE_TRANSITION_ENTER);
+
 
         }
     }
@@ -88,17 +95,20 @@ public class GeofenceReceiver extends BroadcastReceiver {
     }
 
 
-    private void generateNotification(String message) {
+    private void generateNotification(String message, int geoFenceMode) {
+
+        Intent pathIntent = new Intent(context, PathSelectorActivity.class);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addParentStack(PathSelectorActivity.class);
+        stackBuilder.addNextIntent(pathIntent);
+
+        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("Test")
-                .setContentText(message);
-        Intent resultIntent = new Intent(context, MainActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-        builder.setContentIntent(resultPendingIntent);
+                .setContentText(message)
+                .setContentIntent(pendingIntent);
+
         NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(0, builder.build());
     }

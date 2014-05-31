@@ -47,6 +47,15 @@ public class MainActivity extends Activity implements
                 startActivity(intent);
             }
         });
+        Button generateReport = (Button)findViewById(R.id.gen_report);
+        generateReport.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, PathSelectorActivity.class);
+                MainActivity.this.startActivity(intent);
+            }
+        });
         //startService(new Intent(this, LocationPingService.class));
     }
 

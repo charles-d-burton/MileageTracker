@@ -20,7 +20,6 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
 import com.charles.mileagetracker.app.database.PendingSegmentTable;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
@@ -45,9 +44,9 @@ public class CreatePathSegment extends IntentService implements
     private static LocationRequest locationRequest = null;
     private static LocationListener locationListener = null;
 
-    protected static double lastLat = 0;
-    protected static double lastLon = 0;
-    protected static long lastTime = 0;
+    protected static double lastLat = -1;
+    protected static double lastLon = -1;
+    protected static long lastTime = -1;
 
     private static volatile boolean driving = false;
 
@@ -66,14 +65,14 @@ public class CreatePathSegment extends IntentService implements
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        if (lastLat == 0 && lastLon == 0) {
-            //Kind of an ugly hack at the moment.  I'll fix it some other time
-            lastLat = ActivityRecognitionService.startPoint.latitude;
-            lastLon = ActivityRecognitionService.startPoint.longitude;
-            lastTime = ActivityRecognitionService.startTime;
-        }
-        if (intent != null) {
-
+        if (lastLat == -1 && lastLon == 1) {
+            if (intent != null) {
+                lastLat = intent.getDoubleExtra("lat", -1);
+                lastLon = intent.getDoubleExtra("lon", -1);
+                //lastLat = ActivityRecognitionService.startPoint.latitude;
+                //lastLon = ActivityRecognitionService.startPoint.longitude;
+                lastTime = intent.getLongExtra("startTime", -1);
+            }
         }
     }
 
@@ -201,15 +200,18 @@ public class CreatePathSegment extends IntentService implements
 
         @Override
         public void onLocationChanged(Location location) {
-            if (location.getAccuracy() < 5 ) { //Less than 5 meter accuracy
+            if (driving) {
+                locationClient.disconnect();
+            } else if (location.getAccuracy() < 5 ) { //Less than 5 meter accuracy
                 locationClient.disconnect();
                 logSegment(new LatLng(location.getLatitude(), location.getLongitude()));
             } else if (attempts < 10) {
                 Log.v("DEBUG: ", "Not enough precision");
                 attempts = attempts +1;
             } else {
-                locationClient.disconnect();
+
                 logSegment(new LatLng(location.getLatitude(), location.getLongitude()));
+                locationClient.disconnect();
             }
 
         }

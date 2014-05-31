@@ -58,9 +58,7 @@ public class ActivityRecognitionService extends Service implements
         servicesAvailable = servicesConnected();
 
         mActivityRecognitionClient = new com.google.android.gms.location.ActivityRecognitionClient(getApplicationContext(), this, this);
-        Intent pendingIntent = new Intent(getApplicationContext(), ActivityRecognitionIntentService.class);
 
-        mActivityRecognitionPendingIntent = PendingIntent.getService(getApplicationContext(),0, pendingIntent,PendingIntent.FLAG_UPDATE_CURRENT);
         startTime = System.currentTimeMillis();
     }
 
@@ -79,7 +77,15 @@ public class ActivityRecognitionService extends Service implements
         lon = intent.getDoubleExtra("lon", -1);
         Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
 
-        setStartPoint(id);
+        Intent pendingIntent = new Intent(getApplicationContext(), ActivityRecognitionIntentService.class);
+        intent.putExtra("id", id);
+        intent.putExtra("lat", lat);
+        intent.putExtra("lon", lon);
+        intent.putExtra("startTime", startTime);
+
+        mActivityRecognitionPendingIntent = PendingIntent.getService(getApplicationContext(),0, pendingIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+        //setStartPoint(id);
         startUpdates();
         return START_REDELIVER_INTENT;
     }
@@ -103,6 +109,7 @@ public class ActivityRecognitionService extends Service implements
             case STOP:
                 mActivityRecognitionClient.removeActivityUpdates(mActivityRecognitionPendingIntent);
                 getApplicationContext().stopService(new Intent(getApplicationContext(), ActivityRecognitionIntentService.class));
+
                 break;
             default :
                 //throw new Exception("Unknown request type in onConnected().");
