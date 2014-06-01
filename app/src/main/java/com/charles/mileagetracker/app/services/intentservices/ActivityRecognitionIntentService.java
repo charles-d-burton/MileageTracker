@@ -1,16 +1,33 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
-import android.app.ActivityManager;
 import android.app.IntentService;
-import android.content.ComponentName;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.IBinder;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.Messenger;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.activities.MainActivity;
+import com.charles.mileagetracker.app.database.PendingSegmentTable;
+import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
+import com.google.android.gms.maps.model.LatLng;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -27,6 +44,7 @@ public class ActivityRecognitionIntentService extends IntentService {
     private static int secondsElapsed = 0;
     private static long lastDrivingUpdate = 0l;
     private static int notInVehicleCounter = 0;
+    private static boolean driving = false;
 
 
     private static boolean locationUpdateInProgress = false;
@@ -35,13 +53,18 @@ public class ActivityRecognitionIntentService extends IntentService {
     private enum ACTIVITY_TYPE {DRIVING, WALKING, BIKING, STILL, TILTING, UNKNOWN }
     private ACTIVITY_TYPE mActivityType;
 
-    private CreatePathSegment mService = null;
+    private GetCurrentLocation mService = null;
     private boolean mBound = false;
 
     private static double startlat = -1;
-    private static double startlon = 1;
+    private static double startlon = -1;
     private static int id = -1;
     private static long startTime = -1;
+
+
+    private static double lastLat = -1;
+    private static double lastLon = -1;
+    private static long lastTime = -1;
 
     /*
     Initialize some variables and get the calling Intent to retrieve the most likely activity
@@ -88,8 +111,6 @@ public class ActivityRecognitionIntentService extends IntentService {
         switch (activityType) {
             case DetectedActivity.IN_VEHICLE:
                 Log.v("DEBUG: " , "Driving");
-                notInVehicleCounter = 0;
-                secondsElapsed = 0;
                 driving();
                 break;
             case DetectedActivity.ON_FOOT:
@@ -116,7 +137,9 @@ public class ActivityRecognitionIntentService extends IntentService {
     }
 
     private void driving() {
-
+        notInVehicleCounter = 0;
+        secondsElapsed = 0;
+        driving = true;
     }
 
     /*
@@ -134,7 +157,7 @@ public class ActivityRecognitionIntentService extends IntentService {
        secondsElapsed = secondsElapsed + difference;
        Log.v("DEBUG: ", "Seconds not driving: " + Integer.toString(secondsElapsed));
 
-       if (notInVehicleCounter >= 2 && notInVehicleCounter < 10) {//Want to check for a quick update, if it's been more than 10 though not interested because you're stopped
+       if (notInVehicleCounter >= 2 && notInVehicleCounter < 5) {//Want to check for a quick update, if it's been more than 10 though not interested because you're stopped
            locationUpdateInProgress = true;
            createPathSegment();
            Log.v("DEBUG: ", Integer.toString(notInVehicleCounter) + " Requests not driving, getting current location");
@@ -145,50 +168,127 @@ public class ActivityRecognitionIntentService extends IntentService {
     Start the intent to get the current location and update the database
      */
     private void createPathSegment() {
-        if (!isCreatePathSegmentRunning()) {
-            Intent intent = new Intent(getApplicationContext(), CreatePathSegment.class);
-            intent.putExtra("id", id);
-            intent.putExtra("lat", startlat);
-            intent.putExtra("lon", startlon);
-            intent.putExtra("startTime", startTime);
-            startService(intent);
-            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-//            mService.getLocationUpdate();
-        }
+        Intent intent = new Intent(getApplicationContext(), GetCurrentLocation.class);
+        intent.putExtra(GetCurrentLocation.LOCATION_MESSENGER, new Messenger(handler));
+        startService(intent);
 
     }
 
     /*
-    Safety check to make sure that another instance of the @CreatePathSegment is not running.
-    Don't want to creat a memory leak or other problems by having a lot of them running.
+    A check to see if you've traveled more than 500 meters from the last taken location.
      */
-    private boolean isCreatePathSegmentRunning() {
-        ActivityManager activityManager = (ActivityManager)getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
-            if (CreatePathSegment.class.getName().equals(service.service.getClassName())) {
+    private boolean sufficientDistanceTraveled(LatLng latLng) {
+        double distance = 0;
+        if (lastLat == 0 && lastLon == 0 ) { //Means we're in our first run.
+            lastLat = latLng.latitude;
+            lastLon = latLng.longitude;
+            return true;
+        } else {
+            distance = getDistance(latLng, new LatLng(lastLat, lastLon));
+            if (distance > 500) {
+                lastLat = latLng.latitude;
+                lastLon = latLng.longitude;
+
                 return true;
             }
         }
+
         return false;
     }
 
-    /** Defines callbacks for service binding, passed to bindService() */
-   private ServiceConnection mConnection = new ServiceConnection() {
+    private double getDistance(LatLng pointA, LatLng pointB) {
+        double distance = 0f;
 
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            CreatePathSegment.LocalBinder binder = (CreatePathSegment.LocalBinder) service;
-            mService = binder.getService();
-            mService.getLocationUpdate();
-            mBound = true;
-            Log.v("DEBUG: ", "Bound CreatePathSegment Service");
+        Location a = new Location("pointA");
+        a.setLatitude(pointA.latitude);
+        a.setLongitude(pointA.longitude);
+
+        Location b = new Location("pointB");
+        b.setLatitude(pointB.latitude);
+        b.setLongitude(pointB.longitude);
+
+        distance = a.distanceTo(b);
+
+        return distance;
+    }
+
+    /*
+    Currently not used, it's a way to reverse lookup where you are in address format from a LatLng
+     */
+    private List<Address> checkLocation(LatLng location) {
+        Geocoder geoCoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+        try {
+            List<Address> addresses = geoCoder.getFromLocation(location.latitude, location.longitude, 1);
+            if (addresses.size() > 0) {
+                return addresses;
+            }
+            for (Address address : addresses) {
+                //Log.v("DEBUG: ", "Thoroughfare: " + address.getThoroughfare());
+                Log.v("DEBUG: ", "Address line: " + address.getAddressLine(0));
+                generateNotification(address.getAddressLine(0));
+                address.getThoroughfare();
+            }
+        } catch (IOException ioe) {
+
         }
+        return null;
+    }
 
+    private void generateNotification(String message) {
+        Context context = getApplicationContext();
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("Test")
+                .setContentText(message);
+        Intent resultIntent = new Intent(context, MainActivity.class);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(resultPendingIntent);
+        NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.notify(0, builder.build());
+    }
+
+
+    /*
+    Database handling code goes here
+     */
+
+    private void logSegment(LatLng latLng) {
+        if (!sufficientDistanceTraveled(latLng)) {
+            return;  //We're too close to the last point
+        }
+        Address startAddress = checkLocation(new LatLng(lastLat, lastLon)).get(0);
+        Address endAddress = checkLocation(latLng).get(0);
+        ContentValues values = new ContentValues();
+        Log.v("DEBUG: ", "Address: " + endAddress.getAddressLine(0));
+        values.put(PendingSegmentTable.END_ADDRESS, endAddress.getAddressLine(0));
+        values.put(PendingSegmentTable.END_LAT, latLng.latitude);
+        values.put(PendingSegmentTable.END_LON, latLng.longitude);
+        values.put(PendingSegmentTable.TIME_END, System.currentTimeMillis());
+        values.put(PendingSegmentTable.START_LAT, lastLat);
+        values.put(PendingSegmentTable.START_LON, lastLon);
+        values.put(PendingSegmentTable.START_ADDRESS, startAddress.getAddressLine(0));
+        values.put(PendingSegmentTable.TIME_START, lastTime);
+
+        getContentResolver().insert(TrackerContentProvider.PENDING_URI, values);
+
+    }
+
+    /*
+    Message Handler
+     */
+
+    private Handler handler=new Handler() {
         @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mBound = false;
+        public void handleMessage(Message msg) {
+            Bundle reply = msg.getData();
+            double lat = reply.getDouble("lat");
+            double lon = reply.getDouble("lon");
+            Address addy = checkLocation(new LatLng(lat, lon)).get(0);
+            Log.v("DEBUG: ", "Current address is: " + addy.getAddressLine(0));
+
         }
     };
 }

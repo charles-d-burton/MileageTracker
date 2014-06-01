@@ -108,7 +108,7 @@
             android:exported="false" >
         </service>
         <service
-            android:name="com.charles.mileagetracker.app.services.intentservices.CreatePathSegment"
+            android:name=".services.intentservices.GetCurrentLocation"
             android:exported="false" >
         </service>
 

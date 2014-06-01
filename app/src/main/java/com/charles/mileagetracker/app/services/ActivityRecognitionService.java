@@ -1,11 +1,9 @@
 package com.charles.mileagetracker.app.services;
 
-import android.app.IntentService;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.database.Cursor;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -17,8 +15,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.model.LatLng;
-
-import java.util.Iterator;
 
 /**
  *A long-running service that starts when you leave a fenced in area.  This registers an IntentService
