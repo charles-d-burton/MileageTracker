@@ -1,20 +1,39 @@
 package com.charles.mileagetracker.app.services;
 
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.activities.MainActivity;
+import com.charles.mileagetracker.app.database.PendingSegmentTable;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
+import com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.model.LatLng;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 /**
  *A long-running service that starts when you leave a fenced in area.  This registers an IntentService
@@ -42,6 +61,12 @@ public class ActivityRecognitionService extends Service implements
     private double lat = 0;
     private double lon = 0;
 
+    private static double lastLat = -1;
+    private static double lastLon = -1;
+    private static long lastTime = -1;
+
+    private Messenger messenger = null;
+
 
     public ActivityRecognitionService() {
 
@@ -68,6 +93,7 @@ public class ActivityRecognitionService extends Service implements
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        messenger = new Messenger(handler);
         id = intent.getIntExtra("id", -1);
         lat = intent.getDoubleExtra("lat", -1);
         lon = intent.getDoubleExtra("lon", -1);
@@ -78,6 +104,7 @@ public class ActivityRecognitionService extends Service implements
         intent.putExtra("lat", lat);
         intent.putExtra("lon", lon);
         intent.putExtra("startTime", startTime);
+        //pendingIntent.putExtra(ActivityRecognitionIntentService.RECOGNITION_SERVICE_MESSENGER, messenger);
 
         mActivityRecognitionPendingIntent = PendingIntent.getService(getApplicationContext(),0, pendingIntent,PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -105,6 +132,7 @@ public class ActivityRecognitionService extends Service implements
             case STOP:
                 mActivityRecognitionClient.removeActivityUpdates(mActivityRecognitionPendingIntent);
                 getApplicationContext().stopService(new Intent(getApplicationContext(), ActivityRecognitionIntentService.class));
+                //mActivityRecognitionClient.disconnect();
 
                 break;
             default :
@@ -202,5 +230,140 @@ public class ActivityRecognitionService extends Service implements
             }
         }
 
+    }
+
+    /*
+    Message Handler
+     */
+
+    private Handler handler=new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Bundle reply = msg.getData();
+            if (reply != null ) {
+                if (msg.arg1 == ActivityRecognitionIntentService.RECOGNITION_SERVICE_MSG_ID) {
+                    handleActivity(reply);
+                } else if (msg.arg1 == GetCurrentLocation.GET_LOCATION_MSG_ID) {
+                    double lat = reply.getDouble("lat");
+                    double lon = reply.getDouble("lon");
+                    Address addy = checkLocation(new LatLng(lat, lon)).get(0);
+                    Log.v("DEBUG: ", "Current address is: " + addy.getAddressLine(0));
+                }
+
+            }
+
+        }
+    };
+
+    private void handleActivity(Bundle data) {
+        Log.v("DEBUG: ", "Current Activity: " + data.getString("activity"));
+    }
+
+    private void handleLocation(Bundle data) {
+
+    }
+
+
+    /*
+    A check to see if you've traveled more than 500 meters from the last taken location.
+     */
+    private boolean sufficientDistanceTraveled(LatLng latLng) {
+        double distance = 0;
+        if (lastLat == 0 && lastLon == 0 ) { //Means we're in our first run.
+            lastLat = latLng.latitude;
+            lastLon = latLng.longitude;
+            return true;
+        } else {
+            distance = getDistance(latLng, new LatLng(lastLat, lastLon));
+            if (distance > 500) {
+                lastLat = latLng.latitude;
+                lastLon = latLng.longitude;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private double getDistance(LatLng pointA, LatLng pointB) {
+        double distance = 0f;
+
+        Location a = new Location("pointA");
+        a.setLatitude(pointA.latitude);
+        a.setLongitude(pointA.longitude);
+
+        Location b = new Location("pointB");
+        b.setLatitude(pointB.latitude);
+        b.setLongitude(pointB.longitude);
+
+        distance = a.distanceTo(b);
+
+        return distance;
+    }
+
+
+
+     /*
+    Database handling code goes here
+     */
+
+    private void logSegment(LatLng latLng) {
+        if (!sufficientDistanceTraveled(latLng)) {
+            return;  //We're too close to the last point
+        }
+        Address startAddress = checkLocation(new LatLng(lastLat, lastLon)).get(0);
+        Address endAddress = checkLocation(latLng).get(0);
+        ContentValues values = new ContentValues();
+        Log.v("DEBUG: ", "Address: " + endAddress.getAddressLine(0));
+        values.put(PendingSegmentTable.END_ADDRESS, endAddress.getAddressLine(0));
+        values.put(PendingSegmentTable.END_LAT, latLng.latitude);
+        values.put(PendingSegmentTable.END_LON, latLng.longitude);
+        values.put(PendingSegmentTable.TIME_END, System.currentTimeMillis());
+        values.put(PendingSegmentTable.START_LAT, lastLat);
+        values.put(PendingSegmentTable.START_LON, lastLon);
+        values.put(PendingSegmentTable.START_ADDRESS, startAddress.getAddressLine(0));
+        values.put(PendingSegmentTable.TIME_START, lastTime);
+
+        getContentResolver().insert(TrackerContentProvider.PENDING_URI, values);
+
+    }
+
+    /*
+    A way to reverse lookup where you are in address format from a LatLng
+     */
+    private List<Address> checkLocation(LatLng location) {
+        Geocoder geoCoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+        try {
+            List<Address> addresses = geoCoder.getFromLocation(location.latitude, location.longitude, 1);
+            if (addresses.size() > 0) {
+                return addresses;
+            }
+            for (Address address : addresses) {
+                //Log.v("DEBUG: ", "Thoroughfare: " + address.getThoroughfare());
+                Log.v("DEBUG: ", "Address line: " + address.getAddressLine(0));
+                generateNotification(address.getAddressLine(0));
+                address.getThoroughfare();
+            }
+        } catch (IOException ioe) {
+
+        }
+        return null;
+    }
+
+    private void generateNotification(String message) {
+        Context context = getApplicationContext();
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("Test")
+                .setContentText(message);
+        Intent resultIntent = new Intent(context, MainActivity.class);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(resultPendingIntent);
+        NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.notify(0, builder.build());
     }
 }

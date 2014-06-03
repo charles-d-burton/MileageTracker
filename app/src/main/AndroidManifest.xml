@@ -31,11 +31,6 @@
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyCWLe7RmQQR4AJaMx8xPIZcjSg2FnQ5if4" />
 
-        <service
-            android:name="com.charles.mileagetracker.app.services.LocationPingService"
-            android:enabled="true"
-            android:exported="true" >
-        </service>
 
         <receiver
             android:name="com.charles.mileagetracker.app.receivers.WifiReceiver"
@@ -47,12 +42,6 @@
 "
             </intent-filter>
         </receiver>
-
-        <service
-            android:name="com.charles.mileagetracker.app.services.LearnLocationService"
-            android:enabled="true"
-            android:exported="true" >
-        </service>
         <service
             android:name="com.charles.mileagetracker.app.services.intentservices.LearnLocationIntentService"
             android:exported="false" >

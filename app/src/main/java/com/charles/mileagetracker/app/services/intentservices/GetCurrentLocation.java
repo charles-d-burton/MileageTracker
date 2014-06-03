@@ -25,31 +25,21 @@ public class GetCurrentLocation extends IntentService implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener {
 
-    protected static final String LOCATION_MESSENGER = "com.charles.milagetracker.app.LOCATION_MESSENGER";
+    public static final String LOCATION_MESSENGER = "com.charles.milagetracker.app.LOCATION_MESSENGER";
+    public static final int GET_LOCATION_MSG_ID = 2;
     private Messenger messenger = null;
 
     private static LocationClient locationClient = null;
     private static LocationRequest locationRequest = null;
     private static LocationListener locationListener = null;
 
-    //protected static double lastLat = -1;
-    //protected static double lastLon = -1;
-    //protected static long lastTime = -1;
-
-    //private static volatile boolean driving = false;
-
     private static int attempts = 0;
 
-    //private final IBinder mBinder = new LocalBinder();
 
     public GetCurrentLocation() {
         super("CheckCurrentLocation");
     }
 
-   /*@Override
-   public IBinder onBind(Intent intent) {
-        return mBinder;
-    }*/
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -68,17 +58,6 @@ public class GetCurrentLocation extends IntentService implements
             }
 
         }
-
-
-        /*if (lastLat == -1 && lastLon == 1) {
-            if (intent != null) {
-                lastLat = intent.getDoubleExtra("lat", -1);
-                lastLon = intent.getDoubleExtra("lon", -1);
-                //lastLat = ActivityRecognitionService.startPoint.latitude;
-                //lastLon = ActivityRecognitionService.startPoint.longitude;
-                lastTime = intent.getLongExtra("startTime", -1);
-            }
-        }*/
     }
 
     @Override
@@ -97,19 +76,6 @@ public class GetCurrentLocation extends IntentService implements
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
-
-    //Start the process to get a current location lock
-    /*protected void getLocationUpdate() {
-        driving = false;
-        locationClient = new LocationClient(getApplicationContext(), this, this);
-        locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-        locationRequest.setInterval(5000);
-        locationRequest.setFastestInterval(1000);
-        locationListener = new MyLocationListener();
-        locationClient.connect();
-
-    }*/
 
     private double getDistance(LatLng pointA, LatLng pointB) {
         double distance = 0f;
@@ -140,27 +106,31 @@ public class GetCurrentLocation extends IntentService implements
         public void onLocationChanged(Location location) {
 
             if (location.getAccuracy() < 5 ) { //Less than 5 meter accuracy
-                locationClient.disconnect();
+
                 Message msg = Message.obtain();
+                msg.arg1 = GET_LOCATION_MSG_ID;
                 Bundle bundle = new Bundle();
                 bundle.putDouble("lat", location.getLatitude());
                 bundle.putDouble("lon", location.getLongitude());
+                msg.setData(bundle);
 
                 try {
                     messenger.send(msg);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
+                locationClient.disconnect();
 
             } else if (attempts < 10) {
                 Log.v("DEBUG: ", "Not enough precision");
                 attempts = attempts +1;
             } else {
                 Message msg = Message.obtain();
+                msg.arg1 = GET_LOCATION_MSG_ID;
                 Bundle bundle = new Bundle();
                 bundle.putDouble("lat", location.getLatitude());
                 bundle.putDouble("lon", location.getLongitude());
-
+                msg.setData(bundle);
                 try {
                     messenger.send(msg);
                 } catch (RemoteException e) {
@@ -170,11 +140,4 @@ public class GetCurrentLocation extends IntentService implements
             }
         }
     }
-
-    /*public class LocalBinder extends Binder {
-        GetCurrentLocation getService() {
-            // Return this instance of GetCurrentLocation so clients can call public methods
-            return GetCurrentLocation.this;
-        }
-    }*/
 }
