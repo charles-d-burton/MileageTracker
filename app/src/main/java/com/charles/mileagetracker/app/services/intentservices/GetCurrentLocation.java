@@ -44,6 +44,13 @@ public class GetCurrentLocation extends IntentService implements
     @Override
     protected void onHandleIntent(Intent intent) {
 
+        if (intent.getBooleanExtra("stop", false)) {
+            Log.v("DEBUG: ", "Stopping location updates");
+
+            if (locationClient != null) locationClient.disconnect();
+            stopSelf();
+        }
+
         if (intent != null) {
             Bundle extras=intent.getExtras();
             if (extras != null) {
@@ -61,7 +68,14 @@ public class GetCurrentLocation extends IntentService implements
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //locationClient.disconnect();
+    }
+
+    @Override
     public void onConnected(Bundle bundle) {
+        Log.d("DEBUG: ", "Location Client Connected");
         locationClient.requestLocationUpdates(locationRequest, locationListener);
 
     }
@@ -69,11 +83,13 @@ public class GetCurrentLocation extends IntentService implements
     @Override
     public void onDisconnected() {
         locationClient.removeLocationUpdates(locationListener);
+        //stopSelf();
 
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.d("DEBUG: ", "Location Client Connection Failed");
 
     }
 
@@ -104,7 +120,7 @@ public class GetCurrentLocation extends IntentService implements
 
         @Override
         public void onLocationChanged(Location location) {
-
+            Log.d("DEBUG: ", "Location Changed");
             if (location.getAccuracy() < 5 ) { //Less than 5 meter accuracy
 
                 Message msg = Message.obtain();

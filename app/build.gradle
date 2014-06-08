@@ -2,14 +2,14 @@ apply plugin: 'android'
 
 android {
     compileSdkVersion 19
-    buildToolsVersion "19.0.3"
+    buildToolsVersion "19.1"
 
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 19
         versionCode 1
         versionName "1.0"
-        packageName "com.charles.mileagetracker.app"
+        applicationId "com.charles.mileagetracker.app"
     }
     buildTypes {
         release {

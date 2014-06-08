@@ -1,21 +1,46 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.activities.MainActivity;
+import com.charles.mileagetracker.app.database.PendingSegmentTable;
+import com.charles.mileagetracker.app.database.StartPoints;
+import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
+import com.google.android.gms.maps.model.LatLng;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
  */
 
+
+//TRY TO MAKE THIS A BROADCAST RECEIVER IN THE MORNING
 public class ActivityRecognitionIntentService extends IntentService {
 
 
@@ -23,8 +48,7 @@ public class ActivityRecognitionIntentService extends IntentService {
         super("ActivityRecognitionIntentService");
     }
 
-    public static final String RECOGNITION_SERVICE_MESSENGER = "com.charles.milagetracker.app.ACTIVITY_MESSENGER";
-    public static final int RECOGNITION_SERVICE_MSG_ID = 1;
+    public static final String ACTIVITY_BROADCAST = "com.charles.mileagetracker.app.ACTIVITY_BROADCAST";
 
 
     private static int secondsElapsed = 0;
@@ -36,21 +60,31 @@ public class ActivityRecognitionIntentService extends IntentService {
     private static boolean locationUpdateInProgress = false;
 
 
-    private enum ACTIVITY_TYPE {DRIVING, WALKING, BIKING, STILL, TILTING, UNKNOWN }
+    public enum ACTIVITY_TYPE {DRIVING, WALKING, BIKING, STILL, TILTING, UNKNOWN }
     private ACTIVITY_TYPE mActivityType;
 
     private GetCurrentLocation mService = null;
     private boolean mBound = false;
 
-    private static double startlat = -1;
-    private static double startlon = -1;
     private static int id = -1;
     private static long startTime = -1;
+    public static LatLng startPoint;
+
+    private static double lastLat = -1;
+    private static double lastLon = -1;
+    private static long lastTime = -1;
 
     private Messenger messenger = null;
 
 
 
+
+    @Override
+    public void onCreate() {
+
+        super.onCreate();
+        //messenger = new Messenger(incomingMessageHandler);
+    }
 
     /*
     Initialize some variables and get the calling Intent to retrieve the most likely activity
@@ -59,8 +93,6 @@ public class ActivityRecognitionIntentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
 
-
-
             if (ActivityRecognitionResult.hasResult(intent)) {
 
                 ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
@@ -68,31 +100,11 @@ public class ActivityRecognitionIntentService extends IntentService {
 
                 int confidence = mostProbableActivity.getConfidence();
 
-                //Messenger messenger = extractMessenger(intent);
-                //if (messenger == null) return;
-
                 activityUpdate(mostProbableActivity.getType(), confidence);
 
             } else {
                 Log.v("DEBUG: ", "Where is the Result Intent WTH?");
             }
-
-
-        }
-    }
-
-    private Messenger extractMessenger(Intent intent) {
-        Bundle extras = intent.getExtras();
-
-        if (extras != null) {
-            Log.v("EXTRAS NOT NULL", "GETTING MESSENGER");
-            messenger = (Messenger)extras.get(RECOGNITION_SERVICE_MESSENGER);
-            if (messenger == null) {
-                Log.v("MESSENGER NULL: ", "I DON'T KNOW WHY THIS IS NULL");
-            }
-            return messenger;
-        } else {
-            return null;
         }
     }
 
@@ -105,28 +117,29 @@ public class ActivityRecognitionIntentService extends IntentService {
      */
 
     private void activityUpdate(int activityType, int confidence) {
-        Log.v("DEBUG: ", "Confidence level: " + Integer.toString(confidence));
+        //Log.v("DEBUG: ", "Confidence level: " + Integer.toString(confidence));
         if (confidence < 62) { //Less than really sure
             return;
         }
         switch (activityType) {
             case DetectedActivity.IN_VEHICLE:
                 //Log.v("DEBUG: " , "Driving");
-                driving(confidence);
+                broadcastActivityType(confidence, ACTIVITY_TYPE.DRIVING);
                 break;
             case DetectedActivity.ON_FOOT:
-                //notDriving(confidence);
-                notDriving(confidence, "walking");
+                broadcastActivityType(confidence, ACTIVITY_TYPE.WALKING);
+                //notDriving(confidence, "walking");
                 break;
             case DetectedActivity.UNKNOWN:
-                Log.v("DEBUG: ", "Unknown");
+                //Log.v("DEBUG: ", "Unknown");
                 break;
             case DetectedActivity.ON_BICYCLE:
-                Log.v("DEBUG:", "Bike");
+                //Log.v("DEBUG:", "Bike");
                 break;
             case DetectedActivity.STILL:
                 //Log.v("DEBUG: ", "Sitting Still");
-                notDriving(confidence, "still");
+                broadcastActivityType(confidence, ACTIVITY_TYPE.STILL);
+                //notDriving(confidence, "still");
                 break;
             case DetectedActivity.TILTING:
                 Log.v("DEBUG: ", "Tilting at windmills");
@@ -138,33 +151,31 @@ public class ActivityRecognitionIntentService extends IntentService {
         }
     }
 
-    private void driving(int confidence) {
-        Message message = Message.obtain();
-        message.arg1 = RECOGNITION_SERVICE_MSG_ID;
-        Bundle extras = new Bundle();
-        extras.putString("activity", "driving");
-        extras.putInt("confidence", confidence);
-        message.setData(extras);
-        try {
-            messenger.send(message);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (NullPointerException npe) {
-            Log.v("DEBUG: ", "Messenger null");
-        }
-
-        /*notInVehicleCounter = 0;
-        secondsElapsed = 0;
-        driving = true;*/
-    }
-
     /*
     Take the current time and calculate what the last time there was a not driving event was.  Use that
     time to get the time elapsed for not driving.  This is partly a safety check to help reduce false
     positives for things like sitting in traffic.
      */
-    /*private void notDriving(int confidence) {
-       notInVehicleCounter = notInVehicleCounter +1;
+    private void broadcastActivityType(int confidence, ACTIVITY_TYPE type) {
+        Intent extras = new Intent();
+        extras.putExtra("confidence", confidence);
+        extras.setAction(ACTIVITY_BROADCAST);
+        switch (type) {
+            case DRIVING:
+                extras.putExtra("type", "driving");
+                break;
+            case WALKING:
+                extras.putExtra("type", "notdriving");
+                break;
+            case STILL:
+                extras.putExtra("type", "notdriving");
+                break;
+            default:
+                return;
+        }
+        sendBroadcast(extras);
+
+       /*notInVehicleCounter = notInVehicleCounter +1;
 
        long currentTime = System.currentTimeMillis();
 
@@ -177,38 +188,6 @@ public class ActivityRecognitionIntentService extends IntentService {
            locationUpdateInProgress = true;
            createPathSegment();
            Log.v("DEBUG: ", Integer.toString(notInVehicleCounter) + " Requests not driving, getting current location");
-       }
-    }*/
-
-    private void notDriving(int confidence, String activity) {
-        Message message = Message.obtain();
-        message.arg1 = RECOGNITION_SERVICE_MSG_ID;
-        Bundle extras = new Bundle();
-        extras.putBoolean("driving", false);
-        extras.putString("activity", activity);
-        extras.putInt("confidence", confidence);
-        message.setData(extras);
-
-        try {
-            messenger.send(message);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (NullPointerException npe) {
-            Log.v("DEBUG: ", "Messenger null");
-        }
-
+       }*/
     }
-
-
-    /*
-    Start the intent to get the current location and update the database
-     */
-    private void createPathSegment() {
-        Intent intent = new Intent(getApplicationContext(), GetCurrentLocation.class);
-        //intent.putExtra(GetCurrentLocation.LOCATION_MESSENGER, new Messenger(handler));
-        //startService(intent);
-
-    }
-
-
 }

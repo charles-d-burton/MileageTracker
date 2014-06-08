@@ -58,13 +58,20 @@ public class GeofenceReceiver extends BroadcastReceiver {
             boolean running = isServiceRunning();
             if (running) {
                 Log.v("DEBUG: ", "Killing Running Record Service");
+                Intent stopActivityService = new Intent(this.context, ActivityRecognitionService.class);
+                stopActivityService.putExtra("stop", true);
+                stopActivityService.putExtra("id", intent.getIntExtra("id", -1));
+                stopActivityService.putExtra("lat", intent.getDoubleExtra("lat", -1));
+                stopActivityService.putExtra("lon", intent.getDoubleExtra("lon", -1));
 
-                this.context.stopService(new Intent(context, ActivityRecognitionService.class));
+                this.context.startService(stopActivityService);
+
+                //this.context.stopService(new Intent(context, ActivityRecognitionService.class));
 
 
                 //context.stopService(new Intent(context, ActivityRecognitionIntentService.class)):
             }
-            generateNotification(getAddresses(), Geofence.GEOFENCE_TRANSITION_ENTER);
+            //generateNotification(getAddresses(), Geofence.GEOFENCE_TRANSITION_ENTER);
 
 
         }
