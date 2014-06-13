@@ -261,7 +261,7 @@ public class ActivityRecognitionIntentService extends IntentService {
         values.put(PendingSegmentTable.ADDRESS, startAddress.getAddressLine(0));
         values.put(PendingSegmentTable.TIME, lastTime);
 
-        getContentResolver().insert(TrackerContentProvider.PENDING_URI, values);
+        getContentResolver().insert(TrackerContentProvider.TRIP_URI, values);
 
         lastLat = latLng.latitude;
         lastLon = latLng.longitude;

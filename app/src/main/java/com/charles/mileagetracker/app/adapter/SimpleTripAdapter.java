@@ -2,20 +2,11 @@ package com.charles.mileagetracker.app.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
-
-import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.database.PendingSegmentTable;
-
-import org.w3c.dom.Text;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * Created by charles on 5/27/14.
@@ -36,7 +27,7 @@ public class SimpleTripAdapter extends SimpleCursorAdapter {
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        Cursor c = getCursor();
+        /*Cursor c = getCursor();
         final LayoutInflater inflater = LayoutInflater.from(context);
         View v = inflater.inflate(layout,parent, false);
 
@@ -60,13 +51,14 @@ public class SimpleTripAdapter extends SimpleCursorAdapter {
             Log.v("DEBUG: ", "EndTimeView null in newView");
         }
 
-        return v;
+        return v;*/
+        return null;
     }
 
     @Override
     public void bindView(View v, Context context, Cursor cursor) {
 
-        String endAddress = cursor.getString(cursor.getColumnIndexOrThrow(PendingSegmentTable.END_ADDRESS));
+        /*String endAddress = cursor.getString(cursor.getColumnIndexOrThrow(PendingSegmentTable.END_ADDRESS));
         long endTime = cursor.getLong(cursor.getColumnIndexOrThrow(PendingSegmentTable.TIME_END));
 
         String endDate = format.format(new Date(endTime));
@@ -83,7 +75,7 @@ public class SimpleTripAdapter extends SimpleCursorAdapter {
             endTimeView.setText(endDate);
         } else {
             Log.v("DEBUG: ", "EndTimeView null in bindView");
-        }
+        }*/
 
     }
 

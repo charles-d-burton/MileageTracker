@@ -6,14 +6,12 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
-import android.graphics.DrawFilter;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by charles on 3/29/14.
@@ -26,43 +24,24 @@ public class TrackerContentProvider extends ContentProvider {
     private static final int TRIPS_ID = 20;
     private static final int STARTS = 30;
     private static final int STARTS_ID = 40;
-    private static final int BLUETOOTH = 50;
-    private static final int BLUETOOTH_ID = 60;
-    private static final int WIFI = 70;
-    private static final int WIFI_ID = 80;
-    private static final int PENDING = 90;
-    private static final int PENDING_ID = 100;
 
     private static final String AUTHORITY = "com.charles.mileagetracker.app.database.TrackerContentProvider";
-
-    private static final String TRIP_PATH = TripTable.TABLE_TRIPS;
-    public static final Uri TRIP_URI = Uri.parse("content://" + AUTHORITY + "/" + TRIP_PATH);
 
     private static final String STARTS_PATH = StartPoints.TABLE_START_POINTS;
     public static final Uri STARTS_URI = Uri.parse("content://" + AUTHORITY + "/" + STARTS_PATH);
 
-    private static final String BLUETOOTH_PATH = BluetoothDevices.TABLE_BLUETOOTH_DEVICES;
-    public static final Uri BLUETOOTH_URI = Uri.parse("content://" + AUTHORITY + "/" + BLUETOOTH_PATH);
-
-    private static final String WIFI_PATH = WifiAccessPoints.TABLE_WIFI;
-    public static final Uri WIFI_URI = Uri.parse("content://" + AUTHORITY + "/" + WIFI_PATH);
-
-    private static final String PENDING_PATH = NewPendingTripTable.PENDING_TABLE;
-    public static final Uri PENDING_URI = Uri.parse("content://" + AUTHORITY + "/" + PENDING_PATH);
+    private static final String TRIP_PATH = TripTable.TRIP_TABLE;
+    public static final Uri TRIP_URI = Uri.parse("content://" + AUTHORITY + "/" + TRIP_PATH);
 
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+
     static {
-        sURIMatcher.addURI(AUTHORITY, TRIP_PATH, TRIPS);
-        sURIMatcher.addURI(AUTHORITY, TRIP_PATH + "/#", TRIPS_ID);
         sURIMatcher.addURI(AUTHORITY, STARTS_PATH, STARTS);
         sURIMatcher.addURI(AUTHORITY, STARTS_PATH + "/#", STARTS_ID);
-        sURIMatcher.addURI(AUTHORITY, BLUETOOTH_PATH, BLUETOOTH);
-        sURIMatcher.addURI(AUTHORITY, BLUETOOTH_PATH +"/#", BLUETOOTH_ID);
-        sURIMatcher.addURI(AUTHORITY, WIFI_PATH, WIFI);
-        sURIMatcher.addURI(AUTHORITY, WIFI_PATH + "/#", WIFI_ID);
-        sURIMatcher.addURI(AUTHORITY, PENDING_PATH, PENDING);
-        sURIMatcher.addURI(AUTHORITY, PENDING_PATH + "/#", PENDING_ID);
+
+        sURIMatcher.addURI(AUTHORITY, TRIP_PATH, TRIPS);
+        sURIMatcher.addURI(AUTHORITY, TRIP_PATH + "/#", TRIPS_ID);
     }
 
 
@@ -82,36 +61,17 @@ public class TrackerContentProvider extends ContentProvider {
 
         int uriType = sURIMatcher.match(uri);
         switch (uriType){
-            case TRIPS_ID:
-                //adding the ID to the original query
-                queryBuilder.appendWhere(TripTable.COLUMN_ID + "=" + uri.getLastPathSegment());
-                //Fall through
-            case TRIPS:
-                queryBuilder.setTables(TripTable.TABLE_TRIPS);
-                break;
             case STARTS_ID:
                 queryBuilder.appendWhere(StartPoints.COLUMN_ID + "=" + uri.getLastPathSegment());
                 //Fall through
             case STARTS:
                 queryBuilder.setTables(StartPoints.TABLE_START_POINTS);
                 break;
-            case BLUETOOTH_ID:
-                queryBuilder.appendWhere(BluetoothDevices.COLUMN_ID + "=" + uri.getLastPathSegment());
+            case TRIPS_ID:
+                queryBuilder.appendWhere(TripTable.COLUMN_ID + "=" + uri.getLastPathSegment());
                 break;
-            case BLUETOOTH:
-                queryBuilder.setTables(BluetoothDevices.TABLE_BLUETOOTH_DEVICES);
-                break;
-            case WIFI_ID:
-                queryBuilder.appendWhere(WifiAccessPoints.COLUMN_ID + "=" + uri.getLastPathSegment());
-                break;
-            case WIFI:
-                queryBuilder.setTables(WifiAccessPoints.TABLE_WIFI);
-                break;
-            case PENDING_ID:
-                queryBuilder.appendWhere(NewPendingTripTable.COLUMN_ID + "=" + uri.getLastPathSegment());
-                break;
-            case PENDING:
-                queryBuilder.setTables(NewPendingTripTable.PENDING_TABLE);
+            case TRIPS:
+                queryBuilder.setTables(TripTable.TRIP_TABLE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -145,31 +105,13 @@ public class TrackerContentProvider extends ContentProvider {
 
 
         switch (uriType) {
-            case TRIPS:
-                id = db.insert(TripTable.TABLE_TRIPS, null, values);
-                returnUri = Uri.parse(TRIPS + "/" + id);
-                break;
             case STARTS:
                 id = db.insert(StartPoints.TABLE_START_POINTS, null, values);
                 returnUri = Uri.parse(STARTS + "/" + id);
                 break;
-            case BLUETOOTH:
-                if (doReplace(values)) {
-                    id = db.replace(BluetoothDevices.TABLE_BLUETOOTH_DEVICES, null, values);
-                } else {
-                    id = db.insert(BluetoothDevices.TABLE_BLUETOOTH_DEVICES, null, values);
-                }
-                break;
-            case WIFI:
-                if (doReplace(values)) {
-                    id = db.replace(WifiAccessPoints.TABLE_WIFI, null, values);
-                } else {
-                    id = db.insert(WifiAccessPoints.TABLE_WIFI, null, values);
-                }
-                break;
-            case PENDING:
-                id = db.insert(NewPendingTripTable.PENDING_TABLE, null, values);
-                returnUri = Uri.parse(PENDING + "/" + id);
+            case TRIPS:
+                id = db.insert(TripTable.TRIP_TABLE, null, values);
+                returnUri = Uri.parse(TRIPS_ID + "/" + id);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -188,17 +130,6 @@ public class TrackerContentProvider extends ContentProvider {
         String id = null;
 
         switch (uriType) {
-            case TRIPS:
-                rowsDeleted = db.delete(TripTable.TABLE_TRIPS, selection, selectionArgs);
-                break;
-            case TRIPS_ID:
-                id = uri.getLastPathSegment();
-                if (TextUtils.isEmpty(selection)) {
-                    rowsDeleted = db.delete(TripTable.TABLE_TRIPS, TripTable.COLUMN_ID + "=" + id, null);
-                } else {
-                    rowsDeleted = db.delete(TripTable.TABLE_TRIPS, TripTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
-                }
-                break;
             case STARTS:
                 rowsDeleted = db.delete(StartPoints.TABLE_START_POINTS, selection, selectionArgs);
                 break;
@@ -210,37 +141,15 @@ public class TrackerContentProvider extends ContentProvider {
                     rowsDeleted = db.delete(StartPoints.TABLE_START_POINTS, StartPoints.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
                 }
                 break;
-            case BLUETOOTH:
-                rowsDeleted = db.delete(BluetoothDevices.TABLE_BLUETOOTH_DEVICES, selection, selectionArgs);
+            case TRIPS:
+                rowsDeleted = db.delete(TripTable.TRIP_TABLE, selection, selectionArgs);
                 break;
-            case BLUETOOTH_ID:
+            case TRIPS_ID:
                 id = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
-                    rowsDeleted = db.delete(BluetoothDevices.TABLE_BLUETOOTH_DEVICES, BluetoothDevices.COLUMN_ID + "=" + id, null);
+                    rowsDeleted = db.delete(TripTable.TRIP_TABLE, TripTable.COLUMN_ID + "=" + id, null);
                 } else {
-                    rowsDeleted = db.delete(BluetoothDevices.TABLE_BLUETOOTH_DEVICES, BluetoothDevices.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
-                }
-                break;
-            case WIFI:
-                rowsDeleted = db.delete(WifiAccessPoints.TABLE_WIFI, selection, selectionArgs);
-                break;
-            case WIFI_ID:
-                id = uri.getLastPathSegment();
-                if (TextUtils.isEmpty(selection)) {
-                    rowsDeleted = db.delete(WifiAccessPoints.TABLE_WIFI, WifiAccessPoints.COLUMN_ID + "=" + id, null);
-                } else {
-                    rowsDeleted = db.delete(WifiAccessPoints.TABLE_WIFI, WifiAccessPoints.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
-                }
-                break;
-            case PENDING:
-                rowsDeleted = db.delete(NewPendingTripTable.PENDING_TABLE, selection, selectionArgs);
-                break;
-            case PENDING_ID:
-                id = uri.getLastPathSegment();
-                if (TextUtils.isEmpty(selection)) {
-                    rowsDeleted = db.delete(NewPendingTripTable.PENDING_TABLE, NewPendingTripTable.COLUMN_ID + "=" + id, null);
-                } else {
-                    rowsDeleted = db.delete(NewPendingTripTable.PENDING_TABLE, NewPendingTripTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
+                    rowsDeleted = db.delete(TripTable.TRIP_TABLE, TripTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
                 }
                 break;
             default:
@@ -260,17 +169,6 @@ public class TrackerContentProvider extends ContentProvider {
         int rowsUpdated = 0;
 
         switch (uriType) {
-            case TRIPS:
-                rowsUpdated = db.update(TripTable.TABLE_TRIPS, values, selection, null);
-                break;
-            case TRIPS_ID:
-                id = uri.getLastPathSegment();
-                if (TextUtils.isEmpty(selection)) {
-                    rowsUpdated = db.update(TripTable.TABLE_TRIPS, values, TripTable.COLUMN_ID + "=" + id, null );
-                } else {
-                    rowsUpdated = db.update(TripTable.TABLE_TRIPS, values, TripTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
-                }
-                break;
             case STARTS:
                 rowsUpdated = db.update(StartPoints.TABLE_START_POINTS, values, selection, null);
                 break;
@@ -282,37 +180,15 @@ public class TrackerContentProvider extends ContentProvider {
                     rowsUpdated = db.update(StartPoints.TABLE_START_POINTS, values, StartPoints.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
                 }
                 break;
-            case BLUETOOTH:
-                rowsUpdated = db.update(BluetoothDevices.TABLE_BLUETOOTH_DEVICES, values, selection, null);
+            case TRIPS:
+                rowsUpdated = db.update(TripTable.TRIP_TABLE, values, selection, null);
                 break;
-            case BLUETOOTH_ID:
+            case TRIPS_ID:
                 id = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
-                    rowsUpdated = db.update(BluetoothDevices.TABLE_BLUETOOTH_DEVICES, values, BluetoothDevices.COLUMN_ID + "=" + id, null);
+                    rowsUpdated = db.update(TripTable.TRIP_TABLE, values, TripTable.COLUMN_ID + "=" + id, null);
                 } else {
-                    rowsUpdated = db.update(BluetoothDevices.TABLE_BLUETOOTH_DEVICES, values, BluetoothDevices.COLUMN_ID + "=" +id + " + and " + selection, selectionArgs);
-                }
-                break;
-            case WIFI:
-                rowsUpdated = db.update(WifiAccessPoints.TABLE_WIFI, values, selection, null);
-                break;
-            case WIFI_ID:
-                id = uri.getLastPathSegment();
-                if (TextUtils.isEmpty(selection)) {
-                    rowsUpdated = db.update(WifiAccessPoints.TABLE_WIFI, values, WifiAccessPoints.COLUMN_ID + "=" + id, null);
-                } else {
-                    rowsUpdated = db.update(WifiAccessPoints.TABLE_WIFI, values, WifiAccessPoints.COLUMN_ID + "=" + id + " and " +  selection, selectionArgs);
-                }
-                break;
-            case PENDING:
-                rowsUpdated = db.update(NewPendingTripTable.PENDING_TABLE, values, selection, null);
-                break;
-            case PENDING_ID:
-                id = uri.getLastPathSegment();
-                if (TextUtils.isEmpty(selection)) {
-                    rowsUpdated = db.update(NewPendingTripTable.PENDING_TABLE, values, NewPendingTripTable.COLUMN_ID + "=" + id, null);
-                } else {
-                    rowsUpdated = db.update(NewPendingTripTable.PENDING_TABLE, values, NewPendingTripTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
+                    rowsUpdated = db.update(TripTable.TRIP_TABLE, values, TripTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
                 }
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -323,19 +199,11 @@ public class TrackerContentProvider extends ContentProvider {
     }
 
     private final void checkColumns(String projection[]) {
-        String available[] = {TripTable.COLUMN_ID, TripTable.END_LAT, TripTable.END_LON, TripTable.START_LAT,
-        TripTable.START_LON, TripTable.TIME_START, TripTable.TIME_END, TripTable.TOTAL_DISTANCE, TripTable.TOTAL_TIME,
-        TripTable.END_ADDRESS, TripTable.START_ADDRESS,
-
+        String available[] = {
         StartPoints.COLUMN_ID, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS, StartPoints.NAME,
 
-        WifiAccessPoints.COLUMN_ID, WifiAccessPoints.REFRENCE_ID, WifiAccessPoints.BSSID, WifiAccessPoints.SSID,
-        WifiAccessPoints.LAST_CONTACTED,
-
-        BluetoothDevices.COLUMN_ID, BluetoothDevices.REFRENCE_ID, BluetoothDevices.DEVICE_NAME,
-        BluetoothDevices.DEVICE_ADDRESS, BluetoothDevices.LAST_CONTACTED,
-
-        NewPendingTripTable.FENCE_RELATION
+        TripTable.FENCE_RELATION, TripTable.ADDRESS,TripTable.COLUMN_ID, TripTable.DISTANCE,TripTable.FENCE_RELATION,
+        TripTable.LAT, TripTable.LON, TripTable.TIME, TripTable.TRIP_KEY, TripTable.TOTAL_TIME
 
         };
 

@@ -15,8 +15,8 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.PathSelectorActivity;
 import com.charles.mileagetracker.app.cache.AccessInternalStorage;
 import com.charles.mileagetracker.app.cache.TripVars;
-import com.charles.mileagetracker.app.database.PendingSegmentTable;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
+import com.charles.mileagetracker.app.database.TripTable;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
@@ -109,13 +109,13 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
     private String getAddresses() {
 
-        String projection[] = {PendingSegmentTable.COLUMN_ID, PendingSegmentTable.END_ADDRESS};
+        String projection[] = {TripTable.COLUMN_ID, TripTable.ADDRESS};
 
-        Cursor c = context.getContentResolver().query(TrackerContentProvider.PENDING_URI, projection, null, null, null);
+        Cursor c = context.getContentResolver().query(TrackerContentProvider.TRIP_URI, projection, null, null, null);
         String addresses = "";
         if (!(c == null) && !(c.getCount() < 1)) {
             for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                addresses = addresses + "\n" + c.getString(c.getColumnIndexOrThrow(PendingSegmentTable.END_ADDRESS));
+                addresses = addresses + "\n" + c.getString(c.getColumnIndexOrThrow(TripTable.ADDRESS));
             }
         }
         return addresses;

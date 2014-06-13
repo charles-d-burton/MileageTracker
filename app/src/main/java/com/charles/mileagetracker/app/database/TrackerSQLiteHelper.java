@@ -18,19 +18,14 @@ public class TrackerSQLiteHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        TripTable.onCreate(db);
         StartPoints.onCreate(db);
-        BluetoothDevices.onCreate(db);
-        WifiAccessPoints.onCreate(db);
+        TripTable.onCreate(db);
+
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        TripTable.onUpgrade(db, oldVersion, newVersion);
         StartPoints.onUpgrade(db, oldVersion, newVersion);
-        BluetoothDevices.onUpgrade(db, oldVersion, newVersion);
-        WifiAccessPoints.onUpgrade(db, oldVersion, newVersion);
-        //PendingSegmentTable.onUpgrade(db, oldVersion, newVersion);
-        NewPendingTripTable.onUpgrade(db, oldVersion, newVersion);
+        TripTable.onUpgrade(db, oldVersion, newVersion);
     }
 }

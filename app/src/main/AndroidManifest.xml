@@ -48,14 +48,6 @@
         </service>
 
         <receiver
-            android:name=".receivers.BluetoothReceiver"
-            android:enabled="true"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name="android.bluetooth.device.action.FOUND" />
-            </intent-filter>
-        </receiver>
-        <receiver
             android:name=".receivers.CellTowerReceiver"
             android:enabled="true"
             android:exported="true" >

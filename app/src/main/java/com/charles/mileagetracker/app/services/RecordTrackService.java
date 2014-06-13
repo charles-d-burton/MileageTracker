@@ -3,12 +3,10 @@ package com.charles.mileagetracker.app.services;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
-import android.net.Uri;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -19,7 +17,6 @@ import com.charles.mileagetracker.app.activities.MainActivity;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripTable;
-import com.charles.mileagetracker.app.database.WifiAccessPoints;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -163,13 +160,9 @@ public class RecordTrackService extends Service {
         long totalTime = (endTime - startTime)/1000;
 
         HashMap segment = new HashMap();
-        segment.put(TripTable.TIME_START, startTime);
-        segment.put(TripTable.START_LAT, startLat);
-        segment.put(TripTable.START_LON, startLon);
-        segment.put(TripTable.TIME_END, endTime);
-        segment.put(TripTable.END_LAT, endLat);
-        segment.put(TripTable.END_LON, endLon);
-        segment.put(TripTable.TOTAL_DISTANCE, distanceInt);
+        segment.put(TripTable.LAT, endLat);
+        segment.put(TripTable.LON, endLon);
+        segment.put(TripTable.DISTANCE, distanceInt);
         segment.put(TripTable.TOTAL_TIME, totalTime);
 
         generateNotification(segment);
@@ -254,7 +247,7 @@ public class RecordTrackService extends Service {
      */
 
     private void generateNotification(HashMap map) {
-        String message = "Generating Path Segment, distance: " + Integer.toString((Integer)map.get(TripTable.TOTAL_DISTANCE));
+        String message = "Generating Path Segment, distance: " + Integer.toString((Integer)map.get(TripTable.DISTANCE));
         Context context = this.getApplicationContext();
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setSmallIcon(R.drawable.ic_launcher)

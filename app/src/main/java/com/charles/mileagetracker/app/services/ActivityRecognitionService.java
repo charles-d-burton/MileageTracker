@@ -1,43 +1,18 @@
 package com.charles.mileagetracker.app.services;
 
-import android.app.ActivityManager;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.activities.MainActivity;
-import com.charles.mileagetracker.app.activities.PathSelectorActivity;
-import com.charles.mileagetracker.app.database.PendingSegmentTable;
-import com.charles.mileagetracker.app.database.StartPoints;
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
 import com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.maps.model.LatLng;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
 
 /**
  *A long-running service that starts when you leave a fenced in area.  This registers an IntentService
