@@ -49,6 +49,7 @@ public class GetCurrentLocation extends IntentService implements
 
             if (locationClient != null) locationClient.disconnect();
             stopSelf();
+            return;
         }
 
         if (intent != null) {
@@ -92,26 +93,6 @@ public class GetCurrentLocation extends IntentService implements
         Log.d("DEBUG: ", "Location Client Connection Failed");
 
     }
-
-    private double getDistance(LatLng pointA, LatLng pointB) {
-        double distance = 0f;
-
-        Location a = new Location("pointA");
-        a.setLatitude(pointA.latitude);
-        a.setLongitude(pointA.longitude);
-
-        Location b = new Location("pointB");
-        b.setLatitude(pointB.latitude);
-        b.setLongitude(pointB.longitude);
-
-        distance = a.distanceTo(b);
-
-        return distance;
-    }
-
-
-
-
     /*
     Listen for location changes.  If it's not very accurate continue through, if after 10 attempts it can't
     get a good fix I'll just what it has.
@@ -122,38 +103,35 @@ public class GetCurrentLocation extends IntentService implements
         public void onLocationChanged(Location location) {
             Log.d("DEBUG: ", "Location Changed");
             if (location.getAccuracy() < 5 ) { //Less than 5 meter accuracy
-
-                Message msg = Message.obtain();
-                msg.arg1 = GET_LOCATION_MSG_ID;
-                Bundle bundle = new Bundle();
-                bundle.putDouble("lat", location.getLatitude());
-                bundle.putDouble("lon", location.getLongitude());
-                msg.setData(bundle);
-
                 try {
-                    messenger.send(msg);
+                    generateMessage(location.getLatitude(), location.getLongitude());
+                    locationClient.disconnect();
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
-                locationClient.disconnect();
-
             } else if (attempts < 10) {
                 Log.v("DEBUG: ", "Not enough precision");
                 attempts = attempts +1;
             } else {
-                Message msg = Message.obtain();
-                msg.arg1 = GET_LOCATION_MSG_ID;
-                Bundle bundle = new Bundle();
-                bundle.putDouble("lat", location.getLatitude());
-                bundle.putDouble("lon", location.getLongitude());
-                msg.setData(bundle);
                 try {
-                    messenger.send(msg);
+                    generateMessage(location.getLatitude(), location.getLongitude());
+                    locationClient.disconnect();
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
-                locationClient.disconnect();
+
             }
+        }
+
+        private void generateMessage(double lat, double lon) throws RemoteException {
+            Message msg = Message.obtain();
+            msg.arg1 = GET_LOCATION_MSG_ID;
+            Bundle bundle = new Bundle();
+            bundle.putDouble("lat", lat);
+            bundle.putDouble("lon", lon);
+            msg.setData(bundle);
+            messenger.send(msg);
+
         }
     }
 }

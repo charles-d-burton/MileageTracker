@@ -24,7 +24,7 @@ public class TripTable {
     // Database creation sql statement
     private static final String DATABASE_CREATE = "create table "
             + TABLE_TRIPS + "(" + COLUMN_ID
-            + " integer primary key autoincrement, "
+            + " integer primary KEY autoincrement, "
             + TIME_START + " INTEGER, "
             + START_LAT + " REAL, "
             + START_LON + " REAL, "

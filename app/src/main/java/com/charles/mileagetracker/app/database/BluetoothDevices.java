@@ -17,7 +17,7 @@ public class BluetoothDevices {
 
     public static final String DATABASE_CREATE = "create table " +
             TABLE_BLUETOOTH_DEVICES + "(" + COLUMN_ID
-            + " integer primary key autoincrement, "
+            + " integer primary KEY autoincrement, "
             + REFRENCE_ID + " INTEGER REFERENCES " + StartPoints.TABLE_START_POINTS + "(" + StartPoints.COLUMN_ID + ")"
             + " ON UPDATE CASCADE ON DELETE CASCADE, "
             + DEVICE_ADDRESS + " TEXT, "

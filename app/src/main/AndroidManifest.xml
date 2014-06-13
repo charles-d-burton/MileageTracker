@@ -110,6 +110,10 @@
             android:name=".services.intentservices.RecordAllPathSegments"
             android:exported="false" >
         </service>
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -129,5 +133,6 @@
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
+
 
 </manifest>

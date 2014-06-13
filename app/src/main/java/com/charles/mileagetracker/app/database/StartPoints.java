@@ -16,7 +16,7 @@ public class StartPoints {
 
     public static final String DATABASE_CREATE = "create table "
             + TABLE_START_POINTS + "(" + COLUMN_ID
-            + " integer primary key autoincrement, "
+            + " integer primary KEY autoincrement, "
             + NAME + " TEXT, "
             + START_LAT + " REAL, "
             + START_LON + " REAL, "

@@ -12,17 +12,16 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.activities.MainActivity;
 import com.charles.mileagetracker.app.activities.PathSelectorActivity;
+import com.charles.mileagetracker.app.cache.AccessInternalStorage;
+import com.charles.mileagetracker.app.cache.TripVars;
 import com.charles.mileagetracker.app.database.PendingSegmentTable;
-import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
-import com.charles.mileagetracker.app.services.RecordTrackService;
-import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
-import com.google.android.gms.maps.model.LatLng;
+
+import java.io.IOException;
 
 public class GeofenceReceiver extends BroadcastReceiver {
 
@@ -40,6 +39,15 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
 
         if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
+
+            try {
+                initializeVars(intent.getIntExtra("id", -1), intent.getDoubleExtra("lat", -1), intent.getDoubleExtra("lon", -1), Geofence.GEOFENCE_TRANSITION_EXIT);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+
+            }
+
             message = "Leaving Fence, starting record";
             boolean running = isServiceRunning();
             if (!running){
@@ -48,6 +56,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
                 activityRecognitionService.putExtra("lat", intent.getDoubleExtra("lat", -1));
                 activityRecognitionService.putExtra("lon", intent.getDoubleExtra("lon", -1));
                 activityRecognitionService.putExtra("transition", "exit");
+
 
                 this.context.startService(activityRecognitionService);
                 generateNotification(message, Geofence.GEOFENCE_TRANSITION_EXIT);
@@ -75,6 +84,17 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
 
         }
+    }
+
+    private void initializeVars(int id, double lat, double lon, int transition) throws IOException {
+        AccessInternalStorage accessInternalStorage = new AccessInternalStorage();
+        TripVars vars = new TripVars();
+        vars.setId(id);
+        vars.setLat(lat);
+        vars.setLon(lon);
+        vars.setFenceTransitionType(transition);
+        accessInternalStorage.writeObject(this.context, TripVars.KEY, vars);
+
     }
 
     private boolean isServiceRunning() {

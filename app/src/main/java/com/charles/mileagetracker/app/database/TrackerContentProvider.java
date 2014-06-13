@@ -47,7 +47,7 @@ public class TrackerContentProvider extends ContentProvider {
     private static final String WIFI_PATH = WifiAccessPoints.TABLE_WIFI;
     public static final Uri WIFI_URI = Uri.parse("content://" + AUTHORITY + "/" + WIFI_PATH);
 
-    private static final String PENDING_PATH = PendingSegmentTable.PENDING_TABLE;
+    private static final String PENDING_PATH = NewPendingTripTable.PENDING_TABLE;
     public static final Uri PENDING_URI = Uri.parse("content://" + AUTHORITY + "/" + PENDING_PATH);
 
 
@@ -108,10 +108,10 @@ public class TrackerContentProvider extends ContentProvider {
                 queryBuilder.setTables(WifiAccessPoints.TABLE_WIFI);
                 break;
             case PENDING_ID:
-                queryBuilder.appendWhere(PendingSegmentTable.COLUMN_ID + "=" + uri.getLastPathSegment());
+                queryBuilder.appendWhere(NewPendingTripTable.COLUMN_ID + "=" + uri.getLastPathSegment());
                 break;
             case PENDING:
-                queryBuilder.setTables(PendingSegmentTable.PENDING_TABLE);
+                queryBuilder.setTables(NewPendingTripTable.PENDING_TABLE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -168,7 +168,7 @@ public class TrackerContentProvider extends ContentProvider {
                 }
                 break;
             case PENDING:
-                id = db.insert(PendingSegmentTable.PENDING_TABLE, null, values);
+                id = db.insert(NewPendingTripTable.PENDING_TABLE, null, values);
                 returnUri = Uri.parse(PENDING + "/" + id);
                 break;
             default:
@@ -233,14 +233,14 @@ public class TrackerContentProvider extends ContentProvider {
                 }
                 break;
             case PENDING:
-                rowsDeleted = db.delete(PendingSegmentTable.PENDING_TABLE, selection, selectionArgs);
+                rowsDeleted = db.delete(NewPendingTripTable.PENDING_TABLE, selection, selectionArgs);
                 break;
             case PENDING_ID:
                 id = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
-                    rowsDeleted = db.delete(PendingSegmentTable.PENDING_TABLE, PendingSegmentTable.COLUMN_ID + "=" + id, null);
+                    rowsDeleted = db.delete(NewPendingTripTable.PENDING_TABLE, NewPendingTripTable.COLUMN_ID + "=" + id, null);
                 } else {
-                    rowsDeleted = db.delete(PendingSegmentTable.PENDING_TABLE, PendingSegmentTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
+                    rowsDeleted = db.delete(NewPendingTripTable.PENDING_TABLE, NewPendingTripTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
                 }
                 break;
             default:
@@ -305,14 +305,14 @@ public class TrackerContentProvider extends ContentProvider {
                 }
                 break;
             case PENDING:
-                rowsUpdated = db.update(PendingSegmentTable.PENDING_TABLE, values, selection, null);
+                rowsUpdated = db.update(NewPendingTripTable.PENDING_TABLE, values, selection, null);
                 break;
             case PENDING_ID:
                 id = uri.getLastPathSegment();
                 if (TextUtils.isEmpty(selection)) {
-                    rowsUpdated = db.update(PendingSegmentTable.PENDING_TABLE, values, PendingSegmentTable.COLUMN_ID + "=" + id, null);
+                    rowsUpdated = db.update(NewPendingTripTable.PENDING_TABLE, values, NewPendingTripTable.COLUMN_ID + "=" + id, null);
                 } else {
-                    rowsUpdated = db.update(PendingSegmentTable.PENDING_TABLE, values, PendingSegmentTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
+                    rowsUpdated = db.update(NewPendingTripTable.PENDING_TABLE, values, NewPendingTripTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
                 }
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -333,7 +333,11 @@ public class TrackerContentProvider extends ContentProvider {
         WifiAccessPoints.LAST_CONTACTED,
 
         BluetoothDevices.COLUMN_ID, BluetoothDevices.REFRENCE_ID, BluetoothDevices.DEVICE_NAME,
-        BluetoothDevices.DEVICE_ADDRESS, BluetoothDevices.LAST_CONTACTED};
+        BluetoothDevices.DEVICE_ADDRESS, BluetoothDevices.LAST_CONTACTED,
+
+        NewPendingTripTable.FENCE_RELATION
+
+        };
 
         if (projection != null) {
             HashSet<String> requestedColumns = new HashSet<String>(Arrays.asList(projection));
@@ -357,7 +361,7 @@ public class TrackerContentProvider extends ContentProvider {
             // This is not strictly necessary, but depends on your needs
             values = new ContentValues( values );
 
-            // Remove the key, so we don't pass that on to db.insert() or db.replace()
+            // Remove the KEY, so we don't pass that on to db.insert() or db.replace()
             values.remove( SQL_INSERT_OR_REPLACE );
         }
         return replace;

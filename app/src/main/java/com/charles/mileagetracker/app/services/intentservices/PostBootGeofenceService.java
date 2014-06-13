@@ -1,30 +1,32 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
-import android.app.ActivityManager;
 import android.app.IntentService;
 import android.app.PendingIntent;
-import android.content.Intent;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.cache.AccessInternalStorage;
+import com.charles.mileagetracker.app.cache.TripVars;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
-import com.charles.mileagetracker.app.services.RecordTrackService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -41,7 +43,7 @@ public class PostBootGeofenceService extends IntentService implements
     private LocationListener locationListener = null;
     private Context context;
 
-    private ArrayList<LatLng> fenceCenters = new ArrayList<LatLng>();
+    private HashMap<Integer, LatLng> fenceCenters = new HashMap<Integer, LatLng>();
     private boolean addingProximityAlerts = false;
     private boolean startedActivityRecognition = false;
 
@@ -90,7 +92,7 @@ public class PostBootGeofenceService extends IntentService implements
 
                 LatLng latLng = new LatLng(lat, lon);
                 addProximityAlert(latLng, id);
-                fenceCenters.add(latLng);
+                fenceCenters.put(id, latLng);
             }
         }
 
@@ -135,21 +137,26 @@ public class PostBootGeofenceService extends IntentService implements
         Log.d("DEBUG: ", "Adding proximity alert");
     }
 
-    private boolean checkInFence(LatLng currentLocation, ArrayList<LatLng> fenceCenters) {
+    private int checkInFence(LatLng currentLocation, HashMap<Integer, LatLng> fenceCenters) {
         Log.v("DEBUG: ", "Checking if in fence");
-        for (LatLng center : fenceCenters) {
+
+        Iterator it = fenceCenters.keySet().iterator();
+        double smallestDistance = Double.MAX_VALUE;
+        int closestId = -1;
+        while (it.hasNext()) {
+            int id = (Integer)it.next();
+            LatLng center = fenceCenters.get(id);
             double distance = getDistance(currentLocation, center);
-            if (distance > 500 && !startedActivityRecognition) {//Outside a geofence and not runing
-                Log.v("DEBUG: ", "Outside geofence, starting record service");
-                Intent recordTrackService = new Intent(context, ActivityRecognitionService.class);
-                recordTrackService.putExtra("id", 0);//TODO: I may need to fix this.
-                context.startService(recordTrackService);
-                startedActivityRecognition = true;
-            } else {
-                //Log.v("DEBUG: ", "Inside Geofence, sleepy time");
+            if (distance < 500){//Inside GeoFence
+                return -1; //Known impossible value
             }
+            if (distance < smallestDistance) {
+                smallestDistance = distance; //Finding the nearest geofence
+                closestId = id;
+            }
+
         }
-        return false;
+        return closestId;
     }
 
     private double getDistance(LatLng pointA, LatLng pointB) {
@@ -174,10 +181,46 @@ public class PostBootGeofenceService extends IntentService implements
         public void onLocationChanged(Location location) {
             if (!addingProximityAlerts) {
                 LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                checkInFence(currentLocation, fenceCenters);
+                int infenceId = checkInFence(currentLocation, fenceCenters);
+                if (infenceId != -1) {
+                    startUpdates(location, infenceId);
+                }
+
                 locationClient.removeLocationUpdates(locationListener);
                 locationClient.disconnect();
             }
         }
     }
+
+    /*
+    Check if there was a previously started record.  We want to use that if there was, if not then create
+    a new one then start the service.  It uses the fence that it was closest to for the id.
+     */
+    private void startUpdates(Location location, int id) {
+        AccessInternalStorage internalStorage = new AccessInternalStorage();
+
+        try {
+            TripVars tripVars = (TripVars)internalStorage.readObject(context, TripVars.KEY);
+        } catch (IOException e) {
+            TripVars tripVars = new TripVars();
+            tripVars.setFenceTransitionType(Geofence.GEOFENCE_TRANSITION_EXIT);
+            tripVars.setId(id);
+            tripVars.setLat(location.getLatitude());
+            tripVars.setLon(location.getLongitude());
+            try {
+                internalStorage.writeObject(context, TripVars.KEY, tripVars);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+                return;//Break points to prevent starting the service if there's problems
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            return;
+        }
+        Intent intent = new Intent(context, ActivityRecognitionService.class);
+        intent.putExtra("id", id);
+        context.startService(intent);
+        startedActivityRecognition = true;
+    }
+
 }

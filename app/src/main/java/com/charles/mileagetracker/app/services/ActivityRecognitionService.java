@@ -1,5 +1,6 @@
 package com.charles.mileagetracker.app.services;
 
+import android.app.ActivityManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -42,13 +43,12 @@ import java.util.Locale;
  *A long-running service that starts when you leave a fenced in area.  This registers an IntentService
  * ActivityRecognitionIntentService to process your current activity.
  */
+
+//TODO: I need to rework this class so that it initialized the variables as well as handles creating the db start entry
 public class ActivityRecognitionService extends Service implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener {
 
-    public static final String RECOGNITION_SERVICE_MESSENGER = "com.charles.milagetracker.app.ACTIVITY_MESSENGER";
-    public static final int RECOGNITION_SERVICE_MSG_ID = 1;
-    private static Messenger messenger = null;
 
     private boolean servicesAvailable = false;
     private boolean mInProgress = false;
@@ -58,23 +58,13 @@ public class ActivityRecognitionService extends Service implements
     // Store the current activity recognition client
     private com.google.android.gms.location.ActivityRecognitionClient mActivityRecognitionClient;
 
+
     public enum REQUEST_TYPE {START, STOP}
     private REQUEST_TYPE mRequestType;
 
     private int id = 0;
     private double lat = 0;
     private double lon = 0;
-    private long startTime = -1;
-
-    static double lastLat = -1;
-    private static double lastLon = -1;
-    private static long lastTime = -1;
-
-    private static boolean driving = false;
-    private static boolean segmentRecorded = false;
-    private static int notDrivingUpdates = 0;
-
-
 
     public ActivityRecognitionService() {
 
@@ -85,8 +75,6 @@ public class ActivityRecognitionService extends Service implements
     public void onCreate() {
         mInProgress = false;
         servicesAvailable = servicesConnected();
-        messenger = new Messenger(incomingMessageHandler);
-        startTime = System.currentTimeMillis();
 
         mActivityRecognitionClient = new com.google.android.gms.location.ActivityRecognitionClient(getApplicationContext(), this, this);
 
@@ -108,29 +96,32 @@ public class ActivityRecognitionService extends Service implements
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        Intent pendingIntent = new Intent(getApplicationContext(), ActivityRecognitionIntentService.class);
+        mActivityRecognitionPendingIntent = PendingIntent.getService(getApplicationContext(),0, pendingIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
         if (intent.getBooleanExtra("stop", false)) {
-            generateNotification("Stopping");
-            //TODO: pull out the variables for the ending location
+
+            Intent getLocationIntent = new Intent(getApplicationContext(), GetCurrentLocation.class);
+            getLocationIntent.putExtra("stop", true);
+            startService(getLocationIntent);
+            stopUpdates();
             stopSelf();
             return 0;
         }
 
+
         id = intent.getIntExtra("id", -1);
         lat = intent.getDoubleExtra("lat", -1);
         lon = intent.getDoubleExtra("lon", -1);
-        //It's just starting so we're going to drop the center of the calling geofence as the starting location
-        lastLat = lat;
-        lastLon = lon;
 
         final IntentFilter filter = new IntentFilter();
         filter.addAction(ActivityRecognitionIntentService.ACTIVITY_BROADCAST);
-        registerReceiver(activityTypeReceiver, filter);
 
 
         Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
 
-        Intent pendingIntent = new Intent(getApplicationContext(), ActivityRecognitionIntentService.class);
-        mActivityRecognitionPendingIntent = PendingIntent.getService(getApplicationContext(),0, pendingIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
 
 
         //setStartPoint(id);
@@ -140,11 +131,7 @@ public class ActivityRecognitionService extends Service implements
 
     @Override
     public void onDestroy() {
-        stopUpdates();
-        unregisterReceiver(activityTypeReceiver);
-        Intent getLocationIntent = new Intent(getApplicationContext(), GetCurrentLocation.class);
-        getLocationIntent.putExtra("stop", true);
-        startService(getLocationIntent);
+        //generateNotification("Service Destroyed");
         super.onDestroy();
     }
 
@@ -161,7 +148,6 @@ public class ActivityRecognitionService extends Service implements
             case STOP:
                 mActivityRecognitionClient.removeActivityUpdates(mActivityRecognitionPendingIntent);
                 getApplicationContext().stopService(new Intent(getApplicationContext(), ActivityRecognitionIntentService.class));
-                //mActivityRecognitionClient.disconnect();
 
                 break;
             default :
@@ -243,198 +229,11 @@ public class ActivityRecognitionService extends Service implements
         }
     }
 
-    /*
-    Broadcast receiver to receive updates from the ActivityRecognitionIntentService
-    If you're driving it just keeps on trucking.  Otherwise it checks to see if you've recorded a path
-    segment since the last time you were driving. If not, how many times has it recorded you not driving.
-    If you've been sitting still or walking for 2 cycles(two minutes) then you're probably not traveling in a
-    car so it's safe to record a path segment.
-     */
-
-    private BroadcastReceiver activityTypeReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            int confidence = intent.getIntExtra("confidence", -1);
-            String type = intent.getStringExtra("type");
-            Log.v("DEBUG: ", "RECEIVED ACTIVITY: " + type + " Confidence: " + Integer.toString(confidence));
-            if (type.equalsIgnoreCase("driving")) {
-                driving = true;
-                segmentRecorded = false;
-                notDrivingUpdates = 0;
-                killGetLocation();
-            } else if (type.equalsIgnoreCase("notdriving")) {
-                driving = false;
-                notDrivingUpdates = notDrivingUpdates + 1;
-                Log.d("DEBUG: ", "Driving: " + Boolean.toString(driving) + " Recorded: " + Boolean.toString(segmentRecorded) + " Attempts: " + Integer.toString(notDrivingUpdates));
-                if (!segmentRecorded && notDrivingUpdates == 2) {//Don't want to keep checking for locations
-
-                    handleNotDriving();
-                }
-
-            }
-
-        }
-
-    };
-
-    //Kills the GetCurrentLocation class.  Uses start service but sets a boolean to tell it to unregister and stop cleanly
-    private void killGetLocation() {
-        Intent intent = new Intent(getApplicationContext(), GetCurrentLocation.class);
-        intent.putExtra("stop", true);
-        startService(intent);
-    }
-
-    private void handleNotDriving() {
-
-        Intent startLocationIntent = new Intent(getApplicationContext(), GetCurrentLocation.class);
-        startLocationIntent.putExtra(GetCurrentLocation.LOCATION_MESSENGER, messenger);
-        startService(startLocationIntent);
+    //Going to query the database and key the last recorded path, then use that information to increment
+    //and add a new trip with a unique identifier
+    private int getUniquePathingKey() {
+        return -1;
     }
 
 
-    private Handler incomingMessageHandler =new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            //if (driving)return;//Last sanity check, this short circuits recording a trip if you suddenly start driving again
-            Bundle reply = msg.getData();
-            if (reply != null) {
-                if (msg.arg1 == GetCurrentLocation.GET_LOCATION_MSG_ID) {
-                    if (!segmentRecorded) {
-                        double lat = reply.getDouble("lat");
-                        double lon = reply.getDouble("lon");
-                        logSegment(new LatLng(lat, lon));
-                    }
-                    //Address addy = checkLocation(new LatLng(lat, lon)).get(0);
-                    //Log.v("DEBUG: ", "Current address is: " + addy.getAddressLine(0));
-                }
-            }
-        }
-    };
-
-    /*
-    Database handling code goes here
-     */
-
-    private void logSegment(LatLng latLng) {
-        if (!sufficientDistanceTraveled(latLng)) {
-            return;  //We're too close to the last point
-        }
-        segmentRecorded = true;
-        Address startAddress = checkLocation(new LatLng(lastLat, lastLon)).get(0);
-        Address endAddress = checkLocation(latLng).get(0);
-        ContentValues values = new ContentValues();
-        Log.v("DEBUG: ", "Address: " + endAddress.getAddressLine(0));
-        values.put(PendingSegmentTable.END_ADDRESS, endAddress.getAddressLine(0));
-        values.put(PendingSegmentTable.END_LAT, latLng.latitude);
-        values.put(PendingSegmentTable.END_LON, latLng.longitude);
-        values.put(PendingSegmentTable.TIME_END, System.currentTimeMillis());
-        values.put(PendingSegmentTable.START_LAT, lastLat);
-        values.put(PendingSegmentTable.START_LON, lastLon);
-        values.put(PendingSegmentTable.START_ADDRESS, startAddress.getAddressLine(0));
-        values.put(PendingSegmentTable.TIME_START, lastTime);
-
-        getContentResolver().insert(TrackerContentProvider.PENDING_URI, values);
-
-        lastLat = latLng.latitude;
-        lastLon = latLng.longitude;
-
-    }
-
-    /*
-    A check to see if you've traveled more than 500 meters from the last taken location.
-     */
-    private boolean sufficientDistanceTraveled(LatLng latLng) {
-        double distance = 0;
-        if (lastLat == -1 && lastLon == -1 ) { //Means we're in our first run.;
-            distance = getDistance(new LatLng(lat, lon), new LatLng(latLng.latitude, latLng.longitude));
-            if (distance > 500) {
-                return true;//More than 500 meters from start point
-            }
-
-        } else {
-            distance = getDistance(latLng, new LatLng(lastLat, lastLon));
-            if (distance > 500) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /*
-    Check if a start location was recorded,
-     */
-
-    private double getDistance(LatLng pointA, LatLng pointB) {
-        double distance = 0f;
-
-        Location a = new Location("pointA");
-        a.setLatitude(pointA.latitude);
-        a.setLongitude(pointA.longitude);
-
-        Location b = new Location("pointB");
-        b.setLatitude(pointB.latitude);
-        b.setLongitude(pointB.longitude);
-
-        distance = a.distanceTo(b);
-
-        return distance;
-    }
-
-    /*
-    A way to reverse lookup where you are in address format from a LatLng
-     */
-    private List<Address> checkLocation(LatLng location) {
-        Geocoder geoCoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-        try {
-            List<Address> addresses = geoCoder.getFromLocation(location.latitude, location.longitude, 1);
-            if (addresses.size() > 0) {
-                return addresses;
-            }
-            for (Address address : addresses) {
-                //Log.v("DEBUG: ", "Thoroughfare: " + address.getThoroughfare());
-                Log.v("DEBUG: ", "Address line: " + address.getAddressLine(0));
-                generateNotification(address.getAddressLine(0));
-            }
-        } catch (IOException ioe) {
-
-        }
-        return null;
-    }
-
-    private void generateNotification(String message) {
-        Context context = getApplicationContext();
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentTitle("Test")
-                .setContentText(message);
-        Intent resultIntent = new Intent(context, PathSelectorActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(PathSelectorActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-        builder.setContentIntent(resultPendingIntent);
-        NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(0, builder.build());
-    }
-
-    //First run, set starting point
-    private void setStartPoint(int id) {
-        String projection[] = {StartPoints.COLUMN_ID, StartPoints.START_LAT, StartPoints.START_LON};
-        String selectionClause = StartPoints.COLUMN_ID + "= ? ";
-        String selectionArgs[] = {Integer.toString(id)};
-
-        Cursor c = getContentResolver().query(TrackerContentProvider.STARTS_URI, projection, selectionClause, selectionArgs, null);
-
-        if (!(c == null) && !(c.getCount() < 1)) {
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                Log.v("DEBUG: ", "Start Point Found, setting first location");
-                double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
-                double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
-                //startPoint = new LatLng(lat, lon);
-            }
-        }
-
-    }
 }
