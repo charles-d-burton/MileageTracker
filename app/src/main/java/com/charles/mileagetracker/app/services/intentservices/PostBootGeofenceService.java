@@ -219,6 +219,8 @@ public class PostBootGeofenceService extends IntentService implements
         }
         Intent intent = new Intent(context, ActivityRecognitionService.class);
         intent.putExtra("id", id);
+        intent.putExtra("lat", location.getLatitude());
+        intent.putExtra("lon", location.getLongitude());
         context.startService(intent);
         startedActivityRecognition = true;
     }

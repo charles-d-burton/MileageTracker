@@ -106,21 +106,25 @@ public class GetCurrentLocation extends IntentService implements
                 try {
                     generateMessage(location.getLatitude(), location.getLongitude());
                     locationClient.disconnect();
+                    return;
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
             } else if (attempts < 10) {
                 Log.v("DEBUG: ", "Not enough precision");
                 attempts = attempts +1;
+                return;
             } else {
                 try {
                     generateMessage(location.getLatitude(), location.getLongitude());
                     locationClient.disconnect();
+                    return;
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
 
             }
+            locationClient.disconnect();
         }
 
         private void generateMessage(double lat, double lon) throws RemoteException {

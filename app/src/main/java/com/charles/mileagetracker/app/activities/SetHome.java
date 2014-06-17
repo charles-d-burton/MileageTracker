@@ -124,13 +124,15 @@ public class SetHome extends Activity implements
 
     @Override
     protected void onResume() {
-        locationClient.connect();
         super.onResume();
+        locationClient.connect();
+
 
     }
 
     @Override
     protected void onDestroy() {
+        super.onDestroy();
         task.cancel(true);//Prevent the app from crashing if the Activity is closed before this can run
         getLoaderManager().destroyLoader(LOADER_ID);
         super.onDestroy();
@@ -349,6 +351,8 @@ public class SetHome extends Activity implements
         values.put(StartPoints.START_LAT, marker.getPosition().latitude);
         values.put(StartPoints.START_LON, marker.getPosition().longitude);
         getContentResolver().update(TrackerContentProvider.STARTS_URI,values, StartPoints.COLUMN_ID + "=" + id, null);
+
+        //TODO, update the GeoFence
     }
 
     /*

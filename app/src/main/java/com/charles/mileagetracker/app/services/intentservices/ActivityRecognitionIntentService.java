@@ -24,6 +24,7 @@ import com.charles.mileagetracker.app.cache.AccessInternalStorage;
 import com.charles.mileagetracker.app.cache.TripVars;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
+import com.charles.mileagetracker.app.database.TripRowCreator;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.maps.model.LatLng;
@@ -61,10 +62,11 @@ public class ActivityRecognitionIntentService extends IntentService {
     private Messenger messenger = null;
 
 
-    private boolean segmentRecorded;
+    //private boolean segmentRecorded;
 
     private TripVars tripVars = null;
     private AccessInternalStorage accessCache = null;
+
 
 
     @Override
@@ -160,6 +162,7 @@ public class ActivityRecognitionIntentService extends IntentService {
         tripVars.setDriving(true);
         tripVars.setNotDrivingCounter(0);
         tripVars.setSegmentRecorded(false);
+        killGetLocation();
         try {
             accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
         } catch (IOException e) {
@@ -186,38 +189,60 @@ public class ActivityRecognitionIntentService extends IntentService {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else if (counter == 2) {
-            double lastLat = tripVars.getLastLat();
-            double lastLon = tripVars.getLastLon();
-            tripVars.setSegmentRecorded(true);
+        } else if (counter >= 2) {
+            counter = counter + 1;
+            tripVars.setNotDrivingCounter(counter);
+            if (!tripVars.isSegmentRecorded()) {
+                double lastLat = tripVars.getLastLat();
+                double lastLon = tripVars.getLastLon();
+                //tripVars.setSegmentRecorded(true);
+
+                messenger = new Messenger(incomingMessageHandler);
+                startLocationHandler(lastLat, lastLon, false);
+            }
             //The following try catch block might be moved later
             try {
                 accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            messenger = new Messenger(incomingMessageHandler);
-            startLocationHandler();
         }
     }
 
+    /*
+    This is created to handle messages incoming from the GetCurrentLocation service.  When that service
+    gets a good locatino fix it fires this to record that location as a database entry.
+     */
     private Handler incomingMessageHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            //if (driving)return;//Last sanity check, this short circuits recording a trip if you suddenly start driving again
-            Bundle reply = msg.getData();
-            if (reply != null) {
-                if (msg.arg1 == GetCurrentLocation.GET_LOCATION_MSG_ID) {
-                    if (!segmentRecorded) {
+            TripVars roTripVars = null;
+            try {
+                roTripVars = (TripVars)accessCache.readObject(getApplicationContext(), TripVars.KEY);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            if (roTripVars.isDriving() == false && !roTripVars.isSegmentRecorded()) {
+                Bundle reply = msg.getData();
+                if (reply != null) {
+                    if (msg.arg1 == GetCurrentLocation.GET_LOCATION_MSG_ID) {
                         double lat = reply.getDouble("lat");
                         double lon = reply.getDouble("lon");
                         Address addy = checkLocation(new LatLng(lat, lon)).get(0);
                         Log.v("DEBUG: ", "Current address is: " + addy.getAddressLine(0));
-                        //logSegment(new LatLng(lat, lon));
+                        boolean logged = logSegment(new LatLng(lat, lon), tripVars);
+                        if (logged) try {
+                            accessCache.writeObject(getApplicationContext(),TripVars.KEY,tripVars);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
-
                 }
             }
+            //if (driving)return;//Last sanity check, this short circuits recording a trip if you suddenly start driving again
         }
     };
 
@@ -231,9 +256,10 @@ public class ActivityRecognitionIntentService extends IntentService {
         }
     }
 
-    private void startLocationHandler() {
+    private void startLocationHandler(double lastLat, double lastLon, boolean stop) {
 
         Intent startLocationIntent = new Intent(getApplicationContext(), GetCurrentLocation.class);
+        if (stop) startLocationIntent.putExtra("stop", stop);
         startLocationIntent.putExtra(GetCurrentLocation.LOCATION_MESSENGER, messenger);
         startService(startLocationIntent);
     }
@@ -243,8 +269,23 @@ public class ActivityRecognitionIntentService extends IntentService {
     Database handling code goes here
      */
 
-    /*private void logSegment(LatLng latLng) {
-        if (!sufficientDistanceTraveled(latLng) || driving) {
+    private boolean logSegment(LatLng latLng, TripVars vars) {
+        double lastLat = vars.getLastLat();
+        double lastLon = vars.getLastLon();
+        if (lastLat == -1 && lastLon == -1) {
+            lastLat = vars.getLat();
+            lastLon = vars.getLon();
+        }
+
+        double distance = getDistance(latLng, new LatLng(lastLat, lastLon));
+        if (distance > 500) {
+            TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());
+            rowCreator.recordSegment(tripVars.getId(),latLng.latitude, latLng.longitude);
+            tripVars.setSegmentRecorded(true);
+            return true;
+        }
+        return false;
+        /*if (!sufficientDistanceTraveled(latLng) || driving) {
             return;  //We're too close to the last point
         }
         segmentRecorded = true;
@@ -264,14 +305,14 @@ public class ActivityRecognitionIntentService extends IntentService {
         getContentResolver().insert(TrackerContentProvider.TRIP_URI, values);
 
         lastLat = latLng.latitude;
-        lastLon = latLng.longitude;
+        lastLon = latLng.longitude;*/
 
     }
 
     /*
     A check to see if you've traveled more than 500 meters from the last taken location.
      */
-    private boolean sufficientDistanceTraveled(LatLng latLng) {
+    private boolean sufficientDistanceTraveled(LatLng sLatLng, LatLng eLatLng) {
         double distance = 0;
         /*if (lastLat == -1 && lastLon == -1 ) { //Means we're in our first run.;
             distance = getDistance(new LatLng(lat, lon), new LatLng(latLng.latitude, latLng.longitude));

@@ -2,14 +2,19 @@ package com.charles.mileagetracker.app.activities;
 
 import android.app.ListActivity;
 import android.app.LoaderManager;
+import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.SimpleCursorAdapter;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.adapter.SimpleTripAdapter;
+import com.charles.mileagetracker.app.database.TrackerContentProvider;
+import com.charles.mileagetracker.app.database.TripTable;
 
 public class PathSelectorActivity extends ListActivity implements
         LoaderManager.LoaderCallbacks<Cursor>{
@@ -46,14 +51,11 @@ public class PathSelectorActivity extends ListActivity implements
 
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
-        /*Uri uri = TrackerContentProvider.TRIP_URI;
-        String[] projection = {TripTable.START_ADDRESS, PendingSegmentTable.TIME_START,
-                PendingSegmentTable.END_ADDRESS, PendingSegmentTable.TIME_END, PendingSegmentTable.START_LAT,
-                PendingSegmentTable.START_LON, PendingSegmentTable.END_LAT, PendingSegmentTable.END_LON,
-                PendingSegmentTable.COLUMN_ID, PendingSegmentTable.TOTAL_DISTANCE, PendingSegmentTable.TOTAL_TIME};
+        Uri uri = TrackerContentProvider.TRIP_URI;
+        String[] projection = {TripTable.ADDRESS, TripTable.BUSINESS_RELATED, TripTable.CLOSED, TripTable.TRIP_KEY,
+        TripTable.TIME, TripTable.FENCE_RELATION, TripTable.LON, TripTable.LAT, TripTable.COLUMN_ID};
 
-        return new CursorLoader(this, uri,projection, null, null, null);*/
-        return null;
+        return new CursorLoader(this, uri,projection, null, null, null);
     }
 
     @Override
@@ -73,12 +75,12 @@ public class PathSelectorActivity extends ListActivity implements
     }
 
     private void fillData() {
-        /*String[] from = new String[] {PendingSegmentTable.END_ADDRESS, PendingSegmentTable.TIME_END};
+        String[] from = new String[] {TripTable.ADDRESS, TripTable.TIME};
 
         int [] to = new int[] {R.id.end_trip_item_address, R.id.end_trip_date_time};
 
         getLoaderManager().initLoader(LOADER_ID, null, this);
         mAdapter = new SimpleTripAdapter(this, R.layout.trip_layout, null, from, to, 0);
-        setListAdapter(mAdapter);*/
+        setListAdapter(mAdapter);
     }
 }

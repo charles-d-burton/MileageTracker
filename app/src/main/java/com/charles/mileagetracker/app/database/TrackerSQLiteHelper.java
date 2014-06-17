@@ -10,7 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class TrackerSQLiteHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "trips.db";
-    private static final int DATABASE_VERSION = 14;
+    private static final int DATABASE_VERSION = 20;
 
     public TrackerSQLiteHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -20,6 +20,7 @@ public class TrackerSQLiteHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         StartPoints.onCreate(db);
         TripTable.onCreate(db);
+        TripGroup.onCreate(db);
 
     }
 
@@ -27,5 +28,6 @@ public class TrackerSQLiteHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         StartPoints.onUpgrade(db, oldVersion, newVersion);
         TripTable.onUpgrade(db, oldVersion, newVersion);
+        TripGroup.onUpgrade(db, oldVersion, newVersion);
     }
 }

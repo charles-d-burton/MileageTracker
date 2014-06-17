@@ -11,13 +11,15 @@ public class TripTable {
     public static final String TRIP_TABLE = "trip_table";
     public static final String COLUMN_ID = "_id";
     public static final String FENCE_RELATION = "fence_id";
+    public static final String CLOSED = "closed";
     public static final String TRIP_KEY = "trip_key";
     public static final String TIME = "time_start";
     public static final String LAT = "start_lat";
     public static final String LON = "start_lon";
     public static final String ADDRESS = "start_address";
     public static final String DISTANCE = "total_distance";
-    public static final String TOTAL_TIME = "total_time";
+    public static final String BUSINESS_RELATED = "business_related";
+    //public static final String TIME_STAMP_MILLIS = "timestamp";
 
     // Database creation sql statement
     private static final String DATABASE_CREATE = "create table "
@@ -25,11 +27,14 @@ public class TripTable {
             + " integer primary KEY autoincrement, "
             + FENCE_RELATION + " INTEGER REFERENCES " + StartPoints.TABLE_START_POINTS + "(" + StartPoints.COLUMN_ID + ")"
             + " ON UPDATE CASCADE ON DELETE CASCADE, "
+            + CLOSED + " INTEGER REFERENCES " + TripGroup.TRIP_GROUP + "(" + TripGroup.GROUP_ID + ")"
+            + " ON UPDATE CASCADE ON DELETE CASCADE, "
             + TRIP_KEY + " INTEGER, "
             + TIME + " INTEGER, "
             + LAT + " REAL, "
             + LON + " REAL, "
-            + ADDRESS + " TEXT);";
+            + ADDRESS + " TEXT DEFAULT NULL, "
+            + BUSINESS_RELATED + " INTEGER DEFAULT 0);";
 
     public static void onCreate(SQLiteDatabase database) {
         Log.v("Creating DB: ", "TRIP TABLE");

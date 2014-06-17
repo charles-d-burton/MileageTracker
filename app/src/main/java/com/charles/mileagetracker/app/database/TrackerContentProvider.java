@@ -24,6 +24,8 @@ public class TrackerContentProvider extends ContentProvider {
     private static final int TRIPS_ID = 20;
     private static final int STARTS = 30;
     private static final int STARTS_ID = 40;
+    private static final int GROUPS = 50;
+    private static final int GROUPS_ID = 60;
 
     private static final String AUTHORITY = "com.charles.mileagetracker.app.database.TrackerContentProvider";
 
@@ -32,6 +34,9 @@ public class TrackerContentProvider extends ContentProvider {
 
     private static final String TRIP_PATH = TripTable.TRIP_TABLE;
     public static final Uri TRIP_URI = Uri.parse("content://" + AUTHORITY + "/" + TRIP_PATH);
+
+    private static final String GROUP_PATH = TripGroup.TRIP_GROUP;
+    public static final Uri GROUP_URI = Uri.parse("content://" + AUTHORITY + "/" + GROUP_PATH);
 
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -42,6 +47,9 @@ public class TrackerContentProvider extends ContentProvider {
 
         sURIMatcher.addURI(AUTHORITY, TRIP_PATH, TRIPS);
         sURIMatcher.addURI(AUTHORITY, TRIP_PATH + "/#", TRIPS_ID);
+
+        sURIMatcher.addURI(AUTHORITY, GROUP_PATH, GROUPS);
+        sURIMatcher.addURI(AUTHORITY, GROUP_PATH + "/#", GROUPS_ID);
     }
 
 
@@ -69,9 +77,13 @@ public class TrackerContentProvider extends ContentProvider {
                 break;
             case TRIPS_ID:
                 queryBuilder.appendWhere(TripTable.COLUMN_ID + "=" + uri.getLastPathSegment());
-                break;
             case TRIPS:
                 queryBuilder.setTables(TripTable.TRIP_TABLE);
+                break;
+            case GROUPS_ID:
+                queryBuilder.appendWhere(TripGroup.GROUP_ID + "=" + uri.getLastPathSegment());
+            case GROUPS:
+                queryBuilder.setTables(TripGroup.TRIP_GROUP);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -113,6 +125,10 @@ public class TrackerContentProvider extends ContentProvider {
                 id = db.insert(TripTable.TRIP_TABLE, null, values);
                 returnUri = Uri.parse(TRIPS_ID + "/" + id);
                 break;
+            case GROUPS:
+                id = db.insert(TripGroup.TRIP_GROUP, null, values);
+                returnUri = Uri.parse(GROUPS_ID + "/" + id);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -150,6 +166,17 @@ public class TrackerContentProvider extends ContentProvider {
                     rowsDeleted = db.delete(TripTable.TRIP_TABLE, TripTable.COLUMN_ID + "=" + id, null);
                 } else {
                     rowsDeleted = db.delete(TripTable.TRIP_TABLE, TripTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
+                }
+                break;
+            case GROUPS:
+                rowsDeleted = db.delete(TripGroup.TRIP_GROUP, selection, selectionArgs);
+                break;
+            case GROUPS_ID:
+                id = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection)) {
+                    rowsDeleted = db.delete(TripGroup.TRIP_GROUP, TripGroup.GROUP_ID + "=" + id, null);
+                } else {
+                    rowsDeleted = db.delete(TripGroup.TRIP_GROUP, TripGroup.GROUP_ID + "=" + id + " and " + selection, selectionArgs);
                 }
                 break;
             default:
@@ -190,6 +217,18 @@ public class TrackerContentProvider extends ContentProvider {
                 } else {
                     rowsUpdated = db.update(TripTable.TRIP_TABLE, values, TripTable.COLUMN_ID + "=" + id + " and " + selection, selectionArgs);
                 }
+                break;
+            case GROUPS:
+                rowsUpdated = db.update(TripGroup.TRIP_GROUP, values,selection, null);
+                break;
+            case GROUPS_ID:
+                id = uri.getLastPathSegment();
+                if (TextUtils.isEmpty(selection)) {
+                    rowsUpdated = db.update(TripGroup.TRIP_GROUP, values, TripGroup.GROUP_ID + "=" + id, null);
+                } else {
+                    rowsUpdated = db.update(TripGroup.TRIP_GROUP, values, TripGroup.GROUP_ID + "=" + id + " and " + selection, selectionArgs);
+                }
+                break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -203,7 +242,9 @@ public class TrackerContentProvider extends ContentProvider {
         StartPoints.COLUMN_ID, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS, StartPoints.NAME,
 
         TripTable.FENCE_RELATION, TripTable.ADDRESS,TripTable.COLUMN_ID, TripTable.DISTANCE,TripTable.FENCE_RELATION,
-        TripTable.LAT, TripTable.LON, TripTable.TIME, TripTable.TRIP_KEY, TripTable.TOTAL_TIME
+        TripTable.LAT, TripTable.LON, TripTable.TIME, TripTable.TRIP_KEY, TripTable.TIME, TripTable.CLOSED, TripTable.BUSINESS_RELATED,
+
+        TripGroup.GROUP_ID, TripGroup.GROUP_CLOSED
 
         };
 

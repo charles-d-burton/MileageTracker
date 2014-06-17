@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.database.TripRowCreator;
 import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
 import com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation;
 import com.google.android.gms.common.ConnectionResult;
@@ -81,7 +82,6 @@ public class ActivityRecognitionService extends Service implements
             getLocationIntent.putExtra("stop", true);
             startService(getLocationIntent);
             stopUpdates();
-            stopSelf();
             return 0;
         }
 
@@ -90,8 +90,10 @@ public class ActivityRecognitionService extends Service implements
         lat = intent.getDoubleExtra("lat", -1);
         lon = intent.getDoubleExtra("lon", -1);
 
-        final IntentFilter filter = new IntentFilter();
-        filter.addAction(ActivityRecognitionIntentService.ACTIVITY_BROADCAST);
+        TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());//Record our starting path location
+        rowCreator.recordSegment(id, lat, lon);
+        //final IntentFilter filter = new IntentFilter();
+        //filter.addAction(ActivityRecognitionIntentService.ACTIVITY_BROADCAST);
 
 
         Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
@@ -123,6 +125,7 @@ public class ActivityRecognitionService extends Service implements
             case STOP:
                 mActivityRecognitionClient.removeActivityUpdates(mActivityRecognitionPendingIntent);
                 getApplicationContext().stopService(new Intent(getApplicationContext(), ActivityRecognitionIntentService.class));
+                mActivityRecognitionClient.disconnect();
 
                 break;
             default :
@@ -203,12 +206,5 @@ public class ActivityRecognitionService extends Service implements
             mActivityRecognitionClient.connect();
         }
     }
-
-    //Going to query the database and key the last recorded path, then use that information to increment
-    //and add a new trip with a unique identifier
-    private int getUniquePathingKey() {
-        return -1;
-    }
-
 
 }

@@ -163,7 +163,7 @@ public class RecordTrackService extends Service {
         segment.put(TripTable.LAT, endLat);
         segment.put(TripTable.LON, endLon);
         segment.put(TripTable.DISTANCE, distanceInt);
-        segment.put(TripTable.TOTAL_TIME, totalTime);
+        segment.put(TripTable.TIME, totalTime);
 
         generateNotification(segment);
 

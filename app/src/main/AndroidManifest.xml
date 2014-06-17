@@ -31,27 +31,7 @@
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyCWLe7RmQQR4AJaMx8xPIZcjSg2FnQ5if4" />
 
-        <receiver
-            android:name=".receivers.WifiReceiver"
-            android:enabled="true"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name="android.net.wifi.STATE_CHANGE" />
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-"
-            </intent-filter>
-        </receiver>
 
-        <service
-            android:name=".services.intentservices.LearnLocationIntentService"
-            android:exported="false" >
-        </service>
-
-        <receiver
-            android:name=".receivers.CellTowerReceiver"
-            android:enabled="true"
-            android:exported="true" >
-        </receiver>
         <receiver
             android:name=".receivers.GeofenceReceiver"
             android:enabled="true"
@@ -115,8 +95,6 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
