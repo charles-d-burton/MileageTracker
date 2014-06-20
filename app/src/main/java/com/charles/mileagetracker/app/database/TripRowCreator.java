@@ -51,7 +51,7 @@ public class TripRowCreator {
         values.put(TripTable.LON, lon);
         values.put(TripTable.FENCE_RELATION, id);
 
-        Address addy = checkLocation(new LatLng(lat, lon)).get(0);
+        Address addy = checkLocation(new LatLng(lat, lon)).get(0);//TODO: Fix this to prevent NPE
         if (addy != null) {
             values.put(TripTable.ADDRESS, addy.getAddressLine(0));
         }
@@ -63,12 +63,14 @@ public class TripRowCreator {
 
     //Close the group.  This closes the group and seals a trip.
 
-    public boolean closeGroup() {
+    public boolean closeGroup(int id, double lat, double lon) {
         int lastTripGroupId = lastTripOpen();
 
         if (lastTripGroupId == -1) {
             return false;
         }
+
+        recordSegment(id, lat, lon);//Record our end point
 
         Uri uri = TrackerContentProvider.GROUP_URI;
         String[] projection = {

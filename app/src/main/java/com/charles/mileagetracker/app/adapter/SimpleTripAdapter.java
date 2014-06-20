@@ -2,6 +2,7 @@ package com.charles.mileagetracker.app.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -82,6 +83,13 @@ public class SimpleTripAdapter extends SimpleCursorAdapter {
         } else {
             Log.v("DEBUG: ", "EndTimeView null in bindView");
         }
+        final int lightBlue = context.getResources().getColor(R.color.semi_lightblue);
+        v.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                v.setBackgroundColor(lightBlue);
+            }
+        });
 
     }
 

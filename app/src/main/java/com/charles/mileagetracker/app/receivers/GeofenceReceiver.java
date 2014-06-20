@@ -39,8 +39,6 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
         String message = "";
 
-        generateNotification("Received Geofence Broadcast: ", transitionType);
-
 
         if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
 
@@ -53,38 +51,36 @@ public class GeofenceReceiver extends BroadcastReceiver {
             }
 
             message = "Leaving Fence, starting record";
-            boolean running = isServiceRunning();
-            if (!running){
-                Intent activityRecognitionService = new Intent(this.context, ActivityRecognitionService.class);
-                activityRecognitionService.putExtra("id", intent.getIntExtra("id", -1));
-                activityRecognitionService.putExtra("lat", intent.getDoubleExtra("lat", -1));
-                activityRecognitionService.putExtra("lon", intent.getDoubleExtra("lon", -1));
-                activityRecognitionService.putExtra("transition", "exit");
+            Intent activityRecognitionService = new Intent(this.context, ActivityRecognitionService.class);
+            activityRecognitionService.putExtra("id", intent.getIntExtra("id", -1));
+            activityRecognitionService.putExtra("lat", intent.getDoubleExtra("lat", -1));
+            activityRecognitionService.putExtra("lon", intent.getDoubleExtra("lon", -1));
+            activityRecognitionService.putExtra("transition", "exit");
 
 
-                this.context.startService(activityRecognitionService);
-                generateNotification(message, Geofence.GEOFENCE_TRANSITION_EXIT);
-            }
+            this.context.startService(activityRecognitionService);
+            generateNotification("Recording Trip",message, Geofence.GEOFENCE_TRANSITION_EXIT);
 
         } else if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER) {
             message = "Entering fence";
             //boolean running = isServiceRunning();
             Log.v("DEBUG: ", "Killing Running Record Service");
+            int id = intent.getIntExtra("id", -1);
+            double lat = intent.getDoubleExtra("lat", -1);
+            double lon = intent.getDoubleExtra("lon", -1);
+
             Intent stopActivityService = new Intent(this.context, ActivityRecognitionService.class);
             stopActivityService.putExtra("stop", true);
-            stopActivityService.putExtra("id", intent.getIntExtra("id", -1));
-            stopActivityService.putExtra("lat", intent.getDoubleExtra("lat", -1));
-            stopActivityService.putExtra("lon", intent.getDoubleExtra("lon", -1));
+            stopActivityService.putExtra("id", id);
+            stopActivityService.putExtra("lat", lat);
+            stopActivityService.putExtra("lon", lon);
 
             this.context.startService(stopActivityService);
+
+            //Record our end point then close out the trip
             TripRowCreator creator = new TripRowCreator(this.context);
-            creator.closeGroup();
-
-                //this.context.stopService(new Intent(context, ActivityRecognitionService.class));
-
-
-                //context.stopService(new Intent(context, ActivityRecognitionIntentService.class)):
-            generateNotification("Entering Fence", Geofence.GEOFENCE_TRANSITION_ENTER);
+            creator.closeGroup(id, lat, lon);
+            generateNotification("Trip Complete","Were all stops business related?", Geofence.GEOFENCE_TRANSITION_ENTER);
 
 
         }
@@ -126,7 +122,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
     }
 
 
-    private void generateNotification(String message, int geoFenceMode) {
+    private void generateNotification(String title, String message, int geoFenceMode) {
 
         Intent pathIntent = new Intent(context, PathSelectorActivity.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
@@ -136,9 +132,13 @@ public class GeofenceReceiver extends BroadcastReceiver {
         PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setSmallIcon(R.drawable.ic_launcher)
-                .setContentTitle("Test")
+                .setContentTitle(title)
                 .setContentText(message)
-                .setContentIntent(pendingIntent);
+                .setContentIntent(pendingIntent)
+                .addAction(android.R.drawable.btn_plus, "Yes", pendingIntent)
+                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "No", pendingIntent);
+
+
 
         NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(0, builder.build());

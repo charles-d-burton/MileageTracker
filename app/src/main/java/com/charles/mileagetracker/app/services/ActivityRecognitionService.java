@@ -73,6 +73,10 @@ public class ActivityRecognitionService extends Service implements
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
+        if (intent == null) {
+            return 0;
+        }
+
         Intent pendingIntent = new Intent(getApplicationContext(), ActivityRecognitionIntentService.class);
         mActivityRecognitionPendingIntent = PendingIntent.getService(getApplicationContext(),0, pendingIntent,PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -92,16 +96,9 @@ public class ActivityRecognitionService extends Service implements
 
         TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());//Record our starting path location
         rowCreator.recordSegment(id, lat, lon);
-        //final IntentFilter filter = new IntentFilter();
-        //filter.addAction(ActivityRecognitionIntentService.ACTIVITY_BROADCAST);
 
 
         Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
-
-
-
-
-        //setStartPoint(id);
         startUpdates();
         return START_REDELIVER_INTENT;
     }

@@ -82,5 +82,6 @@ public class PathSelectorActivity extends ListActivity implements
         getLoaderManager().initLoader(LOADER_ID, null, this);
         mAdapter = new SimpleTripAdapter(this, R.layout.trip_layout, null, from, to, 0);
         setListAdapter(mAdapter);
+
     }
 }

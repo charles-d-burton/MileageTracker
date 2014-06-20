@@ -19,9 +19,9 @@ public class AccessInternalStorage {
     public AccessInternalStorage() {}
 
     private static Lock lock = new ReentrantLock();
-    private Condition condition = lock.newCondition();
+    private static Condition condition = lock.newCondition();
 
-    public synchronized static void writeObject(Context context, String key, Object object) throws IOException {
+    public static void writeObject(Context context, String key, Object object) throws IOException {
         lock.lock();//Some safety to keep from trying to write two objects at once
         FileOutputStream fos = context.openFileOutput(key, Context.MODE_PRIVATE);
         ObjectOutputStream oos = new ObjectOutputStream(fos);
