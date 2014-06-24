@@ -172,11 +172,14 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private void handleWalking(int confidence) {
         tripVars.setDriving(false);
-        if (confidence > 75) {
-            if (!tripVars.isSegmentRecorded()) {//Trip segment not recorded, the class GetCurrentLocation will set this flag to true
-                startLocationHandler();
-            }
+
+        int counter = tripVars.getNotDrivingCounter();
+        counter = counter + 1;
+        tripVars.setNotDrivingCounter(counter);
+        if (counter > 1 && !tripVars.isSegmentRecorded()) {//Trip segment not recorded, the class GetCurrentLocation will set this flag to true
+            startLocationHandler();
         }
+
         try {
             accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
         } catch (IOException e) {
@@ -186,14 +189,13 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private void handleStill(int confidence) {
         tripVars.setDriving(false);
-        if (confidence > 75) {
-            int counter = tripVars.getNotDrivingCounter();
-            counter = counter + 1;
-            tripVars.setNotDrivingCounter(counter);
-            if (counter >= 4 && !tripVars.isSegmentRecorded()) {
-                startLocationHandler();
-            }
+        int counter = tripVars.getNotDrivingCounter();
+        counter = counter + 1;
+        tripVars.setNotDrivingCounter(counter);
+        if (counter >= 4 && !tripVars.isSegmentRecorded()) {
+            startLocationHandler();
         }
+
         try {
             accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
         } catch (IOException e) {

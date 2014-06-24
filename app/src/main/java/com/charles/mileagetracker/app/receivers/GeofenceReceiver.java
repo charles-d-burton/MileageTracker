@@ -82,7 +82,6 @@ public class GeofenceReceiver extends BroadcastReceiver {
             creator.closeGroup(id, lat, lon);
             generateNotification("Trip Complete","Were all stops business related?", Geofence.GEOFENCE_TRANSITION_ENTER);
 
-
         }
     }
 

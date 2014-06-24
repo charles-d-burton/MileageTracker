@@ -14,12 +14,15 @@ import android.util.Log;
 import com.charles.mileagetracker.app.cache.AccessInternalStorage;
 import com.charles.mileagetracker.app.cache.TripVars;
 import com.charles.mileagetracker.app.database.TripRowCreator;
+import com.charles.mileagetracker.app.webapicalls.LocationServices;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.model.LatLng;
+
+import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.List;
@@ -60,7 +63,7 @@ public class GetCurrentLocation extends IntentService implements
 
             }
 
-            stopSelf();
+            //stopSelf();
             return;
         }
 
@@ -107,8 +110,8 @@ public class GetCurrentLocation extends IntentService implements
     private class MyLocationListener implements LocationListener {
         @Override
         public void onLocationChanged(Location location) {
-            Log.d("DEBUG: ", "Location Changed");
-            if (location != null) {
+            Log.d("DEBUG: ", "Location Changed.  Accuracy: " + Double.toString(location.getAccuracy()));
+            if (location != null && location.getAccuracy() <= 100) {
                 try {
                     logLocation(location);
                     //generateMessage(location.getLatitude(), location.getLongitude());
@@ -131,8 +134,10 @@ public class GetCurrentLocation extends IntentService implements
         double distance = getDistance(oldLocation, new LatLng(lat, lon));
 
         if (distance > 750) {//Larger than the geofence, gives me a margin of error
-            Address addy = checkLocation(new LatLng(lat, lon)).get(0);//TODO:  I need to fix this in case it's null
-            Log.v("DEBUG: ", "Current address is: " + addy.getAddressLine(0));
+            //Address addy = checkLocation(new LatLng(lat, lon)).get(0);//TODO:  I need to fix this in case it's null
+            //String addy = checkLocation(new LatLng(lat, lon));
+            //Log.v("DEBUG: ", "Current address is: " + addy.getAddressLine(0));
+            //Log.v("DEBUG: ", "Current address is: " + addy);
             boolean logged = logSegment(new LatLng(lat, lon), tripVars);
 
             if (logged) {
@@ -157,7 +162,7 @@ public class GetCurrentLocation extends IntentService implements
         }
 
         double distance = getDistance(latLng, new LatLng(lastLat, lastLon));
-        if (distance > 500) {
+        if (distance > 750) {
             TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());
             rowCreator.recordSegment(vars.getId(),latLng.latitude, latLng.longitude);
             vars.setSegmentRecorded(true);
@@ -185,26 +190,5 @@ public class GetCurrentLocation extends IntentService implements
         distance = a.distanceTo(b);
 
         return distance;
-    }
-
-    /*
-    A way to reverse lookup where you are in address format from a LatLng
-     */
-    private List<Address> checkLocation(LatLng location) {
-        Geocoder geoCoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-        try {
-            List<Address> addresses = geoCoder.getFromLocation(location.latitude, location.longitude, 1);
-            if (addresses.size() > 0) {
-                return addresses;
-            }
-            /*for (Address address : addresses) {
-                //Log.v("DEBUG: ", "Thoroughfare: " + address.getThoroughfare());
-                Log.v("DEBUG: ", "Address line: " + address.getAddressLine(0));
-                //generateNotification(address.getAddressLine(0));
-            }*/
-        } catch (IOException ioe) {
-
-        }
-        return null;
     }
 }

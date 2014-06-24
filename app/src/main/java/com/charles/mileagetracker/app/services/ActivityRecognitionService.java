@@ -86,20 +86,19 @@ public class ActivityRecognitionService extends Service implements
             getLocationIntent.putExtra("stop", true);
             startService(getLocationIntent);
             stopUpdates();
-            return 0;
+        } else {
+            id = intent.getIntExtra("id", -1);
+            lat = intent.getDoubleExtra("lat", -1);
+            lon = intent.getDoubleExtra("lon", -1);
+            Log.v("DEBUG: ", "Lat/Lng from ActivityService: "+ "Lat: " + Double.toString(lat) + " Lon: " + Double.toString(lon));
+
+            TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());//Record our starting path location
+            rowCreator.recordSegment(id, lat, lon);
+
+
+            Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
+            startUpdates();
         }
-
-
-        id = intent.getIntExtra("id", -1);
-        lat = intent.getDoubleExtra("lat", -1);
-        lon = intent.getDoubleExtra("lon", -1);
-
-        TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());//Record our starting path location
-        rowCreator.recordSegment(id, lat, lon);
-
-
-        Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
-        startUpdates();
         return START_REDELIVER_INTENT;
     }
 
@@ -123,7 +122,6 @@ public class ActivityRecognitionService extends Service implements
                 mActivityRecognitionClient.removeActivityUpdates(mActivityRecognitionPendingIntent);
                 getApplicationContext().stopService(new Intent(getApplicationContext(), ActivityRecognitionIntentService.class));
                 mActivityRecognitionClient.disconnect();
-
                 break;
             default :
                 //throw new Exception("Unknown request type in onConnected().");

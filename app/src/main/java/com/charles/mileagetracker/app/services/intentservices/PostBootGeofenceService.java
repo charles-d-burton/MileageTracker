@@ -47,6 +47,7 @@ public class PostBootGeofenceService extends IntentService implements
     private boolean addingProximityAlerts = false;
     private boolean startedActivityRecognition = false;
 
+    private int counter = 0;
 
     public PostBootGeofenceService() {
         super("PostBootGeofenceService");
@@ -124,6 +125,8 @@ public class PostBootGeofenceService extends IntentService implements
         this.context = context;
         Intent intent = new Intent("com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE");
         intent.putExtra("id", id);
+        intent.putExtra("lat", latLng.latitude);
+        intent.putExtra("lon", latLng.longitude);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         Geofence fence = new Geofence.Builder()
                 .setRequestId(Integer.toString(id))
@@ -179,15 +182,20 @@ public class PostBootGeofenceService extends IntentService implements
 
         @Override
         public void onLocationChanged(Location location) {
+            counter = ++counter;
+            Log.v("DEBUG: ", "Current Accuracy: " + Double.toString(location.getAccuracy()));
             if (!addingProximityAlerts) {
-                LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                int infenceId = checkInFence(currentLocation, fenceCenters);
-                if (infenceId != -1) {
-                    startUpdates(location, infenceId);
+                if (location.getAccuracy() <= 100) {
+                    LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                    int infenceId = checkInFence(currentLocation, fenceCenters);
+                    if (infenceId != -1) {
+                        startUpdates(location, infenceId);
+                    }
+
+                    locationClient.removeLocationUpdates(locationListener);
+                    locationClient.disconnect();
                 }
 
-                locationClient.removeLocationUpdates(locationListener);
-                locationClient.disconnect();
             }
         }
     }

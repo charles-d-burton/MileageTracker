@@ -6,9 +6,13 @@ import android.database.Cursor;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.webapicalls.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+
+import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.List;
@@ -51,9 +55,11 @@ public class TripRowCreator {
         values.put(TripTable.LON, lon);
         values.put(TripTable.FENCE_RELATION, id);
 
-        Address addy = checkLocation(new LatLng(lat, lon)).get(0);//TODO: Fix this to prevent NPE
+        //Address addy = checkLocation(new LatLng(lat, lon)).get(0);//TODO: Fix this to prevent NPE
+        String addy = checkLocation(new LatLng(lat, lon));
+        Log.v("DEBUG: ", "Current Location Address is: " + addy);
         if (addy != null) {
-            values.put(TripTable.ADDRESS, addy.getAddressLine(0));
+            values.put(TripTable.ADDRESS, addy);
         }
 
         values.put(TripTable.TIME, System.currentTimeMillis());
@@ -81,9 +87,12 @@ public class TripRowCreator {
         values.put(TripGroup.GROUP_CLOSED, 1);
 
         context.getContentResolver().update(uri, values, TripGroup.GROUP_ID + "=" + lastTripGroupId, null);
+        new GenerateDistances().doInBackground(lastTripGroupId);
 
         return true;
     }
+
+
 
     /*
     Query the database to find out of the last trip was open or closed, return the id of the group if it's
@@ -108,26 +117,32 @@ public class TripRowCreator {
             }
 
         }
+        c.close();
         return -1;//Known impossible value
     }
 
-    /*
-    A way to reverse lookup where you are in address format from a LatLng
-     */
-    private List<Address> checkLocation(LatLng location) {
-        Geocoder geoCoder = new Geocoder(context, Locale.getDefault());
-        try {
-            List<Address> addresses = geoCoder.getFromLocation(location.latitude, location.longitude, 1);
-            if (addresses.size() > 0) {
-                return addresses;
-            }
-            for (Address address : addresses) {
-                //Log.v("DEBUG: ", "Thoroughfare: " + address.getThoroughfare());
-                Log.v("DEBUG: ", "Address line: " + address.getAddressLine(0));
-            }
-        } catch (IOException ioe) {
+    private String checkLocation(LatLng location) {
+        LocationServices locationServices = new LocationServices(context);
+        return locationServices.getRoadName(location.latitude, location.longitude);
+    }
 
+    private class GenerateDistances extends AsyncTask<Integer, Integer, String> {
+
+        @Override
+        protected String doInBackground(Integer... params) {
+            int groupId = params[0];
+            String projection[] = {TripTable.DISTANCE,
+                                   TripTable.LAT,
+                                   TripTable.LON,
+                                   TripTable.TRIP_KEY,
+                                   TripTable.COLUMN_ID};
+            Cursor c = context.getContentResolver().query(TrackerContentProvider.TRIP_URI, projection, TripTable.TRIP_KEY + "=" + Integer.toString(groupId), null, null);
+
+            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                if (c.isFirst()) continue;
+
+            }
+            return null;
         }
-        return null;
     }
 }
