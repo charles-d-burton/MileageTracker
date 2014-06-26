@@ -128,10 +128,6 @@ public class GetCurrentLocation extends IntentService implements
         double distance = getDistance(oldLocation, new LatLng(lat, lon));
 
         if (distance > 750) {//Larger than the geofence, gives me a margin of error
-            //Address addy = checkLocation(new LatLng(lat, lon)).get(0);//TODO:  I need to fix this in case it's null
-            //String addy = checkLocation(new LatLng(lat, lon));
-            //Log.v("DEBUG: ", "Current address is: " + addy.getAddressLine(0));
-            //Log.v("DEBUG: ", "Current address is: " + addy);
             boolean logged = logSegment(new LatLng(lat, lon), tripVars);
 
             if (logged) {
@@ -210,9 +206,10 @@ public class GetCurrentLocation extends IntentService implements
                     tooClose = true;
                 }
             }
+            c.close();
         }
 
-        c.close();
+
         return tooClose;
     }
 }

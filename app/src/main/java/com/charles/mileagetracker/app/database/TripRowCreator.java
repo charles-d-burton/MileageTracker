@@ -4,20 +4,12 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.location.Address;
-import android.location.Geocoder;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.webapicalls.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
-
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by charles on 6/14/14.
@@ -32,6 +24,9 @@ public class TripRowCreator {
         this.context = context;
     }
 
+    /*
+    Get the currently open trip.
+     */
     public void recordSegment(int id, double lat, double lon) {
         Log.v("DEBUG: ", "Recording path segment");
         int group_id = -1;
@@ -56,7 +51,6 @@ public class TripRowCreator {
         values.put(TripTable.LON, lon);
         values.put(TripTable.FENCE_RELATION, id);
 
-        //Address addy = checkLocation(new LatLng(lat, lon)).get(0);//TODO: Fix this to prevent NPE
         String addy = checkLocation(new LatLng(lat, lon));
         Log.v("DEBUG: ", "Current Location Address is: " + addy);
         if (addy != null) {
@@ -154,20 +148,25 @@ public class TripRowCreator {
             double endLat = 0;
             double endLon = 0;
             LocationServices locationServices = new LocationServices(context);
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {//TODO: Finish this, it'll calculate distances between points
-                int id = c.getInt(c.getColumnIndexOrThrow(TripTable.COLUMN_ID));
-                if (c.isFirst()) {
-                    startLat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
-                    startLon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
-                } else {
-                    endLat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
-                    endLon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
-                    double distance = locationServices.getDistance(startLat, startLon, endLat, endLon);
-                    updateRow(id, distance, context);
-                    startLat = endLat;
-                    startLon = endLon;
+            if (c != null && c.getCount() > 0) {
+                c.moveToPosition(-1);
+                while (c.moveToNext()) {
+                    int id = c.getInt(c.getColumnIndexOrThrow(TripTable.COLUMN_ID));
+                    if (c.isFirst()) {
+                        startLat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
+                        startLon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
+                    } else {
+                        endLat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
+                        endLon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
+                        double distance = locationServices.getDistance(startLat, startLon, endLat, endLon);
+                        updateRow(id, distance, context);
+                        startLat = endLat;
+                        startLon = endLon;
+                    }
                 }
+                c.close();
             }
+
             return null;
         }
 

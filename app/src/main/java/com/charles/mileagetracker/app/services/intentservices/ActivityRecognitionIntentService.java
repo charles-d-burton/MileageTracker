@@ -2,36 +2,16 @@ package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.ActivityManager;
 import android.app.IntentService;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.os.Messenger;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.activities.PathSelectorActivity;
 import com.charles.mileagetracker.app.cache.AccessInternalStorage;
 import com.charles.mileagetracker.app.cache.TripVars;
-import com.charles.mileagetracker.app.database.StartPoints;
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.database.TripRowCreator;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
-import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -57,7 +37,6 @@ public class ActivityRecognitionIntentService extends IntentService {
     private GetCurrentLocation mService = null;
     private boolean mBound = false;
 
-    private static int id = -1;
     private TripVars tripVars = null;
     private AccessInternalStorage accessCache = null;
 
