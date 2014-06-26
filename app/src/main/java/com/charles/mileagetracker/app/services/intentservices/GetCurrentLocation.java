@@ -135,6 +135,7 @@ public class GetCurrentLocation extends IntentService implements
             tripVars.setLastLon(lon);
             accessCache.writeObject(getApplicationContext(), TripVars.KEY, tripVars);
         }
+
     }
 
     private double getDistance(LatLng pointA, LatLng pointB) {
