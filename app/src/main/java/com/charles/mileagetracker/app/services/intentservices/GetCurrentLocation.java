@@ -128,43 +128,14 @@ public class GetCurrentLocation extends IntentService implements
         double distance = getDistance(oldLocation, new LatLng(lat, lon));
 
         if (distance > 750) {//Larger than the geofence, gives me a margin of error
-            boolean logged = logSegment(new LatLng(lat, lon), tripVars);
-
-            if (logged) {
-                tripVars.setLastLat(lat);
-                tripVars.setLastLon(lon);
-                tripVars.setSegmentRecorded(true);
-                accessCache.writeObject(getApplicationContext(), TripVars.KEY, tripVars);
-            }
-        }
-    }
-
-    /*
-    Database handling code goes here
-     */
-
-    private boolean logSegment(LatLng latLng, TripVars vars) {
-        double lastLat = vars.getLastLat();
-        double lastLon = vars.getLastLon();
-        if (lastLat == -1 && lastLon == -1) {
-            lastLat = vars.getLat();
-            lastLon = vars.getLon();
-        }
-
-        double distance = getDistance(latLng, new LatLng(lastLat, lastLon));
-        if (distance > 750) {
             TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());
-            rowCreator.recordSegment(vars.getId(),latLng.latitude, latLng.longitude);
-            vars.setSegmentRecorded(true);
-            return true;
+            rowCreator.recordSegment(tripVars.getId(),lat, lon);
+            tripVars.setSegmentRecorded(true);
+            tripVars.setLastLat(lat);
+            tripVars.setLastLon(lon);
+            accessCache.writeObject(getApplicationContext(), TripVars.KEY, tripVars);
         }
-        return false;
-
     }
-
-    /*
-    Check if a start location was recorded,
-     */
 
     private double getDistance(LatLng pointA, LatLng pointB) {
         double distance = 0f;
