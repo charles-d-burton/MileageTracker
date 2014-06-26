@@ -15,14 +15,16 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.PathSelectorActivity;
 import com.charles.mileagetracker.app.cache.AccessInternalStorage;
 import com.charles.mileagetracker.app.cache.TripVars;
+import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripRowCreator;
-import com.charles.mileagetracker.app.database.TripTable;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
+import java.util.List;
 
 public class GeofenceReceiver extends BroadcastReceiver {
 
@@ -35,53 +37,24 @@ public class GeofenceReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         this.context = context.getApplicationContext();
-        int transitionType = LocationClient.getGeofenceTransition(intent);
-
-        String message = "";
-
-
-        if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
-
-            try {
-                initializeVars(intent.getIntExtra("id", -1), intent.getDoubleExtra("lat", -1), intent.getDoubleExtra("lon", -1), Geofence.GEOFENCE_TRANSITION_EXIT);
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (intent != null) {
+            int transitionType = LocationClient.getGeofenceTransition(intent);
+            List geoFences = LocationClient.getTriggeringGeofences(intent);
+            Geofence fence = (Geofence)geoFences.get(0);
+            int id = Integer.parseInt(fence.getRequestId());
+            LatLng center = getCenter(id);
+            if (center == null) {
                 return;
-
             }
 
-            message = "Leaving Fence, starting record";
-            Intent activityRecognitionService = new Intent(this.context, ActivityRecognitionService.class);
-            activityRecognitionService.putExtra("id", intent.getIntExtra("id", -1));
-            activityRecognitionService.putExtra("lat", intent.getDoubleExtra("lat", -1));
-            activityRecognitionService.putExtra("lon", intent.getDoubleExtra("lon", -1));
-            activityRecognitionService.putExtra("transition", "exit");
 
+            if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
+                transitionExit(id, center);
 
-            this.context.startService(activityRecognitionService);
-            generateNotification("Recording Trip",message, Geofence.GEOFENCE_TRANSITION_EXIT);
+            } else if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER) {
+                transitionEnter(id, center);
 
-        } else if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER) {
-            message = "Entering fence";
-            //boolean running = isServiceRunning();
-            Log.v("DEBUG: ", "Killing Running Record Service");
-            int id = intent.getIntExtra("id", -1);
-            double lat = intent.getDoubleExtra("lat", -1);
-            double lon = intent.getDoubleExtra("lon", -1);
-
-            Intent stopActivityService = new Intent(this.context, ActivityRecognitionService.class);
-            stopActivityService.putExtra("stop", true);
-            stopActivityService.putExtra("id", id);
-            stopActivityService.putExtra("lat", lat);
-            stopActivityService.putExtra("lon", lon);
-
-            this.context.startService(stopActivityService);
-
-            //Record our end point then close out the trip
-            TripRowCreator creator = new TripRowCreator(this.context);
-            creator.closeGroup(id, lat, lon);
-            generateNotification("Trip Complete","Were all stops business related?", Geofence.GEOFENCE_TRANSITION_ENTER);
-
+            }
         }
     }
 
@@ -93,7 +66,6 @@ public class GeofenceReceiver extends BroadcastReceiver {
         vars.setLon(lon);
         vars.setFenceTransitionType(transition);
         accessInternalStorage.writeObject(this.context, TripVars.KEY, vars);
-
     }
 
     private boolean isServiceRunning() {
@@ -106,18 +78,62 @@ public class GeofenceReceiver extends BroadcastReceiver {
         return false;
     }
 
-    private String getAddresses() {
+    private LatLng getCenter(int id) {
+        LatLng center = null;
+        String projection[] = {StartPoints.COLUMN_ID, StartPoints.START_LON, StartPoints.START_LON};
 
-        String projection[] = {TripTable.COLUMN_ID, TripTable.ADDRESS};
+        Cursor c = context.getContentResolver().query(TrackerContentProvider.STARTS_URI, projection,
+                StartPoints.COLUMN_ID + "=" + Integer.toString(id), null, null);
 
-        Cursor c = context.getContentResolver().query(TrackerContentProvider.TRIP_URI, projection, null, null, null);
-        String addresses = "";
-        if (!(c == null) && !(c.getCount() < 1)) {
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                addresses = addresses + "\n" + c.getString(c.getColumnIndexOrThrow(TripTable.ADDRESS));
-            }
+        if (c != null && c.getCount() > 0) {
+            c.moveToFirst();
+            double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
+            double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
+            center = new LatLng(lat, lon);
+            c.close();
         }
-        return addresses;
+        return center;
+    }
+
+    private void transitionEnter(int id, LatLng center) {
+        String message = "Entering fence";
+        //boolean running = isServiceRunning();
+        Log.v("DEBUG: ", "Killing Running Record Service");
+        double lat = center.latitude;
+        double lon = center.longitude;
+
+        Intent stopActivityService = new Intent(this.context, ActivityRecognitionService.class);
+        stopActivityService.putExtra("stop", true);
+        stopActivityService.putExtra("id", id);
+        stopActivityService.putExtra("lat", lat);
+        stopActivityService.putExtra("lon", lon);
+
+        this.context.startService(stopActivityService);
+
+        //Record our end point then close out the trip
+        TripRowCreator creator = new TripRowCreator(this.context);
+        creator.closeGroup(id, lat, lon);
+        generateNotification("Trip Complete","Were all stops business related?", Geofence.GEOFENCE_TRANSITION_ENTER);
+    }
+
+    private void transitionExit(int id, LatLng center) {
+        try {
+            initializeVars(id, center.latitude, center.longitude, Geofence.GEOFENCE_TRANSITION_EXIT);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+
+        }
+
+        String message = "Leaving Fence, starting record";
+        Intent activityRecognitionService = new Intent(this.context, ActivityRecognitionService.class);
+        activityRecognitionService.putExtra("id", id);
+        activityRecognitionService.putExtra("lat", center.latitude);
+        activityRecognitionService.putExtra("lon", center.longitude);
+        activityRecognitionService.putExtra("transition", "exit");
+
+        this.context.startService(activityRecognitionService);
+        generateNotification("Recording Trip",message, Geofence.GEOFENCE_TRANSITION_EXIT);
     }
 
 

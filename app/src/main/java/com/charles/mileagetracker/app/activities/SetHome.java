@@ -497,22 +497,25 @@ public class SetHome extends Activity implements
         protected ArrayList doInBackground(Cursor... params) {
             Cursor c = params[0];
             ArrayList<Home> homes = new ArrayList<Home>();
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+            if (c != null && c.getCount() > 0) {
+                c.moveToPosition(-1);
+                while (c.moveToNext()) {
+                    Integer id = c.getInt(c.getColumnIndexOrThrow(StartPoints.COLUMN_ID));
 
-                Integer id = c.getInt(c.getColumnIndexOrThrow(StartPoints.COLUMN_ID));
+                    String name = c.getString(c.getColumnIndexOrThrow(StartPoints.NAME));
+                    double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
+                    double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
 
-                String name = c.getString(c.getColumnIndexOrThrow(StartPoints.NAME));
-                double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
-                double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
-
-                Home home = new Home(id, name, new LatLng(lat, lon));
-                homes.add(home);
-                if (!homeMap.containsKey(id)) {
-                    homeMap.put(id, home);
-                    publishProgress(home);  //This will update the UI thread to display the marker
+                    Home home = new Home(id, name, new LatLng(lat, lon));
+                    homes.add(home);
+                    if (!homeMap.containsKey(id)) {
+                        homeMap.put(id, home);
+                        publishProgress(home);  //This will update the UI thread to display the marker
+                    }
                 }
-
             }
+            c.close();
+
             return homes;  //Return a complete list of homes that are in the database
         }
 

@@ -3,13 +3,8 @@ package com.charles.mileagetracker.app.services.intentservices;
 import android.app.IntentService;
 import android.content.Intent;
 import android.database.Cursor;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.cache.AccessInternalStorage;
@@ -17,7 +12,6 @@ import com.charles.mileagetracker.app.cache.TripVars;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripRowCreator;
-import com.charles.mileagetracker.app.webapicalls.LocationServices;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
@@ -25,11 +19,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.model.LatLng;
 
-import org.json.JSONException;
-
 import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
 
 
 /**
@@ -113,15 +103,18 @@ public class GetCurrentLocation extends IntentService implements
         public void onLocationChanged(Location location) {
             Log.d("DEBUG: ", "Location Changed.  Accuracy: " + Double.toString(location.getAccuracy()));
             if (location != null && location.getAccuracy() <= 100) {
-                try {
-                    logLocation(location);
-                    //generateMessage(location.getLatitude(), location.getLongitude());
+                if (tooCloseToStartPoint(location)) {
                     locationClient.disconnect();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } else {
+                    try {
+                        logLocation(location);
+                        //generateMessage(location.getLatitude(), location.getLongitude());
+                        locationClient.disconnect();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
-
         }
     }
 
@@ -198,17 +191,28 @@ public class GetCurrentLocation extends IntentService implements
      */
 
     private boolean tooCloseToStartPoint(Location startpoint) {
+        boolean tooClose = false;
+        LatLng currentPoint = new LatLng(startpoint.getLatitude(), startpoint.getLongitude());
         String projection[] = {
                 StartPoints.START_LAT,
                 StartPoints.START_LON
 
         };
         Cursor c = getContentResolver().query(TrackerContentProvider.STARTS_URI,projection, null, null, null);
-
-        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-            double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
-            double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
+        if (c != null && c.getCount() > 0) {
+            c.moveToPosition(-1);
+            while (c.moveToNext()) {
+                double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
+                double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
+                LatLng startPoint = new LatLng(lat, lon);
+                double distance = getDistance(currentPoint, startPoint);
+                if (distance < 500) {
+                    tooClose = true;
+                }
+            }
         }
-        return true;
+
+        c.close();
+        return tooClose;
     }
 }

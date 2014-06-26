@@ -77,6 +77,7 @@ public class PostBootGeofenceService extends IntentService implements
         locationClient.requestLocationUpdates(locationRequest, locationListener);
 
         Uri uri = TrackerContentProvider.STARTS_URI;
+
         String[] projection = {
                 StartPoints.COLUMN_ID,
                 StartPoints.START_LAT,
@@ -85,8 +86,9 @@ public class PostBootGeofenceService extends IntentService implements
 
         Cursor c = context.getContentResolver().query(uri, projection, null, null, null);
 
-        if (!(c == null) && !(c.getCount() < 1)) {
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+        if (c != null && c.getCount() > 0) {
+            c.moveToPosition(-1);
+            while (c.moveToNext()) {
                 int id = c.getInt(c.getColumnIndexOrThrow(StartPoints.COLUMN_ID));
                 double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
                 double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
@@ -95,8 +97,9 @@ public class PostBootGeofenceService extends IntentService implements
                 addProximityAlert(latLng, id);
                 fenceCenters.put(id, latLng);
             }
-        }
 
+        }
+        c.close();
         if (fenceCenters.size() == 0) { //No fences defined disconnect so everything can close
             locationClient.removeLocationUpdates(locationListener);
             locationClient.disconnect();
@@ -122,7 +125,7 @@ public class PostBootGeofenceService extends IntentService implements
     }
 
     private void addProximityAlert(LatLng latLng, int id) {
-        this.context = context;
+        //this.context = context;
         Intent intent = new Intent("com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE");
         intent.putExtra("id", id);
         intent.putExtra("lat", latLng.latitude);
