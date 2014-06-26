@@ -1,5 +1,6 @@
 package com.charles.mileagetracker.app.database;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -67,7 +68,9 @@ public class TripRowCreator {
         context.getContentResolver().insert(TrackerContentProvider.TRIP_URI, values);
     }
 
-    //Close the group.  This closes the group and seals a trip.
+    /*Close the group.  This closes the group and seals a trip by getting the last groupId
+    and then updating it as closed.  This has a cascade effect on all the associated trip points
+    */
 
     public boolean closeGroup(int id, double lat, double lon) {
         int lastTripGroupId = lastTripOpen();
@@ -128,6 +131,13 @@ public class TripRowCreator {
 
     private class GenerateDistances extends AsyncTask<Integer, Integer, String> {
 
+        /*
+        On a background thread I'm getting a cursor and pulling all rows associated with a specific group.
+        Once I have that I define four double that represent the locations that I need the distance between.
+        I iterate through the rows getting the lat/long of where the stop was taken then processing the distance
+        between the previous one and the current one.  It then resets the variables when finished making the current
+        one the previous.
+         */
         @Override
         protected String doInBackground(Integer... params) {
             int groupId = params[0];
@@ -138,11 +148,40 @@ public class TripRowCreator {
                                    TripTable.COLUMN_ID};
             Cursor c = context.getContentResolver().query(TrackerContentProvider.TRIP_URI, projection, TripTable.TRIP_KEY + "=" + Integer.toString(groupId), null, null);
 
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                if (c.isFirst()) continue;
 
+            double startLat = 0;
+            double startLon = 0;
+            double endLat = 0;
+            double endLon = 0;
+            LocationServices locationServices = new LocationServices(context);
+            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {//TODO: Finish this, it'll calculate distances between points
+                int id = c.getInt(c.getColumnIndexOrThrow(TripTable.COLUMN_ID));
+                if (c.isFirst()) {
+                    startLat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
+                    startLon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
+                } else {
+                    endLat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
+                    endLon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
+                    double distance = locationServices.getDistance(startLat, startLon, endLat, endLon);
+                    updateRow(id, distance, context);
+                    startLat = endLat;
+                    startLon = endLon;
+                }
             }
             return null;
         }
+
+        private void updateRow(int rowId, double distance, Context context) {
+            ContentValues values = new ContentValues();
+            values.put(TripTable.DISTANCE, distance);
+
+            ContentResolver resolver = context.getContentResolver();
+
+            resolver.update(TrackerContentProvider.TRIP_URI, values, TripTable.COLUMN_ID + "=" + rowId, null);
+
+
+        }
+
+
     }
 }

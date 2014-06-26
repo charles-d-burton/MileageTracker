@@ -86,6 +86,7 @@ public class ActivityRecognitionService extends Service implements
             getLocationIntent.putExtra("stop", true);
             startService(getLocationIntent);
             stopUpdates();
+            return START_NOT_STICKY;
         } else {
             id = intent.getIntExtra("id", -1);
             lat = intent.getDoubleExtra("lat", -1);

@@ -33,7 +33,7 @@ public class TripTable {
             + TIME + " INTEGER, "
             + LAT + " REAL, "
             + LON + " REAL, "
-            + DISTANCE + " REAL, "
+            + DISTANCE + " REAL DEFAULT 0, "
             + ADDRESS + " TEXT DEFAULT NULL, "
             + BUSINESS_RELATED + " INTEGER DEFAULT 0);";
 

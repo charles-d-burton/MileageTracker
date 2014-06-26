@@ -2,6 +2,7 @@ package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.database.Cursor;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -13,6 +14,8 @@ import android.util.Log;
 
 import com.charles.mileagetracker.app.cache.AccessInternalStorage;
 import com.charles.mileagetracker.app.cache.TripVars;
+import com.charles.mileagetracker.app.database.StartPoints;
+import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripRowCreator;
 import com.charles.mileagetracker.app.webapicalls.LocationServices;
 import com.google.android.gms.common.ConnectionResult;
@@ -62,8 +65,6 @@ public class GetCurrentLocation extends IntentService implements
             } catch (Exception e) {
 
             }
-
-            //stopSelf();
             return;
         }
 
@@ -190,5 +191,24 @@ public class GetCurrentLocation extends IntentService implements
         distance = a.distanceTo(b);
 
         return distance;
+    }
+
+    /*
+    Get a cursor and check if we're too close check if we're too close to start point
+     */
+
+    private boolean tooCloseToStartPoint(Location startpoint) {
+        String projection[] = {
+                StartPoints.START_LAT,
+                StartPoints.START_LON
+
+        };
+        Cursor c = getContentResolver().query(TrackerContentProvider.STARTS_URI,projection, null, null, null);
+
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+            double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
+            double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
+        }
+        return true;
     }
 }

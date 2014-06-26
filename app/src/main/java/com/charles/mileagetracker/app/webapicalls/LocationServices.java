@@ -120,8 +120,8 @@ public class LocationServices {
 
 
     //Get the maps distance between two points.
-    public String getDistance(double lat1, double lon1, double lat2, double lon2) {
-        String result_in_kms = "";
+    public double getDistance(double lat1, double lon1, double lat2, double lon2) {
+        String result_in_kms = "0";
         String url = "http://maps.google.com/maps/api/directions/xml?origin=" + lat1 + "," + lon1 + "&destination=" + lat2 + "," + lon2 + "&sensor=false&units=metric";
         String tag[] = {"text"};
         HttpResponse response = null;
@@ -150,6 +150,6 @@ public class LocationServices {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return result_in_kms;
+        return Double.parseDouble(result_in_kms);
     }
 }

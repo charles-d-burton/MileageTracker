@@ -53,7 +53,7 @@ public class PathSelectorActivity extends ListActivity implements
     public Loader onCreateLoader(int id, Bundle args) {
         Uri uri = TrackerContentProvider.TRIP_URI;
         String[] projection = {TripTable.ADDRESS, TripTable.BUSINESS_RELATED, TripTable.CLOSED, TripTable.TRIP_KEY,
-        TripTable.TIME, TripTable.FENCE_RELATION, TripTable.LON, TripTable.LAT, TripTable.COLUMN_ID};
+        TripTable.TIME, TripTable.FENCE_RELATION, TripTable.LON, TripTable.LAT, TripTable.COLUMN_ID, TripTable.DISTANCE};
 
         return new CursorLoader(this, uri,projection, null, null, null);
     }

@@ -41,6 +41,7 @@ public class SimpleTripAdapter extends SimpleCursorAdapter {
 
         String endAddress = c.getString(c.getColumnIndexOrThrow(TripTable.ADDRESS));
         long endTime = c.getLong(c.getColumnIndexOrThrow(TripTable.TIME));
+        double distance = c.getDouble(c.getColumnIndexOrThrow(TripTable.DISTANCE));
 
         String endDate = format.format(new Date(endTime));
 
@@ -48,15 +49,11 @@ public class SimpleTripAdapter extends SimpleCursorAdapter {
         TextView endAddressView = (TextView)v.findViewById(R.id.end_trip_item_address);
         if (endAddressView != null) {
             endAddressView.setText(endAddress);
-        } else {
-            Log.v("DEBUG: ", "EndAdressView null in newView");
         }
 
         TextView endTimeView = (TextView)v.findViewById(R.id.end_trip_date_time);
         if (endTimeView != null) {
             endTimeView.setText(endDate);
-        } else {
-            Log.v("DEBUG: ", "EndTimeView null in newView");
         }
 
         return v;
@@ -67,22 +64,20 @@ public class SimpleTripAdapter extends SimpleCursorAdapter {
 
         String endAddress = cursor.getString(cursor.getColumnIndexOrThrow(TripTable.ADDRESS));
         long endTime = cursor.getLong(cursor.getColumnIndexOrThrow(TripTable.TIME));
+        double distance = cursor.getDouble(cursor.getColumnIndexOrThrow(TripTable.DISTANCE));
 
         String endDate = format.format(new Date(endTime));
 
         TextView endAddressView = (TextView)v.findViewById(R.id.end_trip_item_address);
         if (endAddressView != null) {
             endAddressView.setText(endAddress);
-        } else {
-            Log.v("DEBUG: ", "EndAdressView null in bindView");
         }
 
         TextView endTimeView = (TextView)v.findViewById(R.id.end_trip_date_time);
         if (endTimeView != null) {
             endTimeView.setText(endDate);
-        } else {
-            Log.v("DEBUG: ", "EndTimeView null in bindView");
         }
+
         final int lightBlue = context.getResources().getColor(R.color.semi_lightblue);
         v.setOnClickListener(new View.OnClickListener() {
             @Override
