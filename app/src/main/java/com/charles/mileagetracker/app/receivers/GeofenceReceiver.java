@@ -64,6 +64,8 @@ public class GeofenceReceiver extends BroadcastReceiver {
         vars.setId(id);
         vars.setLat(lat);
         vars.setLon(lon);
+        vars.setLastLat(lat);
+        vars.setLastLon(lon);
         vars.setFenceTransitionType(transition);
         accessInternalStorage.writeObject(this.context, TripVars.KEY, vars);
     }
@@ -80,7 +82,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
     private LatLng getCenter(int id) {
         LatLng center = null;
-        String projection[] = {StartPoints.COLUMN_ID, StartPoints.START_LON, StartPoints.START_LON};
+        String projection[] = {StartPoints.COLUMN_ID, StartPoints.START_LAT, StartPoints.START_LON};
 
         Cursor c = context.getContentResolver().query(TrackerContentProvider.STARTS_URI, projection,
                 StartPoints.COLUMN_ID + "=" + Integer.toString(id), null, null);
@@ -90,8 +92,9 @@ public class GeofenceReceiver extends BroadcastReceiver {
             double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
             double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
             center = new LatLng(lat, lon);
-            c.close();
+
         }
+        if (c != null) c.close();
         return center;
     }
 
@@ -152,8 +155,6 @@ public class GeofenceReceiver extends BroadcastReceiver {
                 .setContentIntent(pendingIntent)
                 .addAction(android.R.drawable.btn_plus, "Yes", pendingIntent)
                 .addAction(android.R.drawable.ic_menu_close_clear_cancel, "No", pendingIntent);
-
-
 
         NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(0, builder.build());

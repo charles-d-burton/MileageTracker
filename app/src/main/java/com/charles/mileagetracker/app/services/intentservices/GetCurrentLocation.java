@@ -124,7 +124,7 @@ public class GetCurrentLocation extends IntentService implements
         double lat = location.getLatitude();
         double lon = location.getLongitude();
 
-        LatLng oldLocation = new LatLng(tripVars.getLastLat(), tripVars.getLon());
+        LatLng oldLocation = new LatLng(tripVars.getLastLat(), tripVars.getLastLon());
         double distance = getDistance(oldLocation, new LatLng(lat, lon));
 
         if (distance > 750) {//Larger than the geofence, gives me a margin of error

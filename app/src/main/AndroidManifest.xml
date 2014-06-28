@@ -31,7 +31,6 @@
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyCWLe7RmQQR4AJaMx8xPIZcjSg2FnQ5if4" />
 
-
         <receiver
             android:name=".receivers.GeofenceReceiver"
             android:enabled="true"
@@ -86,6 +85,11 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+        <activity
+            android:name=".activities.ExpandingTripList"
+            android:label="@string/title_activity_expanding_trip_list" >
+        </activity>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -103,6 +107,5 @@
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
-
 
 </manifest>

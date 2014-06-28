@@ -124,6 +124,12 @@ public class PostBootGeofenceService extends IntentService implements
 
     }
 
+    /*
+    I know that you add Geofences by List and the calling method here is actually generating basically
+    a list of Geofences so this might seem inefficient.  It however is not what it seems, I need to
+    maintain requestId coherency with the associated SQL _id of the column.  This means that I cannot
+    add them based on index and instead have to add them one at a time using the associated ID.
+     */
     private void addProximityAlert(LatLng latLng, int id) {
         //this.context = context;
         Intent intent = new Intent("com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE");
@@ -218,6 +224,8 @@ public class PostBootGeofenceService extends IntentService implements
             tripVars.setId(id);
             tripVars.setLat(location.getLatitude());
             tripVars.setLon(location.getLongitude());
+            tripVars.setLastLat(location.getLatitude());
+            tripVars.setLastLon(location.getLongitude());
             try {
                 internalStorage.writeObject(context, TripVars.KEY, tripVars);
             } catch (IOException e1) {

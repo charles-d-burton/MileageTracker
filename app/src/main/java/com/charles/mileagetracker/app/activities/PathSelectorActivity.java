@@ -80,7 +80,7 @@ public class PathSelectorActivity extends ListActivity implements
         int [] to = new int[] {R.id.end_trip_item_address, R.id.end_trip_date_time};
 
         getLoaderManager().initLoader(LOADER_ID, null, this);
-        mAdapter = new SimpleTripAdapter(this, R.layout.trip_layout, null, from, to, 0);
+        mAdapter = new SimpleTripAdapter(this, R.layout.trip_list_item, null, from, to, 0);
         setListAdapter(mAdapter);
 
     }
