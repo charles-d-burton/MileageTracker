@@ -95,9 +95,9 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private void activityUpdate(int activityType, int confidence) {
         //Log.v("DEBUG: ", "Confidence level: " + Integer.toString(confidence));
-        if (confidence < 62) { //Less than really sure
+        /*if (confidence < 62) { //Less than really sure
             return;
-        }
+        }*/
         switch (activityType) {
             case DetectedActivity.IN_VEHICLE:
                 //Log.v("DEBUG: " , "Driving");
