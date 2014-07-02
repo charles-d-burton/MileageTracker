@@ -37,6 +37,11 @@ public class GetCurrentLocation extends IntentService implements
     private static LocationRequest locationRequest = null;
     private static LocationListener locationListener = null;
 
+    private int locationTryCounter = 0;
+
+    private enum ACCURACY {HIGH, LOW}
+    private ACCURACY accuracy;
+
 
 
 
@@ -59,13 +64,8 @@ public class GetCurrentLocation extends IntentService implements
         }
 
         if (intent != null) {
-            locationClient = new LocationClient(getApplicationContext(), this, this);
-            locationRequest = LocationRequest.create();
-            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-            locationRequest.setInterval(5000);
-            locationRequest.setFastestInterval(1000);
-            locationListener = new MyLocationListener();
-            locationClient.connect();
+            accuracy = ACCURACY.LOW;
+            initLocation();
         }
     }
 
@@ -102,7 +102,8 @@ public class GetCurrentLocation extends IntentService implements
         @Override
         public void onLocationChanged(Location location) {
             Log.d("DEBUG: ", "Location Changed.  Accuracy: " + Double.toString(location.getAccuracy()));
-            if (location != null && location.getAccuracy() <= 100) {
+            locationTryCounter = locationTryCounter++;
+            if (location != null && location.getAccuracy() <= 100 || locationTryCounter > 10) {
                 if (tooCloseToStartPoint(location)) {
                     locationClient.disconnect();
                 } else {
@@ -115,8 +116,30 @@ public class GetCurrentLocation extends IntentService implements
                     }
                 }
             }
+
+            if (locationTryCounter == 5) {
+                locationClient.disconnect();
+                accuracy = ACCURACY.HIGH;
+                initLocation();
+            }
         }
     }
+
+    private void initLocation() {
+        locationClient = new LocationClient(getApplicationContext(), this, this);
+        locationRequest = LocationRequest.create();
+        if (accuracy == ACCURACY.LOW) {
+            locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        } else if (accuracy == ACCURACY.HIGH) {
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        }
+
+        locationRequest.setInterval(5000);
+        locationRequest.setFastestInterval(1000);
+        locationListener = new MyLocationListener();
+        locationClient.connect();
+    }
+
 
     private void logLocation(Location location) throws IOException, ClassNotFoundException {
         AccessInternalStorage accessCache = new AccessInternalStorage();
@@ -158,9 +181,9 @@ public class GetCurrentLocation extends IntentService implements
     Get a cursor and check if we're too close check if we're too close to start point
      */
 
-    private boolean tooCloseToStartPoint(Location startpoint) {
+    private boolean tooCloseToStartPoint(Location currentLocation) {
         boolean tooClose = false;
-        LatLng currentPoint = new LatLng(startpoint.getLatitude(), startpoint.getLongitude());
+        LatLng currentPoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
         String projection[] = {
                 StartPoints.START_LAT,
                 StartPoints.START_LON
@@ -174,12 +197,12 @@ public class GetCurrentLocation extends IntentService implements
                 double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
                 LatLng startPoint = new LatLng(lat, lon);
                 double distance = getDistance(currentPoint, startPoint);
-                if (distance < 500) {
+                if (distance < 1000) {//Closer than a kilometer which is within the margin of error
                     tooClose = true;
                 }
             }
-            c.close();
         }
+        if (c != null) c.close();
 
 
         return tooClose;

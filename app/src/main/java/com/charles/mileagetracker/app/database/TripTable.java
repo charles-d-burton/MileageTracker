@@ -19,6 +19,7 @@ public class TripTable {
     public static final String ADDRESS = "start_address";
     public static final String DISTANCE = "total_distance";
     public static final String BUSINESS_RELATED = "business_related";
+    public static final String FINALIZED = "finalized";
     //public static final String TIME_STAMP_MILLIS = "timestamp";
 
     // Database creation sql statement
@@ -35,6 +36,7 @@ public class TripTable {
             + LON + " REAL, "
             + DISTANCE + " REAL DEFAULT 0, "
             + ADDRESS + " TEXT DEFAULT NULL, "
+            + FINALIZED + " INTEGER DEFAULT 0, "
             + BUSINESS_RELATED + " INTEGER DEFAULT 0);";
 
     public static void onCreate(SQLiteDatabase database) {

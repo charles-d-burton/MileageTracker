@@ -514,7 +514,7 @@ public class SetHome extends Activity implements
                     }
                 }
             }
-            c.close();
+            if (c != null) c.close();
 
             return homes;  //Return a complete list of homes that are in the database
         }

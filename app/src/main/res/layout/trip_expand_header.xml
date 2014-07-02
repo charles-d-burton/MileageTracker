@@ -3,15 +3,19 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="#000000">
+    android:gravity="center_vertical">
 
     <TextView
         android:id="@+id/list_header"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="40dp"
         android:paddingLeft="?android:attr/expandableListPreferredItemPaddingLeft"
-        android:textSize="17dp"
-        android:textColor="#f9f93d" />
+        android:textSize="18dp"
+        android:textColor="@android:color/black"
+        android:background="@drawable/abc_ab_solid_light_holo"
+        android:typeface="normal"
+        android:textAlignment="center"
+        android:layout_gravity="center_vertical" />
 
 
 

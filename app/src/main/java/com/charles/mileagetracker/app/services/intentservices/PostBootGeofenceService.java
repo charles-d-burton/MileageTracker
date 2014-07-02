@@ -49,6 +49,8 @@ public class PostBootGeofenceService extends IntentService implements
 
     private int counter = 0;
 
+    private int accuracy = 0;
+
     public PostBootGeofenceService() {
         super("PostBootGeofenceService");
     }
@@ -58,13 +60,8 @@ public class PostBootGeofenceService extends IntentService implements
         context = getApplicationContext();
         if (intent != null) {
             final String action = intent.getAction();
-            locationClient = new LocationClient(context, this, this);
-            locationRequest = LocationRequest.create();
-            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-            locationRequest.setInterval(5000);
-            locationRequest.setFastestInterval(1000);
-            locationListener = new MyLocationListener();
-            locationClient.connect();
+            accuracy = 1;
+            initLocationUpdates();
             Log.v("DEBUG: ", "Trying to start locationclient from boot");
 
         }
@@ -124,6 +121,21 @@ public class PostBootGeofenceService extends IntentService implements
 
     }
 
+    private void initLocationUpdates() {
+        locationClient = new LocationClient(context, this, this);
+        locationRequest = LocationRequest.create();
+        if (accuracy == 0) {
+            locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        } else if (accuracy == 1) {
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        }
+
+        locationRequest.setInterval(5000);
+        locationRequest.setFastestInterval(1000);
+        locationListener = new MyLocationListener();
+        locationClient.connect();
+    }
+
     /*
     I know that you add Geofences by List and the calling method here is actually generating basically
     a list of Geofences so this might seem inefficient.  It however is not what it seems, I need to
@@ -159,7 +171,7 @@ public class PostBootGeofenceService extends IntentService implements
             int id = (Integer)it.next();
             LatLng center = fenceCenters.get(id);
             double distance = getDistance(currentLocation, center);
-            if (distance < 500){//Inside GeoFence
+            if (distance < 500){//Inside GeoFence Within Margin of Error
                 return -1; //Known impossible value
             }
             if (distance < smallestDistance) {
@@ -187,14 +199,14 @@ public class PostBootGeofenceService extends IntentService implements
         return distance;
     }
 
-    private final class MyLocationListener implements LocationListener {
+    private class MyLocationListener implements LocationListener {
 
         @Override
         public void onLocationChanged(Location location) {
-            counter = ++counter;
             Log.v("DEBUG: ", "Current Accuracy: " + Double.toString(location.getAccuracy()));
             if (!addingProximityAlerts) {
-                if (location.getAccuracy() <= 100) {
+                counter = counter++;
+                if (location.getAccuracy() <= 100 || counter > 10) {
                     LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     int infenceId = checkInFence(currentLocation, fenceCenters);
                     if (infenceId != -1) {
@@ -203,6 +215,13 @@ public class PostBootGeofenceService extends IntentService implements
 
                     locationClient.removeLocationUpdates(locationListener);
                     locationClient.disconnect();
+                }
+
+                if (counter == 5) {
+                    Log.v("Post Boot Accuracy: ", "Accuracy too low, trying GPS");
+                    accuracy = 1;
+                    locationClient.disconnect();
+                    initLocationUpdates();
                 }
 
             }

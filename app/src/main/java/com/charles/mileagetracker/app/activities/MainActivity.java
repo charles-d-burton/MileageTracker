@@ -52,7 +52,7 @@ public class MainActivity extends Activity implements
 
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, PathSelectorActivity.class);
+                Intent intent = new Intent(MainActivity.this, ExpandingTripList.class);
                 MainActivity.this.startActivity(intent);
             }
         });

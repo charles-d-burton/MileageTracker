@@ -84,7 +84,7 @@ public class TripRowCreator {
         values.put(TripGroup.GROUP_CLOSED, 1);
 
         context.getContentResolver().update(uri, values, TripGroup.GROUP_ID + "=" + lastTripGroupId, null);
-        new GenerateDistances().doInBackground(lastTripGroupId);
+        new GenerateDistances().execute(lastTripGroupId);
 
         return true;
     }

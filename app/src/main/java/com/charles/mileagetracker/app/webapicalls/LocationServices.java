@@ -30,6 +30,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Scanner;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -150,6 +151,17 @@ public class LocationServices {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return Double.parseDouble(result_in_kms);
+
+
+        return getDoubleFromString(result_in_kms);
+        //return Double.parseDouble(result_in_kms);
+    }
+
+    private double getDoubleFromString(String string) {
+        Scanner st = new Scanner(string);
+        while (!st.hasNextDouble()) {
+            st.next();
+        }
+        return st.nextDouble();
     }
 }
