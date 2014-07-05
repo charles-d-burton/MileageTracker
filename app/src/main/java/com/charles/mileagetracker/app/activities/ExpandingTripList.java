@@ -41,7 +41,8 @@ public class ExpandingTripList extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expanding_trip_list);
 
-        listDataChild = new LinkedHashMap<String, ArrayList<HashMap<String, String>>>();
+
+        //listDataChild = new LinkedHashMap<String, ArrayList<HashMap<String, String>>>();
         listDataHeader = new ArrayList<String>();
 
         expListView = (ExpandableListView)findViewById(R.id.expanding_view);
@@ -55,8 +56,10 @@ public class ExpandingTripList extends Activity {
         expListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
                 @Override
                 public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-                    Log.d("DEBUG: ", "Child clicked");
-                    HashMap<String, String> data = listDataChild.get(groupPosition).get(childPosition);
+                    Log.d("DEBUG: ", "Child clicked: " + Integer.toString(groupPosition));
+
+
+                    HashMap<String, String> data = listDataChild.get(listDataHeader.get(groupPosition)).get(childPosition);
                     v.setBackgroundColor(R.drawable.abc_ab_solid_light_holo);
                     return false;
                 }

@@ -157,7 +157,7 @@ public class ActivityRecognitionService extends Service implements
 
             return true;
         } else {
-
+            Log.v("DEBUG Activity RecognitionService: ", "Play Services Not Available");
             return false;
         }
     }

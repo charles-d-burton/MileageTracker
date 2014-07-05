@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:weightSum="1"
@@ -15,7 +15,7 @@
         android:paddingBottom="5dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_toLeftOf="@+id/map_button"
+
         android:paddingTop="3dp"
         android:paddingLeft="2dp"
         />
@@ -29,10 +29,10 @@
         android:layout_alignParentStart="true"
         android:layout_below="@+id/end_trip_item_address"
         android:layout_alignParentLeft="true"
-        android:layout_toLeftOf="@+id/map_button"
+
         android:paddingLeft="2dp" />
 
-    <ImageButton
+    <!--<ImageButton
         android:layout_width="64dp"
         android:layout_height="wrap_content"
         android:id="@+id/map_button"
@@ -46,6 +46,6 @@
         android:layout_alignParentEnd="true"
         android:layout_alignBottom="@+id/end_trip_date_time"
         android:focusable="false"
-        />
+        />-->
 
-</RelativeLayout>
+</GridLayout>

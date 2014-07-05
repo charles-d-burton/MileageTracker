@@ -47,10 +47,6 @@ public class PostBootGeofenceService extends IntentService implements
     private boolean addingProximityAlerts = false;
     private boolean startedActivityRecognition = false;
 
-    private int counter = 0;
-
-    private int accuracy = 0;
-
     public PostBootGeofenceService() {
         super("PostBootGeofenceService");
     }
@@ -60,7 +56,6 @@ public class PostBootGeofenceService extends IntentService implements
         context = getApplicationContext();
         if (intent != null) {
             final String action = intent.getAction();
-            accuracy = 1;
             initLocationUpdates();
             Log.v("DEBUG: ", "Trying to start locationclient from boot");
 
@@ -124,11 +119,7 @@ public class PostBootGeofenceService extends IntentService implements
     private void initLocationUpdates() {
         locationClient = new LocationClient(context, this, this);
         locationRequest = LocationRequest.create();
-        if (accuracy == 0) {
-            locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-        } else if (accuracy == 1) {
-            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        }
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         locationRequest.setInterval(5000);
         locationRequest.setFastestInterval(1000);
@@ -204,9 +195,8 @@ public class PostBootGeofenceService extends IntentService implements
         @Override
         public void onLocationChanged(Location location) {
             Log.v("DEBUG: ", "Current Accuracy: " + Double.toString(location.getAccuracy()));
-            if (!addingProximityAlerts) {
-                counter = counter++;
-                if (location.getAccuracy() <= 100 || counter > 10) {
+            if (!addingProximityAlerts && location != null) {
+                if (location.getAccuracy() <= 100 ) {
                     LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     int infenceId = checkInFence(currentLocation, fenceCenters);
                     if (infenceId != -1) {
@@ -216,14 +206,6 @@ public class PostBootGeofenceService extends IntentService implements
                     locationClient.removeLocationUpdates(locationListener);
                     locationClient.disconnect();
                 }
-
-                if (counter == 5) {
-                    Log.v("Post Boot Accuracy: ", "Accuracy too low, trying GPS");
-                    accuracy = 1;
-                    locationClient.disconnect();
-                    initLocationUpdates();
-                }
-
             }
         }
     }

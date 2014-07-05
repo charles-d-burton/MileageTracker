@@ -195,7 +195,6 @@ public class ActivityRecognitionIntentService extends IntentService {
     private void startLocationHandler() {
 
         Intent startLocationIntent = new Intent(getApplicationContext(), GetCurrentLocation.class);
-        //startLocationIntent.putExtra(GetCurrentLocation.LOCATION_MESSENGER, messenger);
         startService(startLocationIntent);
     }
 
