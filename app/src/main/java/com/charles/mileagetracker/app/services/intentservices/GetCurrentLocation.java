@@ -97,6 +97,7 @@ public class GetCurrentLocation extends IntentService implements
         @Override
         public void onLocationChanged(Location location) {
             Log.d("DEBUG: ", "Location Changed.  Accuracy: " + Double.toString(location.getAccuracy()));
+            locationTryCounter = locationTryCounter + 1;
             if (location != null && location.getAccuracy() <= 100) {
                 if (tooCloseToStartPoint(location)) {
                     locationClient.disconnect();
@@ -108,6 +109,16 @@ public class GetCurrentLocation extends IntentService implements
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+                }
+            } else if (locationTryCounter > 5 ) {
+                locationTryCounter = 0;
+                try {
+                    logLocation(location);
+                    locationClient.disconnect();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
             }
         }
