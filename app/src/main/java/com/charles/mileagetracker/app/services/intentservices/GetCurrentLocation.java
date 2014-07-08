@@ -66,7 +66,7 @@ public class GetCurrentLocation extends IntentService implements
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (locationClient.isConnected()) locationClient.disconnect();
+        if (locationClient != null && locationClient.isConnected()) locationClient.disconnect();
         //locationClient.disconnect();
     }
 
@@ -79,7 +79,7 @@ public class GetCurrentLocation extends IntentService implements
 
     @Override
     public void onDisconnected() {
-        locationClient.removeLocationUpdates(locationListener);
+        //locationClient.removeLocationUpdates(locationListener);
         //stopSelf();
 
     }
@@ -97,28 +97,20 @@ public class GetCurrentLocation extends IntentService implements
         @Override
         public void onLocationChanged(Location location) {
             Log.d("DEBUG: ", "Location Changed.  Accuracy: " + Double.toString(location.getAccuracy()));
-            locationTryCounter = locationTryCounter + 1;
             if (location != null && location.getAccuracy() <= 100) {
                 if (tooCloseToStartPoint(location)) {
+                    locationClient.removeLocationUpdates(this);
                     locationClient.disconnect();
                 } else {
                     try {
                         logLocation(location);
                         //generateMessage(location.getLatitude(), location.getLongitude());
+                        locationClient.removeLocationUpdates(this);
                         locationClient.disconnect();
+
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                }
-            } else if (locationTryCounter > 5 ) {
-                locationTryCounter = 0;
-                try {
-                    logLocation(location);
-                    locationClient.disconnect();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
                 }
             }
         }
@@ -129,8 +121,8 @@ public class GetCurrentLocation extends IntentService implements
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        locationRequest.setInterval(5000);
-        locationRequest.setFastestInterval(1000);
+        //locationRequest.setInterval(5000);
+        //locationRequest.setFastestInterval(1000);
         locationListener = new MyLocationListener();
         locationClient.connect();
     }
@@ -145,12 +137,13 @@ public class GetCurrentLocation extends IntentService implements
         LatLng oldLocation = new LatLng(tripVars.getLastLat(), tripVars.getLastLon());
         double distance = getDistance(oldLocation, new LatLng(lat, lon));
 
-        if (distance > 750) {//Larger than the geofence, gives me a margin of error
+        if (distance > 1000) {//Larger than the geofence, gives me a margin of error
             TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());
             rowCreator.recordSegment(tripVars.getId(),lat, lon);
             tripVars.setSegmentRecorded(true);
             tripVars.setLastLat(lat);
             tripVars.setLastLon(lon);
+            tripVars.setSegmentRecording(false);
             accessCache.writeObject(getApplicationContext(), TripVars.KEY, tripVars);
         }
 

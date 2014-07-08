@@ -42,7 +42,7 @@ public class ExpandingTripList extends Activity {
         setContentView(R.layout.activity_expanding_trip_list);
 
 
-        //listDataChild = new LinkedHashMap<String, ArrayList<HashMap<String, String>>>();
+        listDataChild = new LinkedHashMap<String, ArrayList<HashMap<String, String>>>();
         listDataHeader = new ArrayList<String>();
 
         expListView = (ExpandableListView)findViewById(R.id.expanding_view);

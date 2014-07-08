@@ -22,7 +22,7 @@
         </activity>
 
         <provider
-            android:name=".database.TrackerContentProvider"
+            android:name="com.charles.mileagetracker.app.database.TrackerContentProvider"
             android:authorities="com.charles.mileagetracker.app.database.TrackerContentProvider"
             android:exported="true" >
         </provider>
@@ -47,28 +47,29 @@
         </service>
 
         <receiver
-            android:name=".receivers.BootReceiver"
+            android:name="com.charles.mileagetracker.app.receivers.BootReceiver"
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
 
         <service
-            android:name=".services.intentservices.PostBootGeofenceService"
+            android:name="com.charles.mileagetracker.app.services.intentservices.PostBootGeofenceService"
             android:exported="false" >
         </service>
         <service
-            android:name=".services.ActivityRecognitionService"
+            android:name="com.charles.mileagetracker.app.services.ActivityRecognitionService"
             android:exported="false" >
         </service>
         <service
-            android:name=".services.intentservices.ActivityRecognitionIntentService"
+            android:name="com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService"
             android:exported="false" >
         </service>
         <service
-            android:name=".services.intentservices.GetCurrentLocation"
+            android:name="com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation"
             android:exported="false" >
         </service>
 
@@ -76,11 +77,6 @@
             android:name=".activities.PathSelectorActivity"
             android:label="@string/title_activity_path_selector" >
         </activity>
-
-        <service
-            android:name=".services.intentservices.RecordAllPathSegments"
-            android:exported="false" >
-        </service>
 
         <meta-data
             android:name="com.google.android.gms.version"

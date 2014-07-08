@@ -36,6 +36,8 @@ public class AccessInternalStorage {
         FileInputStream fis = context.openFileInput(key);
         ObjectInputStream ois = new ObjectInputStream(fis);
         Object object = ois.readObject();
+        ois.close();
+        fis.close();
         return object;
     }
 }

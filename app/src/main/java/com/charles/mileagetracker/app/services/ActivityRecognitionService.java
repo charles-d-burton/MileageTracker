@@ -58,8 +58,6 @@ public class ActivityRecognitionService extends Service implements
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.v("DEBUG: ", "Binding ActivityRecognition Class");
-        Log.v("DEBUG: ", Integer.toString(intent.getIntExtra("id", -1)));
         return null;
     }
 
@@ -86,7 +84,7 @@ public class ActivityRecognitionService extends Service implements
             getLocationIntent.putExtra("stop", true);
             startService(getLocationIntent);
             stopUpdates();
-            return START_NOT_STICKY;
+            return 0;
         } else {
             id = intent.getIntExtra("id", -1);
             lat = intent.getDoubleExtra("lat", -1);
@@ -98,9 +96,10 @@ public class ActivityRecognitionService extends Service implements
 
 
             Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
+            mInProgress = false;
             startUpdates();
         }
-        return START_REDELIVER_INTENT;
+        return 0;
     }
 
     @Override
@@ -117,12 +116,14 @@ public class ActivityRecognitionService extends Service implements
             case START:
                 mActivityRecognitionClient.requestActivityUpdates(60000,mActivityRecognitionPendingIntent);
                 mInProgress = false;
+                Log.d("DEBUG:", "Request fulfilled, disconnecting");
                 mActivityRecognitionClient.disconnect();
                 break;
             case STOP:
                 mActivityRecognitionClient.removeActivityUpdates(mActivityRecognitionPendingIntent);
                 getApplicationContext().stopService(new Intent(getApplicationContext(), ActivityRecognitionIntentService.class));
                 mActivityRecognitionClient.disconnect();
+                mActivityRecognitionPendingIntent.cancel();
                 break;
             default :
                 //throw new Exception("Unknown request type in onConnected().");
@@ -171,6 +172,7 @@ public class ActivityRecognitionService extends Service implements
         // Check for Google Play services
         mRequestType = REQUEST_TYPE.START;
         if (!servicesConnected()) {
+
             return;
         }
         // If a request is not already underway
@@ -178,6 +180,7 @@ public class ActivityRecognitionService extends Service implements
             // Indicate that a request is in progress
             mInProgress = true;
             // Request a connection to Location Services
+            Log.d("DEBUG: ", "Connecting client");
             mActivityRecognitionClient.connect();
             //
         } else {

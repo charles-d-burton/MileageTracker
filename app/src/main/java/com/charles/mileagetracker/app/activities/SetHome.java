@@ -87,8 +87,8 @@ public class SetHome extends Activity implements
 
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(5000);
-        locationRequest.setFastestInterval(1000);
+        //locationRequest.setInterval(5000);
+        //locationRequest.setFastestInterval(1000);
 
         locationClient = new LocationClient(this, this, this);
         locationListener = new MyLocationListener();

@@ -52,7 +52,6 @@ public class ActivityRecognitionIntentService extends IntentService {
      */
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.d("DEBUG: ", "Handling Activity Recognition");
         accessCache = new AccessInternalStorage();
         try {
             tripVars = (TripVars)accessCache.readObject(getApplicationContext(), TripVars.KEY);
@@ -155,7 +154,8 @@ public class ActivityRecognitionIntentService extends IntentService {
         int counter = tripVars.getNotDrivingCounter();
         counter = counter + 1;
         tripVars.setNotDrivingCounter(counter);
-        if (counter > 1 && !tripVars.isSegmentRecorded()) {//Trip segment not recorded, the class GetCurrentLocation will set this flag to true
+        if (counter > 1 && !tripVars.isSegmentRecorded() && !tripVars.isSegmentRecording()) {//Trip segment not recorded, the class GetCurrentLocation will set this flag to true
+            tripVars.setSegmentRecording(true);
             startLocationHandler();
         }
 
@@ -171,7 +171,8 @@ public class ActivityRecognitionIntentService extends IntentService {
         int counter = tripVars.getNotDrivingCounter();
         counter = counter + 1;
         tripVars.setNotDrivingCounter(counter);
-        if (counter >= 4 && !tripVars.isSegmentRecorded()) {
+        if (counter >= 4 && !tripVars.isSegmentRecorded() && !tripVars.isSegmentRecording()) {
+            tripVars.setSegmentRecording(true);
             startLocationHandler();
         }
 

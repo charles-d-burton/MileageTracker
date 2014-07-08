@@ -23,14 +23,21 @@ public class TripVars implements Serializable {
 
     private double lastLat = -1;
     private double lastLon = -1;
-
-
-
     private long lastTime = -1;
 
     private boolean driving = false;
     private boolean segmentRecorded = false;
     private int notDrivingUpdates = 0;
+
+    public boolean isSegmentRecording() {
+        return segmentRecording;
+    }
+
+    public void setSegmentRecording(boolean segmentRecording) {
+        this.segmentRecording = segmentRecording;
+    }
+
+    private boolean segmentRecording = false;
 
     public int getFenceTransitionType() {
         return fenceTransitionType;

@@ -107,14 +107,14 @@ public class GeofenceReceiver extends BroadcastReceiver {
         double lat = center.latitude;
         double lon = center.longitude;
 
-        Intent stopActivityService = new Intent(this.context.getApplicationContext(), ActivityRecognitionService.class);
+        Intent stopActivityService = new Intent(this.context, ActivityRecognitionService.class);
         stopActivityService.putExtra("stop", true);
         stopActivityService.putExtra("id", id);
         stopActivityService.putExtra("lat", lat);
         stopActivityService.putExtra("lon", lon);
 
         this.context.startService(stopActivityService);
-        this.context.stopService(new Intent(this.context.getApplicationContext(),GetCurrentLocation.class));
+        this.context.stopService(new Intent(this.context,GetCurrentLocation.class));
 
         //Record our end point then close out the trip
         TripRowCreator creator = new TripRowCreator(this.context);
