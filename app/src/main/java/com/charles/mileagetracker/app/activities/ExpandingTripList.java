@@ -12,27 +12,23 @@ import android.widget.ExpandableListView;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.adapter.ExpandableListAdapter;
-import com.charles.mileagetracker.app.database.StartPoints;
+import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
+import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripTable;
 import com.charles.mileagetracker.app.webapicalls.LocationServices;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.TreeMap;
 
 public class ExpandingTripList extends Activity {
 
     ExpandableListAdapter listAdapter;
     ExpandableListView expListView;
-    List<String> listDataHeader;
-    LinkedHashMap<String, ArrayList<HashMap<String, String>>> listDataChild;
+
+    private ArrayList<ExpandListGroup> listGroups;
     //private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
     private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
 
@@ -40,26 +36,20 @@ public class ExpandingTripList extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expanding_trip_list);
-
-
-        listDataChild = new LinkedHashMap<String, ArrayList<HashMap<String, String>>>();
-        listDataHeader = new ArrayList<String>();
-
         expListView = (ExpandableListView)findViewById(R.id.expanding_view);
+        listGroups = new ArrayList<ExpandListGroup>();
 
         initCursor();
 
-        listAdapter = new ExpandableListAdapter(this, listDataHeader, listDataChild);
+        listAdapter = new ExpandableListAdapter(this, listGroups);
 
         expListView.setAdapter(listAdapter);
 
         expListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
                 @Override
                 public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-                    Log.d("DEBUG: ", "Child clicked: " + Integer.toString(groupPosition));
+                    Log.d("DEBUG: ", "Group clicked: " + Integer.toString(groupPosition));
 
-
-                    HashMap<String, String> data = listDataChild.get(listDataHeader.get(groupPosition)).get(childPosition);
                     v.setBackgroundColor(R.drawable.abc_ab_solid_light_holo);
                     return false;
                 }
@@ -86,48 +76,65 @@ public class ExpandingTripList extends Activity {
         if (c != null && c.getCount() > 0) {
             c.moveToPosition(c.getCount() + 1);//Move cursor one postion beyond end of list
             while (c.moveToPrevious()) {
-                String group_id = Integer.toString(c.getInt(c.getColumnIndexOrThrow(TripTable.TRIP_KEY)));
-                HashMap info = buildSegment(c);
-                if (!listDataChild.containsKey(group_id)) {
-                    listDataHeader.add(group_id);
-                    ArrayList<HashMap<String, String>> data = new ArrayList<HashMap<String, String>>();
-                    data.add(info);
-                    listDataChild.put(group_id, data);
-                } else {
-                    ArrayList<HashMap<String, String>> data = listDataChild.get(group_id);
-                    data.add(info);
-                    listDataChild.put(group_id, data);
-                }
+                int group_id = c.getInt(c.getColumnIndexOrThrow(TripTable.TRIP_KEY));
+                double distance = c.getDouble(c.getColumnIndexOrThrow(TripTable.DISTANCE));
+                ExpandListGroup group = getGroup(group_id);
+                ExpandListChild child = buildChild(c);
+                group.addItem(child);
+
             }
         }
 
-        Iterator it = listDataChild.keySet().iterator();
-        while (it.hasNext()) {
-            String key = (String)it.next();
-            ArrayList data = (ArrayList)listDataChild.get(key);
-            Collections.reverse(data);//Reverse the data so that it shows newest first
-        }
         if (c != null) c.close();
+        reverseChildren();
 
     }
 
-    private HashMap<String, String> buildSegment(Cursor c) {
-        long date = c.getLong(c.getColumnIndexOrThrow(TripTable.TIME));
-        String dateString = format.format(new Date(date));
+    private ExpandListGroup getGroup(int group_id){
+        Iterator it = listGroups.iterator();
+        while (it.hasNext()) {
+            ExpandListGroup group = (ExpandListGroup)it.next();
+            if (group.getGroupId() == group_id) {
+                return group;
+            }
+        }
+        ExpandListGroup group = new ExpandListGroup(group_id);
+        listGroups.add(group);
+        return group;//Default to
+    }
+
+    private ExpandListChild buildChild(Cursor c) {
+        long millis = c.getLong(c.getColumnIndexOrThrow(TripTable.TIME));
+        String dateString = format.format(new Date(millis));
         double lat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
         double lon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
-        Log.v("EXList Lat: ", Double.toString(lat));
-        Log.v("EXList Lon: ", Double.toString(lon));
+        double distance = c.getDouble(c.getColumnIndexOrThrow(TripTable.DISTANCE));
+        int businessRelated = c.getInt(c.getColumnIndexOrThrow(TripTable.BUSINESS_RELATED));
+        int id = c.getInt(c.getColumnIndexOrThrow(TripTable.COLUMN_ID));
         String address = c.getString(c.getColumnIndexOrThrow(TripTable.ADDRESS));
+        int group_id = c.getInt(c.getColumnIndexOrThrow(TripTable.TRIP_KEY));
         if (address.trim().length() == 0) {
             address = getAddress(lat, lon);
         }
+        return new ExpandListChild(dateString,millis,id,distance,group_id,lat,lon,businessRelated,address);
+    }
 
-        HashMap<String, String> values = new HashMap<String, String>();
-        values.put("address", address);
-        values.put("date", dateString);
-        return values;
-        //return dateString + "\n" + address;
+
+
+    private void reverseChildren() {
+        //Reverse the internal lists so the dates are in the correct order.
+        Iterator it = listGroups.iterator();
+        while (it.hasNext()) {
+            ExpandListGroup group = (ExpandListGroup)it.next();
+            group.reverseChildren();
+            setName(group);
+        }
+    }
+
+    //Set the name of the group to the first date of a recorded trip
+    private void setName(ExpandListGroup group) {
+        ExpandListChild child = group.getItems().get(0);
+        group.setName(child.getDate());
     }
 
     private String getAddress(double lat, double lon) {
