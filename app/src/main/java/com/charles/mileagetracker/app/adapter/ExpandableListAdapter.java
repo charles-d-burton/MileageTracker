@@ -76,7 +76,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         String headerTitle = group.getName();
 
         if (convertView == null) {
-                LayoutInflater inflater = (LayoutInflater) this.context
+                LayoutInflater inflater = (LayoutInflater) context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.trip_expand_header, null);
         }
@@ -94,10 +94,17 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
 
         ExpandListChild child = (ExpandListChild)getChild(groupPosition, childPosition);
 
-        if (convertView == null) {
-            LayoutInflater inflater = (LayoutInflater) this.context
+        //if (convertView == null) {
+            LayoutInflater inflater = (LayoutInflater) context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.trip_list_item, null);
+        //}
+
+
+        if (child.isBusinessRelated() == 1) {
+            convertView.setBackgroundColor(context.getResources().getColor(R.color.semi_lightblue));
+        } else {
+            convertView.setBackgroundColor(context.getResources().getColor(R.color.white));
         }
 
         TextView addressView = (TextView) convertView

@@ -116,6 +116,7 @@ public class ActivityRecognitionIntentService extends IntentService {
                 handleStill(confidence);
                 break;
             case DetectedActivity.TILTING:
+                handleStill(confidence);
                 //Log.v("DEBUG: ", "Tilting at windmills");
                 break;
             default:

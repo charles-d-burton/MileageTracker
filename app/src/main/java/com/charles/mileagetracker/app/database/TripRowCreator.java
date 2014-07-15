@@ -130,7 +130,9 @@ public class TripRowCreator {
         Once I have that I define four double that represent the locations that I need the distance between.
         I iterate through the rows getting the lat/long of where the stop was taken then processing the distance
         between the previous one and the current one.  It then resets the variables when finished making the current
-        one the previous.
+        one the previous.  It also handles cleaning up false positive trips, meaning a "trip" where the fence was triggered,
+        but you didn't actually go anywhere because you're right on the edge of the fence.  So your distance is effectively zero
+        and you didn't actually travel anywhere.
          */
         @Override
         protected String doInBackground(Integer... params) {
@@ -159,13 +161,19 @@ public class TripRowCreator {
                         endLat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
                         endLon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
                         double distance = locationServices.getDistance(startLat, startLon, endLat, endLon);
-                        updateRow(id, distance, context);
-                        startLat = endLat;
-                        startLon = endLon;
+                        if ((distance * 0.621) < 1 && c.getCount() == 2) { //Started and ended in the same place with no stops.
+                            context.getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.TRIP_KEY + "=" +Integer.toString(groupId),null);
+
+                            break;//Get out of the loop
+                        } else {
+                            updateRow(id, distance, context);
+                            startLat = endLat;
+                            startLon = endLon;
+                        }
                     }
                 }
-                c.close();
             }
+            if (c != null) c.close();
 
             return null;
         }
@@ -177,10 +185,6 @@ public class TripRowCreator {
             ContentResolver resolver = context.getContentResolver();
 
             resolver.update(TrackerContentProvider.TRIP_URI, values, TripTable.COLUMN_ID + "=" + rowId, null);
-
-
         }
-
-
     }
 }

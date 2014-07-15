@@ -14,6 +14,7 @@ import com.charles.mileagetracker.app.cache.AccessInternalStorage;
 import com.charles.mileagetracker.app.cache.TripVars;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
+import com.charles.mileagetracker.app.database.TripRowCreator;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -201,6 +202,7 @@ public class PostBootGeofenceService extends IntentService implements
                     int infenceId = checkInFence(currentLocation, fenceCenters);
                     if (infenceId != -1) {
                         startUpdates(location, infenceId);
+                    } else {
                     }
 
                     locationClient.removeLocationUpdates(locationListener);

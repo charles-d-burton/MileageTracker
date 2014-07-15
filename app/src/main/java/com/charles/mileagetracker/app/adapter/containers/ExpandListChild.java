@@ -58,6 +58,7 @@ public class ExpandListChild {
     }
 
     public void setBusinessRelated(int businessRelated) {
+
         this.businessRelated = businessRelated;
     }
 
