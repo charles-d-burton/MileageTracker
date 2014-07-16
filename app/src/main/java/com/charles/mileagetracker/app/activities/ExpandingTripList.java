@@ -1,6 +1,7 @@
 package com.charles.mileagetracker.app.activities;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -43,12 +44,12 @@ public class ExpandingTripList extends Activity {
         bar = (ProgressBar)findViewById(R.id.progressBar);
 
         listGroups = new ArrayList<ExpandListGroup>();
-
-        new FillData().execute("");
-
         listAdapter = new ExpandableListAdapter(this, listGroups);
 
+
+
         expListView.setAdapter(listAdapter);
+
 
         expListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
                 @Override
@@ -63,12 +64,20 @@ public class ExpandingTripList extends Activity {
                     } else {
                         child.setBusinessRelated(1);
                     }
+                    new SaveChild().doInBackground(child);
                     listAdapter.notifyDataSetChanged();
                     //v.setBackgroundColor(R.drawable.abc_ab_solid_light_holo);
                     return false;
                 }
             }
         );
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        new FillData().doInBackground("");
+        //listAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -133,8 +142,9 @@ public class ExpandingTripList extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            listAdapter.notifyDataSetChanged();
+
             bar.setVisibility(View.INVISIBLE);
+            listAdapter.notifyDataSetChanged();
         }
 
         private ExpandListGroup getGroup(int group_id){
@@ -157,7 +167,7 @@ public class ExpandingTripList extends Activity {
             double lon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
             double distance = c.getDouble(c.getColumnIndexOrThrow(TripTable.DISTANCE));
             double miles =  convertKmToMi(distance);
-            Log.v("DEBUG: ", "DISTANCE: " + Double.toString(miles) + "mi");
+            //Log.v("DEBUG: ", "DISTANCE: " + Double.toString(miles) + "mi");
             int businessRelated = c.getInt(c.getColumnIndexOrThrow(TripTable.BUSINESS_RELATED));
             int id = c.getInt(c.getColumnIndexOrThrow(TripTable.COLUMN_ID));
             String address = c.getString(c.getColumnIndexOrThrow(TripTable.ADDRESS));
@@ -187,7 +197,7 @@ public class ExpandingTripList extends Activity {
         private String getAddress(double lat, double lon) {
             LocationServices services = new LocationServices(getApplicationContext());
             String address = services.getRoadName(lat, lon);
-            Log.v("EXList Address: ", address);
+            //Log.v("EXList Address: ", address);
             return address;
         }
 
@@ -195,6 +205,21 @@ public class ExpandingTripList extends Activity {
             // Assume there are 0.621 miles in a kilometer.
             double miles = kilometers * 0.621;
             return miles;
+        }
+    }
+
+    private class SaveChild extends AsyncTask<ExpandListChild, String, String> {
+
+        @Override
+        protected String doInBackground(ExpandListChild... params) {
+            ExpandListChild child = params[0];
+            if (child != null) {
+                //String projection[] = {TripTable.BUSINESS_RELATED, TripTable.TRIP_KEY};
+                ContentValues values = new ContentValues();
+                values.put(TripTable.BUSINESS_RELATED, child.isBusinessRelated());
+                getContentResolver().update(TrackerContentProvider.TRIP_URI,values, TripTable.COLUMN_ID + "=" + child.getId(), null);
+            }
+            return null;
         }
     }
 }

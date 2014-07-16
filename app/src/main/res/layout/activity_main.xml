@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     tools:context="com.charles.mileagetracker.app.activities.MainActivity">
 
-    <FrameLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/main_activity_content_frame">
@@ -15,20 +15,51 @@
             android:layout_height="wrap_content"
             android:text="@string/gen_report"
             android:id="@+id/gen_report"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="49dp"
-            android:layout_gravity="center" />
+            android:layout_gravity="center"
+            android:layout_alignTop="@+id/review_trips"
+            android:layout_toRightOf="@+id/review_trips" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/set_home"
             android:id="@+id/set_home"
-            android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true"
-            android:layout_gravity="center" />
-    </FrameLayout>
+            android:layout_gravity="center"
+            android:layout_marginTop="125dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Review Trips"
+            android:id="@+id/review_trips"
+            android:layout_alignTop="@+id/set_home"
+            android:layout_toRightOf="@+id/set_home" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Total Mileage:"
+            android:id="@+id/totalMileageIdText"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_toLeftOf="@+id/gen_report" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="0 Miles"
+            android:id="@+id/totalMileageField"
+            android:layout_below="@+id/totalMileageIdText"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+    </RelativeLayout>
 
     <fragment
         android:id="@+id/drawer_view_main"

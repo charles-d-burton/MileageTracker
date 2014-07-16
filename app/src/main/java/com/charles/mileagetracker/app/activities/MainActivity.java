@@ -7,17 +7,21 @@ import android.app.LoaderManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripTable;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -34,11 +38,14 @@ public class MainActivity extends Activity implements
 
     private LocationManager lm;
 
+    private TextView mileageView = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         servicesConnected();
         setContentView(R.layout.activity_main);
+
         Button b = (Button) findViewById(R.id.set_home);
         b.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -47,7 +54,8 @@ public class MainActivity extends Activity implements
                 startActivity(intent);
             }
         });
-        Button generateReport = (Button)findViewById(R.id.gen_report);
+
+        Button generateReport = (Button)findViewById(R.id.review_trips);
         generateReport.setOnClickListener(new View.OnClickListener(){
 
             @Override
@@ -56,6 +64,8 @@ public class MainActivity extends Activity implements
                 MainActivity.this.startActivity(intent);
             }
         });
+
+        mileageView = (TextView) findViewById(R.id.totalMileageField);
         //startService(new Intent(this, LocationPingService.class));
     }
 
@@ -76,6 +86,7 @@ public class MainActivity extends Activity implements
     @Override
     public void onResume() {
         super.onResume();
+        new CalculateMileage().execute();
     }
 
 
@@ -200,5 +211,38 @@ public class MainActivity extends Activity implements
                 }
         }
 
+    }
+
+    private class CalculateMileage extends AsyncTask<Void, Void, Void> {
+        private double totalDistance = 0.0;
+        @Override
+        protected Void doInBackground(Void... params) {
+            String projection[] = {
+                    TripTable.COLUMN_ID,
+                    TripTable.DISTANCE,
+                    TripTable.BUSINESS_RELATED
+            };
+            Cursor c = getContentResolver().query(TrackerContentProvider.TRIP_URI, projection, null, null, null);
+            if (c != null && c.getCount() > 0) {
+                c.moveToPosition(-1);
+                while (c.moveToNext()) {
+                    int business = c.getInt(c.getColumnIndexOrThrow(TripTable.BUSINESS_RELATED));
+                    if (business == 1) {
+
+                        double distance = c.getDouble(c.getColumnIndexOrThrow(TripTable.DISTANCE));
+
+                        totalDistance = totalDistance + (distance * 0.621);//Convert to mileage
+                        //Log.v("DISTANCE: " , Double.toString(totalDistance));
+                    }
+                }
+            }
+            if (c != null) c.close();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void param) {
+            ((TextView)findViewById(R.id.totalMileageField)).setText(Integer.toString(new Double(totalDistance).intValue()) + " Miles");
+        }
     }
 }

@@ -21,6 +21,7 @@ import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripRowCreator;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation;
+import com.charles.mileagetracker.app.services.intentservices.SaveBusinessRelated;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.model.LatLng;
@@ -101,9 +102,9 @@ public class GeofenceReceiver extends BroadcastReceiver {
     }
 
     private void transitionEnter(int id, LatLng center) {
-        String message = "Entering fence";
+        //String message = "Entering fence";
         //boolean running = isServiceRunning();
-        Log.v("DEBUG: ", "Killing Running Record Service");
+        //Log.v("DEBUG: ", "Killing Running Record Service");
         double lat = center.latitude;
         double lon = center.longitude;
 
@@ -118,8 +119,8 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
         //Record our end point then close out the trip
         TripRowCreator creator = new TripRowCreator(this.context);
-        creator.closeGroup(id, lat, lon);
-        generateNotification("Trip Complete","Were all stops business related?", Geofence.GEOFENCE_TRANSITION_ENTER);
+        int groupId = creator.closeGroup(id, lat, lon);
+        generateNotification("Trip Complete","Were all stops business related?", groupId);
     }
 
     private void transitionExit(int id, LatLng center) {
@@ -139,25 +140,31 @@ public class GeofenceReceiver extends BroadcastReceiver {
         activityRecognitionService.putExtra("transition", "exit");
 
         this.context.startService(activityRecognitionService);
-        generateNotification("Recording Trip",message, Geofence.GEOFENCE_TRANSITION_EXIT);
+        //generateNotification("Recording Trip",message, Geofence.GEOFENCE_TRANSITION_EXIT);
     }
 
 
-    private void generateNotification(String title, String message, int geoFenceMode) {
+    private void generateNotification(String title, String message, int groupId) {
 
         Intent pathIntent = new Intent(context, ExpandingTripList.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(PathSelectorActivity.class);
+        stackBuilder.addParentStack(ExpandingTripList.class);
         stackBuilder.addNextIntent(pathIntent);
 
-        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent selectPathSegments = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        //Intent to record all trip segments
+        Intent saveTripService = new Intent(context, SaveBusinessRelated.class);
+        saveTripService.putExtra("group", groupId);
+        PendingIntent saveTrip = PendingIntent.getService(context, 0, saveTripService,PendingIntent.FLAG_ONE_SHOT);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle(title)
                 .setContentText(message)
-                .setContentIntent(pendingIntent)
-                .addAction(android.R.drawable.btn_plus, "Yes", pendingIntent)
-                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "No", pendingIntent);
+                .setContentIntent(selectPathSegments)
+                .addAction(android.R.drawable.btn_plus, "Yes", saveTrip)
+                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "No", selectPathSegments);
 
         NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(0, builder.build());

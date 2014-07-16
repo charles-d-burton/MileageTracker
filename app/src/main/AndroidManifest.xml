@@ -22,7 +22,7 @@
         </activity>
 
         <provider
-            android:name="com.charles.mileagetracker.app.database.TrackerContentProvider"
+            android:name=".database.TrackerContentProvider"
             android:authorities="com.charles.mileagetracker.app.database.TrackerContentProvider"
             android:exported="true" >
         </provider>
@@ -47,7 +47,7 @@
         </service>
 
         <receiver
-            android:name="com.charles.mileagetracker.app.receivers.BootReceiver"
+            android:name=".receivers.BootReceiver"
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
@@ -57,19 +57,19 @@
         </receiver>
 
         <service
-            android:name="com.charles.mileagetracker.app.services.intentservices.PostBootGeofenceService"
+            android:name=".services.intentservices.PostBootGeofenceService"
             android:exported="false" >
         </service>
         <service
-            android:name="com.charles.mileagetracker.app.services.ActivityRecognitionService"
+            android:name=".services.ActivityRecognitionService"
             android:exported="false" >
         </service>
         <service
-            android:name="com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService"
+            android:name=".services.intentservices.ActivityRecognitionIntentService"
             android:exported="false" >
         </service>
         <service
-            android:name="com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation"
+            android:name=".services.intentservices.GetCurrentLocation"
             android:exported="false" >
         </service>
 
@@ -86,6 +86,11 @@
             android:name=".activities.ExpandingTripList"
             android:label="@string/title_activity_expanding_trip_list" >
         </activity>
+
+        <service
+            android:name=".services.intentservices.SaveBusinessRelated"
+            android:exported="false" >
+        </service>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

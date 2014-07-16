@@ -66,11 +66,11 @@ public class TripRowCreator {
     and then updating it as closed.  This has a cascade effect on all the associated trip points
     */
 
-    public boolean closeGroup(int id, double lat, double lon) {
+    public int closeGroup(int id, double lat, double lon) {
         int lastTripGroupId = lastTripOpen();
 
         if (lastTripGroupId == -1) {
-            return false;
+            return -1;
         }
 
         recordSegment(id, lat, lon);//Record our end point
@@ -86,7 +86,7 @@ public class TripRowCreator {
         context.getContentResolver().update(uri, values, TripGroup.GROUP_ID + "=" + lastTripGroupId, null);
         new GenerateDistances().execute(lastTripGroupId);
 
-        return true;
+        return lastTripGroupId;
     }
 
 
@@ -142,7 +142,7 @@ public class TripRowCreator {
                                    TripTable.LON,
                                    TripTable.TRIP_KEY,
                                    TripTable.COLUMN_ID};
-            Cursor c = context.getContentResolver().query(TrackerContentProvider.TRIP_URI, projection, TripTable.TRIP_KEY + "=" + Integer.toString(groupId), null, null);
+            Cursor c = context.getContentResolver().query(TrackerContentProvider.TRIP_URI, projection, null, null, null);
 
 
             double startLat = 0;
