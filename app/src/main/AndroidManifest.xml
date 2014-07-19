@@ -85,12 +85,20 @@
         <activity
             android:name=".activities.ExpandingTripList"
             android:label="@string/title_activity_expanding_trip_list" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.MainActivity" />
         </activity>
 
         <service
             android:name=".services.intentservices.SaveBusinessRelated"
             android:exported="false" >
         </service>
+
+        <activity
+            android:name=".activities.ReportGenerateActivity"
+            android:label="@string/title_activity_report_generate" >
+        </activity>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

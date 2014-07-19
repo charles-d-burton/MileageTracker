@@ -28,11 +28,11 @@ public class StartPoints {
     }
 
     public static void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        Log.w(TripTable.class.getName(),
+        /*Log.w(TripTable.class.getName(),
                 "Upgrading database from version " + oldVersion + " to "
                         + newVersion + ", which will destroy all old data");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_START_POINTS);
-        onCreate(db);
+        onCreate(db);*/
     }
 
 }

@@ -1,5 +1,6 @@
 package com.charles.mileagetracker.app.database;
 
+import android.app.NotificationManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -142,7 +143,7 @@ public class TripRowCreator {
                                    TripTable.LON,
                                    TripTable.TRIP_KEY,
                                    TripTable.COLUMN_ID};
-            Cursor c = context.getContentResolver().query(TrackerContentProvider.TRIP_URI, projection, null, null, null);
+            Cursor c = context.getContentResolver().query(TrackerContentProvider.TRIP_URI, projection, TripTable.TRIP_KEY + "=" + groupId, null, null);
 
 
             double startLat = 0;
@@ -163,7 +164,8 @@ public class TripRowCreator {
                         double distance = locationServices.getDistance(startLat, startLon, endLat, endLon);
                         if ((distance * 0.621) < 1 && c.getCount() == 2) { //Started and ended in the same place with no stops.
                             context.getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.TRIP_KEY + "=" +Integer.toString(groupId),null);
-
+                            NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+                            notificationManager.cancel(0);
                             break;//Get out of the loop
                         } else {
                             updateRow(id, distance, context);

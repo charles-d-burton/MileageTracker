@@ -56,8 +56,8 @@ public class ActivityRecognitionIntentService extends IntentService {
         try {
             tripVars = (TripVars)accessCache.readObject(getApplicationContext(), TripVars.KEY);
             Log.d("DEBUG: ", "Driving Counter: " + Integer.toString(tripVars.getNotDrivingCounter()));
-            Log.d("DEBUG: ", "ID: " + Integer.toString(tripVars.getId()));
-            Log.d("DEBUG: ", "SegmentRecorded: " + Boolean.toString(tripVars.isSegmentRecorded()));
+            //Log.d("DEBUG: ", "ID: " + Integer.toString(tripVars.getId()));
+            //Log.d("DEBUG: ", "SegmentRecorded: " + Boolean.toString(tripVars.isSegmentRecorded()));
         } catch (IOException e) {
             e.printStackTrace();
             return;

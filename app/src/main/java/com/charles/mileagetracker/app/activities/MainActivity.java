@@ -55,8 +55,8 @@ public class MainActivity extends Activity implements
             }
         });
 
-        Button generateReport = (Button)findViewById(R.id.review_trips);
-        generateReport.setOnClickListener(new View.OnClickListener(){
+        Button expandTrips = (Button)findViewById(R.id.review_trips);
+        expandTrips.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -65,8 +65,18 @@ public class MainActivity extends Activity implements
             }
         });
 
+        Button generateReport = (Button)findViewById(R.id.gen_report);
+        generateReport.setOnClickListener(new View.OnClickListener() {
+
+              @Override
+              public void onClick(View v) {
+                  Intent intent = new Intent(MainActivity.this, ReportGenerateActivity.class);
+                  MainActivity.this.startActivity(intent);
+              }
+          }
+
+        );
         mileageView = (TextView) findViewById(R.id.totalMileageField);
-        //startService(new Intent(this, LocationPingService.class));
     }
 
 

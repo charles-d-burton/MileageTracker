@@ -14,5 +14,6 @@
     <string name="title_activity_path_selector">PathSelectorActivity</string>
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_expanding_trip_list">ExpandingTripList</string>
+    <string name="title_activity_report_generate">ReportGenerateActivity</string>
 
 </resources>

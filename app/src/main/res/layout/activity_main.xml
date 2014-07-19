@@ -47,7 +47,10 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:layout_toLeftOf="@+id/gen_report" />
+            android:layout_toLeftOf="@+id/gen_report"
+            android:paddingLeft="5dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -57,7 +60,9 @@
             android:id="@+id/totalMileageField"
             android:layout_below="@+id/totalMileageIdText"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
+            android:layout_alignParentStart="true"
+            android:background="@drawable/blue_badge"
+            android:padding="10dp"/>
 
     </RelativeLayout>
 
