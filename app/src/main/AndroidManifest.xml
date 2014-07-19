@@ -99,6 +99,17 @@
             android:name=".activities.ReportGenerateActivity"
             android:label="@string/title_activity_report_generate" >
         </activity>
+
+        <receiver
+            android:name=".receivers.WifiReceiver"
+            android:enabled="true"
+            android:exported="true" >
+        </receiver>
+
+        <service
+            android:name=".services.intentservices.CalcMileageService"
+            android:exported="false" >
+        </service>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

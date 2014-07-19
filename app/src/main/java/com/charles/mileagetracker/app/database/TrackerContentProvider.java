@@ -134,6 +134,7 @@ public class TrackerContentProvider extends ContentProvider {
         }
 
         getContext().getContentResolver().notifyChange(uri, null);
+        db.close();
         Log.v("Insertion", "Successful Insertion");
         return returnUri;
     }
@@ -184,6 +185,7 @@ public class TrackerContentProvider extends ContentProvider {
 
 
         }
+        db.close();
         getContext().getContentResolver().notifyChange(uri, null);
         return rowsDeleted;
     }
@@ -234,6 +236,7 @@ public class TrackerContentProvider extends ContentProvider {
         }
 
         getContext().getContentResolver().notifyChange(uri, null);
+        db.close();
         return rowsUpdated;
     }
 
