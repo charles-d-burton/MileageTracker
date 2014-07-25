@@ -372,14 +372,17 @@ public class MainActivity extends Activity implements
             List<String[]> lines = new ArrayList<String[]>();
             if (c != null) {
                 c.moveToPosition(-1);
+                lines.add(new String[] {"Date", "Address", "Distance Traveled(miles)", "Latitude", "Longitude"});
                 while (c.moveToNext()) {
-                    long date = c.getLong(c.getColumnIndexOrThrow(TripTable.TIME));
-                    String address = c.getString(c.getColumnIndexOrThrow(TripTable.ADDRESS));
-                    int distance = c.getInt(c.getColumnIndexOrThrow(TripTable.DISTANCE));
-                    double lat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
-                    double lon  = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
-                    String line[] = getLine(date, address, distance, lat, lon);
-                    lines.add(line);
+                    if (c.getInt(c.getColumnIndexOrThrow(TripTable.BUSINESS_RELATED)) == 1) {
+                        long date = c.getLong(c.getColumnIndexOrThrow(TripTable.TIME));
+                        String address = c.getString(c.getColumnIndexOrThrow(TripTable.ADDRESS));
+                        int distance = new Double(c.getInt(c.getColumnIndexOrThrow(TripTable.DISTANCE)) * 0.621).intValue();
+                        double lat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
+                        double lon  = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
+                        String line[] = getLine(date, address, distance, lat, lon);
+                        lines.add(line);
+                    }
                 }
             }
             writeToFile(lines);
@@ -404,7 +407,7 @@ public class MainActivity extends Activity implements
 
             array[0] = sdf2.format(new Date(date));
             array[1] = "\"" + address + "\"";
-            array[2] = Integer.toString(distance);
+            array[2] = Integer.toString(distance );
             array[3] = Double.toString(lat);
             array[4] = Double.toString(lon);
             return array;
