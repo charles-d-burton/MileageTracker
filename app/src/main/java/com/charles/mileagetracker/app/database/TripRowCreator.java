@@ -165,7 +165,7 @@ public class TripRowCreator {
                         if (c.getCount() == 2 && (distance * 0.621) < 1) { //Started and ended in the same place with no stops.
                             context.getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.TRIP_KEY + "=" +Integer.toString(groupId),null);
                             NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-                            //notificationManager.cancel(0);
+                            notificationManager.cancel(0);
                             break;//Get out of the loop
                         } else {
                             updateRow(id, distance, context);

@@ -1,6 +1,7 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -102,5 +103,14 @@ public class CalcMileageService extends IntentService {
     }
 
     private void updateTripSegments(Context context, HashMap<Integer, Double> updates) {
+        Iterator it = updates.keySet().iterator();
+        ContentValues values = new ContentValues();
+        while (it.hasNext()) {
+            int id = (Integer)it.next();
+            double distance = updates.get(id);
+            Log.v("UPDATING DB: ", Double.toString(distance));
+            values.put(TripTable.DISTANCE, distance);
+            context.getContentResolver().update(TrackerContentProvider.TRIP_URI,values,TripTable.COLUMN_ID + "=" + id,null);
+        }
     }
 }

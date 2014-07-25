@@ -24,4 +24,5 @@ dependencies {
     compile 'com.android.support:support-v4:20.0.+'
     compile 'com.google.android.gms:play-services:4.+'
     compile 'com.android.support:appcompat-v7:20.+'
+    compile files('/home/charles/AndroidStudioProjects/MileageTracker/libs/opencsv-2.3.jar')
 }

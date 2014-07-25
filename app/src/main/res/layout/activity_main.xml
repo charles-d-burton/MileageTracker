@@ -7,17 +7,8 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/main_activity_content_frame">
-
-        <Button
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/gen_report"
-            android:id="@+id/gen_report"
-            android:layout_gravity="center"
-            android:layout_alignTop="@+id/review_trips"
-            android:layout_toRightOf="@+id/review_trips" />
+        android:id="@+id/main_activity_content_frame"
+        android:clickable="true">
 
         <Button
             android:layout_width="wrap_content"
@@ -25,10 +16,7 @@
             android:text="@string/set_home"
             android:id="@+id/set_home"
             android:layout_gravity="center"
-            android:layout_marginTop="125dp"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
+            android:layout_centerVertical="true" />
 
         <Button
             android:layout_width="wrap_content"
@@ -47,7 +35,6 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:layout_toLeftOf="@+id/gen_report"
             android:paddingLeft="5dp"
             android:paddingTop="10dp"
             android:paddingBottom="10dp" />
@@ -64,7 +51,28 @@
             android:background="@drawable/blue_badge"
             android:padding="10dp"/>
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email Report"
+            android:id="@+id/emailReportButton"
+            android:layout_below="@+id/totalMileageField"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:onClick="showDatePickerDialog" />
+
     </RelativeLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:visibility="gone"
+        android:indeterminateDrawable="@drawable/progress" >
+    </ProgressBar>
 
     <fragment
         android:id="@+id/drawer_view_main"
