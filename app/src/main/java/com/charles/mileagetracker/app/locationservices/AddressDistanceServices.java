@@ -1,11 +1,9 @@
-package com.charles.mileagetracker.app.webapicalls;
+package com.charles.mileagetracker.app.locationservices;
 
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.util.Log;
-
-import com.google.android.gms.maps.model.LatLng;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -38,11 +36,11 @@ import javax.xml.parsers.DocumentBuilderFactory;
 /**
  * Created by charles on 6/23/14.
  */
-public class LocationServices {
+public class AddressDistanceServices {
 
     private Context context;
 
-    public LocationServices(Context context) {
+    public AddressDistanceServices(Context context) {
         this.context = context;
     }
 
@@ -122,7 +120,7 @@ public class LocationServices {
 
     //Get the maps distance between two points.
     public double getDistance(double lat1, double lon1, double lat2, double lon2) {
-        String result_in_kms = "0";
+        String result_in_kms = "-1";
         String url = "http://maps.google.com/maps/api/directions/xml?origin=" + lat1 + "," + lon1 + "&destination=" + lat2 + "," + lon2 + "&sensor=false&units=metric";
         String tag[] = {"text"};
         HttpResponse response = null;
@@ -148,6 +146,8 @@ public class LocationServices {
                 }
                 result_in_kms = String.format("%s", args.get(0));
             }
+
+            is.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

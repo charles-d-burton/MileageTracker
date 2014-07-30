@@ -9,7 +9,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.webapicalls.LocationServices;
+import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.google.android.gms.maps.model.LatLng;
 
 /**
@@ -120,7 +120,7 @@ public class TripRowCreator {
     }
 
     private String checkLocation(LatLng location) {
-        LocationServices locationServices = new LocationServices(context);
+        AddressDistanceServices locationServices = new AddressDistanceServices(context);
         return locationServices.getRoadName(location.latitude, location.longitude);
     }
 
@@ -150,7 +150,7 @@ public class TripRowCreator {
             double startLon = 0;
             double endLat = 0;
             double endLon = 0;
-            LocationServices locationServices = new LocationServices(context);
+            AddressDistanceServices locationServices = new AddressDistanceServices(context);
             if (c != null && c.getCount() > 0) {
                 c.moveToPosition(-1);
                 while (c.moveToNext()) {
@@ -162,7 +162,7 @@ public class TripRowCreator {
                         endLat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
                         endLon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
                         double distance = locationServices.getDistance(startLat, startLon, endLat, endLon);
-                        if (c.getCount() == 2 && (distance * 0.621) < 1) { //Started and ended in the same place with no stops.
+                        if (c.getCount() == 2 && distance != -1 &&  (distance * 0.621) < 1) { //Started and ended in the same place with no stops.
                             context.getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.TRIP_KEY + "=" +Integer.toString(groupId),null);
                             NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
                             notificationManager.cancel(0);

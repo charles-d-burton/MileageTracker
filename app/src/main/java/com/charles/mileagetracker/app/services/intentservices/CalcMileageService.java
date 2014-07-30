@@ -9,8 +9,9 @@ import android.util.Log;
 
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripGroup;
+import com.charles.mileagetracker.app.database.TripRowCreator;
 import com.charles.mileagetracker.app.database.TripTable;
-import com.charles.mileagetracker.app.webapicalls.LocationServices;
+import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,7 +65,7 @@ public class CalcMileageService extends IntentService {
     //Take the context and all the group id's.  Use them to figure out if distances have been calculated for trips
     //Doing this on Wifi to make it faster.
     private HashMap<Integer, Double> getMileageUpdatesMap(Context context, ArrayList<Integer> groups) {
-        LocationServices locationServices = new LocationServices(context);
+        AddressDistanceServices locationServices = new AddressDistanceServices(context);
         HashMap<Integer, Double> updates = new HashMap<Integer, Double>();
         String projection[] = {
                 TripTable.DISTANCE,
@@ -83,6 +84,10 @@ public class CalcMileageService extends IntentService {
             if (c != null) {
                 c.moveToPosition(-1);
                 while (c.moveToNext()) {
+                    if (c.getCount() == 1){
+                        cleanupSingleEntry(group_id);
+                        break;
+                    }
                     int id = c.getInt(c.getColumnIndexOrThrow(TripTable.COLUMN_ID));
                     double distance = c.getDouble(c.getColumnIndexOrThrow(TripTable.DISTANCE));
                     Log.v("CALCULATED DISTANCE: ", Double.toString(distance));
@@ -93,13 +98,21 @@ public class CalcMileageService extends IntentService {
                         double lat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
                         double lon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
                         distance = locationServices.getDistance(lastLat, lastLon, lat, lon);
-                        updates.put(id, distance);
+                        if (distance != -1 && distance < 1 ) {
+                            getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.COLUMN_ID + "=" + id,null);
+                        } else {
+                            updates.put(id, distance);
+                        }
                     }
                 }
             }
             if (c != null) c.close();
         }
         return updates;
+    }
+
+    private void cleanupSingleEntry(int groupId) {
+        getContentResolver().delete(TrackerContentProvider.GROUP_URI, TripGroup.GROUP_ID + "=" + groupId, null);
     }
 
     private void updateTripSegments(Context context, HashMap<Integer, Double> updates) {

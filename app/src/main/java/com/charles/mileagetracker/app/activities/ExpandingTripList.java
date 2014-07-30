@@ -5,7 +5,6 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,7 +18,7 @@ import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripTable;
-import com.charles.mileagetracker.app.webapicalls.LocationServices;
+import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -195,7 +194,7 @@ public class ExpandingTripList extends Activity {
         }
 
         private String getAddress(double lat, double lon) {
-            LocationServices services = new LocationServices(getApplicationContext());
+            AddressDistanceServices services = new AddressDistanceServices(getApplicationContext());
             String address = services.getRoadName(lat, lon);
             //Log.v("EXList Address: ", address);
             return address;

@@ -96,7 +96,7 @@ public class GetCurrentLocation extends IntentService implements
     private class MyLocationListener implements LocationListener {
         @Override
         public void onLocationChanged(Location location) {
-            Log.d("DEBUG: ", "Location Changed.  Accuracy: " + Double.toString(location.getAccuracy()));
+            //Log.d("DEBUG: ", "Location Changed.  Accuracy: " + Double.toString(location.getAccuracy()));
             if (location != null && location.getAccuracy() <= 100) {
                 if (tooCloseToStartPoint(location)) {
                     locationClient.removeLocationUpdates(this);
