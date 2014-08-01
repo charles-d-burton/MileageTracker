@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -70,13 +71,23 @@ public class ExpandingTripList extends Activity {
                 }
             }
         );
+
+
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        Log.v("DEBUG: ", "Resuming");
         new FillData().doInBackground("");
-        //listAdapter.notifyDataSetChanged();
+        listAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        listGroups.clear();
+        listAdapter.notifyDataSetChanged();
     }
 
     @Override
