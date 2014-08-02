@@ -43,6 +43,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
         if (intent != null) {
             int transitionType = LocationClient.getGeofenceTransition(intent);
             List geoFences = LocationClient.getTriggeringGeofences(intent);
+            if (geoFences == null) return;//Fixes bug when geofence turned off
             Geofence fence = (Geofence)geoFences.get(0);
             int id = Integer.parseInt(fence.getRequestId());
             LatLng center = getCenter(id);

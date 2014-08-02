@@ -7,6 +7,7 @@ import android.util.Log;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -48,42 +49,15 @@ public class AddressDistanceServices {
     public String getRoadName(String lat, String lng) throws JSONException {
 
         String roadName = "";
-        String url = "http://maps.googleapis.com/maps/api/geocode/json?latlng=__LAT__,__LNG__&sensor=false";
+        String url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=__LAT__,__LNG__&sensor=false";
 
         url = url.replaceAll("__LAT__", lat);
         url = url.replaceAll("__LNG__", lng);
-        Log.v("DEBUG:","URL: " + url.toString());
+        //Log.v("DEBUG:","URL: " + url.toString());
 
-        DefaultHttpClient httpclient = new DefaultHttpClient(new BasicHttpParams());
-        HttpGet httpget = new HttpGet(url);
 
-        InputStream inputStream = null;
-        String result = null;
-        try {
-            HttpResponse response = httpclient.execute(httpget);
-            HttpEntity entity = response.getEntity();
-
-            inputStream = entity.getContent();
-            // json is UTF-8 by default
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"), 8);
-            StringBuilder sb = new StringBuilder();
-
-            String line = null;
-            while ((line = reader.readLine()) != null)
-            {
-                sb.append(line + "\n");
-            }
-            result = sb.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Oops
-        }
-        finally {
-            try{
-                if(inputStream != null)inputStream.close();
-            }catch(Exception squish){}
-        }
-
+        String result = getStringFromUrl(url);
+        if (result == null) return "";
         JSONObject jObject = new JSONObject(result);
         JSONArray jArray = jObject.getJSONArray("results");
         if (jArray != null && jArray.length() > 0) {
@@ -117,9 +91,37 @@ public class AddressDistanceServices {
         return name;
     }
 
+    public double getDistance(double lat1, double lon1, double lat2, double lon2) {
+        Double result_in_kms = -1.0;
+
+        String url = "https://maps.google.com/maps/api/directions/json?origin=" + lat1 +"," + lon1 + "&destination=" + lat2 + "," + lon2 + "&mode=driving&sensor=false&units=metric";
+        String result = getStringFromUrl(url);
+        if (result == null) return -1;
+        JSONObject jObject = null;
+        try {
+            jObject = new JSONObject(result);
+            JSONArray array = jObject.getJSONArray("routes");
+
+            JSONObject routes = array.getJSONObject(0);
+
+            JSONArray legs = routes.getJSONArray("legs");
+
+            JSONObject steps = legs.getJSONObject(0);
+
+            Integer distance = (Integer)steps.getJSONObject("distance").get("value");
+            Log.v("DISTANCE: ", distance.toString());
+            return (distance / 1000);
+            //return getDoubleFromString(distance.toString()) / 1000;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return result_in_kms;
+    }
+
+
 
     //Get the maps distance between two points.
-    public double getDistance(double lat1, double lon1, double lat2, double lon2) {
+    /*public double getDistance(double lat1, double lon1, double lat2, double lon2) {
         String result_in_kms = "-1";
         String url = "http://maps.google.com/maps/api/directions/xml?origin=" + lat1 + "," + lon1 + "&destination=" + lat2 + "," + lon2 + "&sensor=false&units=metric";
         String tag[] = {"text"};
@@ -155,7 +157,7 @@ public class AddressDistanceServices {
 
         return getDoubleFromString(result_in_kms);
         //return Double.parseDouble(result_in_kms);
-    }
+    }*/
 
     private double getDoubleFromString(String string) {
         Scanner st = new Scanner(string);
@@ -164,4 +166,40 @@ public class AddressDistanceServices {
         }
         return st.nextDouble();
     }
+
+    private String getStringFromUrl(String url) {
+        DefaultHttpClient httpclient = new DefaultHttpClient(new BasicHttpParams());
+        HttpGet httpget = new HttpGet(url);
+
+        InputStream inputStream = null;
+        BufferedReader bufferedReader = null;
+        String result = null;
+        try {
+            HttpResponse response = httpclient.execute(httpget);
+            HttpEntity entity = response.getEntity();
+
+            inputStream = entity.getContent();
+            // json is UTF-8 by default
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"), 8);
+            StringBuilder sb = new StringBuilder();
+
+            String line = null;
+            while ((line = bufferedReader.readLine()) != null)
+            {
+                sb.append(line + "\n");
+            }
+            result = sb.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Oops
+        }
+        finally {
+            try{
+                //if(bufferedReader != null) bufferedReader.close();
+                if(inputStream != null)inputStream.close();
+            }catch(Exception squish){}
+        }
+        return result;
+    }
+
 }
