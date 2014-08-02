@@ -98,11 +98,11 @@ public class CalcMileageService extends IntentService {
                         double lat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
                         double lon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
                         distance = locationServices.getDistance(lastLat, lastLon, lat, lon);
-                        /*if (distance != -1 && distance < 1 ) {
+                        if (distance != -1 && distance < 1 ) {
                             getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.COLUMN_ID + "=" + id,null);
-                        } else {*/
+                        } else {
                             updates.put(id, distance);
-                        //}
+                        }
                     }
                 }
             }
