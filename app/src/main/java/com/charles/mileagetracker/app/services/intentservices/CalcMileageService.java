@@ -85,7 +85,7 @@ public class CalcMileageService extends IntentService {
                 c.moveToPosition(-1);
                 while (c.moveToNext()) {
                     if (c.getCount() == 1){
-                        //cleanupSingleEntry(group_id);
+                        cleanupSingleEntry(group_id);
                         break;
                     }
                     int id = c.getInt(c.getColumnIndexOrThrow(TripTable.COLUMN_ID));
