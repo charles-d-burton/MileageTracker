@@ -7,32 +7,20 @@ import android.util.Log;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
  * Created by charles on 6/23/14.
@@ -92,11 +80,12 @@ public class AddressDistanceServices {
     }
 
     public double getDistance(double lat1, double lon1, double lat2, double lon2) {
-        Double result_in_kms = -1.0;
 
         String url = "https://maps.google.com/maps/api/directions/json?origin=" + lat1 +"," + lon1 + "&destination=" + lat2 + "," + lon2 + "&mode=driving&sensor=false&units=metric";
         String result = getStringFromUrl(url);
+
         if (result == null) return -1;
+        if (result.trim().length() == 0) return -1;
         JSONObject jObject = null;
         try {
             jObject = new JSONObject(result);
@@ -115,58 +104,10 @@ public class AddressDistanceServices {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return result_in_kms;
+        return -1;
     }
 
-
-
-    //Get the maps distance between two points.
-    /*public double getDistance(double lat1, double lon1, double lat2, double lon2) {
-        String result_in_kms = "-1";
-        String url = "http://maps.google.com/maps/api/directions/xml?origin=" + lat1 + "," + lon1 + "&destination=" + lat2 + "," + lon2 + "&sensor=false&units=metric";
-        String tag[] = {"text"};
-        HttpResponse response = null;
-        try {
-            HttpClient httpClient = new DefaultHttpClient();
-            HttpContext localContext = new BasicHttpContext();
-            HttpPost httpPost = new HttpPost(url);
-            response = httpClient.execute(httpPost, localContext);
-            InputStream is = response.getEntity().getContent();
-            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            Document doc = builder.parse(is);
-            if (doc != null) {
-                NodeList nl;
-                ArrayList args = new ArrayList();
-                for (String s : tag) {
-                    nl = doc.getElementsByTagName(s);
-                    if (nl.getLength() > 0) {
-                        Node node = nl.item(nl.getLength() - 1);
-                        args.add(node.getTextContent());
-                    } else {
-                        args.add(" - ");
-                    }
-                }
-                result_in_kms = String.format("%s", args.get(0));
-            }
-
-            is.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-        return getDoubleFromString(result_in_kms);
-        //return Double.parseDouble(result_in_kms);
-    }*/
-
-    private double getDoubleFromString(String string) {
-        Scanner st = new Scanner(string);
-        while (!st.hasNextDouble()) {
-            st.next();
-        }
-        return st.nextDouble();
-    }
-
+    //Pull down the JSON from the provided URL
     private String getStringFromUrl(String url) {
         DefaultHttpClient httpclient = new DefaultHttpClient(new BasicHttpParams());
         HttpGet httpget = new HttpGet(url);
@@ -180,7 +121,7 @@ public class AddressDistanceServices {
 
             inputStream = entity.getContent();
             // json is UTF-8 by default
-            bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"), 8);
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
             StringBuilder sb = new StringBuilder();
 
             String line = null;
