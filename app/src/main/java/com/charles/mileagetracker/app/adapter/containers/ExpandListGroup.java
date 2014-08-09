@@ -2,6 +2,7 @@ package com.charles.mileagetracker.app.adapter.containers;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 
 /**
  * Created by charles on 7/9/14.
@@ -39,6 +40,7 @@ public class ExpandListGroup {
 
 
     public void reverseChildren() {
+
         Collections.reverse(items);
     }
 }

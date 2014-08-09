@@ -5,11 +5,13 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.location.Address;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
+import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.maps.model.LatLng;
 
 /**
@@ -52,7 +54,10 @@ public class TripRowCreator {
         values.put(TripTable.LON, lon);
         values.put(TripTable.FENCE_RELATION, id);
 
-        String addy = checkLocation(new LatLng(lat, lon));
+        AddressDistanceServices locationServices = new AddressDistanceServices(context);
+
+        String addy = locationServices.getRoadName(lat, lon);
+
         Log.v("DEBUG: ", "Current Location Address is: " + addy);
         if (addy != null) {
             values.put(TripTable.ADDRESS, addy);
@@ -119,10 +124,6 @@ public class TripRowCreator {
         return -1;//Known impossible value
     }
 
-    private String checkLocation(LatLng location) {
-        AddressDistanceServices locationServices = new AddressDistanceServices(context);
-        return locationServices.getRoadName(location.latitude, location.longitude);
-    }
 
     private class GenerateDistances extends AsyncTask<Integer, Integer, String> {
 
@@ -162,7 +163,9 @@ public class TripRowCreator {
                         endLat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
                         endLon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
                         double distance = locationServices.getDistance(startLat, startLon, endLat, endLon);
-                        if (c.getCount() == 2 && distance != -1 &&  (distance * 0.621) < 1) { //Started and ended in the same place with no stops.
+                        if (c.getCount() == 1) {
+                            context.getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.TRIP_KEY + "=" +Integer.toString(groupId),null);
+                        } else if (c.getCount() == 2 && distance != -1 &&  (distance * 0.621) < 1) { //Started and ended in the same place with no stops.
                             context.getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.TRIP_KEY + "=" +Integer.toString(groupId),null);
                             NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
                             notificationManager.cancel(0);

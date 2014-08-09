@@ -53,6 +53,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.location.PROVIDERS_CHANGED"/>
             </intent-filter>
         </receiver>
 
@@ -72,11 +73,6 @@
             android:name=".services.intentservices.GetCurrentLocation"
             android:exported="false" >
         </service>
-
-        <activity
-            android:name=".activities.PathSelectorActivity"
-            android:label="@string/title_activity_path_selector" >
-        </activity>
 
         <meta-data
             android:name="com.google.android.gms.version"
@@ -104,7 +100,7 @@
             android:name=".receivers.WifiReceiver"
             android:enabled="true"
             android:exported="true" >
-            <intent-filter android:priority="100">
+            <intent-filter android:priority="100" >
                 <action android:name="android.net.wifi.STATE_CHANGE" />
             </intent-filter>
         </receiver>
@@ -113,6 +109,7 @@
             android:name=".services.intentservices.CalcMileageService"
             android:exported="false" >
         </service>
+
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

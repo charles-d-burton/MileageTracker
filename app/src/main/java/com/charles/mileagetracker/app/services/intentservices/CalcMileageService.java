@@ -94,7 +94,7 @@ public class CalcMileageService extends IntentService {
                     if (c.isFirst()) {
                         lastLat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
                         lastLon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
-                    } else if (distance == 0) {
+                    } else if (distance == 0 || distance == -1) {
                         double lat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
                         double lon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
                         distance = locationServices.getDistance(lastLat, lastLon, lat, lon);

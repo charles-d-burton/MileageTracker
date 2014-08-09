@@ -9,11 +9,9 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
-import android.util.Log;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.ExpandingTripList;
-import com.charles.mileagetracker.app.activities.PathSelectorActivity;
 import com.charles.mileagetracker.app.cache.AccessInternalStorage;
 import com.charles.mileagetracker.app.cache.TripVars;
 import com.charles.mileagetracker.app.database.StartPoints;
@@ -103,9 +101,6 @@ public class GeofenceReceiver extends BroadcastReceiver {
     }
 
     private void transitionEnter(int id, LatLng center) {
-        //String message = "Entering fence";
-        //boolean running = isServiceRunning();
-        //Log.v("DEBUG: ", "Killing Running Record Service");
         double lat = center.latitude;
         double lon = center.longitude;
 
@@ -118,6 +113,15 @@ public class GeofenceReceiver extends BroadcastReceiver {
         this.context.startService(stopActivityService);
         this.context.stopService(new Intent(this.context,GetCurrentLocation.class));
 
+        AccessInternalStorage accessInternalStorage = new AccessInternalStorage();
+        TripVars tripVars = null;
+        try {
+            tripVars = (TripVars)accessInternalStorage.readObject(context, TripVars.KEY);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         //Record our end point then close out the trip
         TripRowCreator creator = new TripRowCreator(this.context);
         int groupId = creator.closeGroup(id, lat, lon);

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,7 +15,6 @@ import com.charles.mileagetracker.app.cache.AccessInternalStorage;
 import com.charles.mileagetracker.app.cache.TripVars;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.database.TripRowCreator;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -48,6 +48,8 @@ public class PostBootGeofenceService extends IntentService implements
     private boolean addingProximityAlerts = false;
     private boolean startedActivityRecognition = false;
 
+    private int locationResolution =100;
+
     public PostBootGeofenceService() {
         super("PostBootGeofenceService");
     }
@@ -63,9 +65,12 @@ public class PostBootGeofenceService extends IntentService implements
         }
     }
 
+    /*
+    Retrieve the fence centers from the database and then start the process to add them into the locationservices
+     */
     @Override
     public void onConnected(Bundle bundle) {
-        Log.v("DEBUG: ", "Location Services Connected from Boot");
+        //Log.v("DEBUG: ", "Location Services Connected from Boot");
         addingProximityAlerts = true;
         locationClient.requestLocationUpdates(locationRequest, locationListener);
 
@@ -118,9 +123,20 @@ public class PostBootGeofenceService extends IntentService implements
     }
 
     private void initLocationUpdates() {
+
+        final LocationManager manager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
+
         locationClient = new LocationClient(context, this, this);
         locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        if (manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            locationResolution = 100;
+        } else {
+            locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+            locationResolution = 500;
+        }
+
 
         locationRequest.setInterval(5000);
         locationRequest.setFastestInterval(1000);
@@ -153,6 +169,9 @@ public class PostBootGeofenceService extends IntentService implements
         Log.d("DEBUG: ", "Adding proximity alert");
     }
 
+    /*
+    Check if currently inside a geofence
+     */
     private int checkInFence(LatLng currentLocation, HashMap<Integer, LatLng> fenceCenters) {
         Log.v("DEBUG: ", "Checking if in fence");
 
@@ -175,6 +194,10 @@ public class PostBootGeofenceService extends IntentService implements
         return closestId;
     }
 
+    /*
+    Calculate the distance between two points as the crow flies
+     */
+
     private double getDistance(LatLng pointA, LatLng pointB) {
         double distance = 0f;
 
@@ -191,13 +214,16 @@ public class PostBootGeofenceService extends IntentService implements
         return distance;
     }
 
+    /*
+    Provides the location updatese
+     */
     private class MyLocationListener implements LocationListener {
 
         @Override
         public void onLocationChanged(Location location) {
             Log.v("DEBUG: ", "Current Accuracy: " + Double.toString(location.getAccuracy()));
             if (!addingProximityAlerts && location != null) {
-                if (location.getAccuracy() <= 100 ) {
+                if (location.getAccuracy() <= locationResolution) {
                     LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     int infenceId = checkInFence(currentLocation, fenceCenters);
                     if (infenceId != -1) {

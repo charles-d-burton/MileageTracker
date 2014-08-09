@@ -1,6 +1,7 @@
 package com.charles.mileagetracker.app.activities;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.AsyncTask;
@@ -26,6 +27,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 
+/*
+Activity that displays the trip data contained in the database.  It uses an ExpandableListView that
+contains two data components.  The parent component that holds the individual trip stops is the
+ExpandListGroup class and the child is the ExpandListChild class.
+ */
 public class ExpandingTripList extends Activity {
 
     private ExpandableListAdapter listAdapter;
@@ -33,8 +39,9 @@ public class ExpandingTripList extends Activity {
     private ProgressBar bar;
 
     private ArrayList<ExpandListGroup> listGroups;
-    //private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
     private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
+
+    private ProgressDialog mDialog = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +71,10 @@ public class ExpandingTripList extends Activity {
                     } else {
                         child.setBusinessRelated(1);
                     }
-                    new SaveChild().doInBackground(child);
+
+                    Runnable saveChild = new SaveChild(child);
+                    saveChild.run();
+                    //new SaveChild().doInBackground(child);
                     listAdapter.notifyDataSetChanged();
                     //v.setBackgroundColor(R.drawable.abc_ab_solid_light_holo);
                     return false;
@@ -109,14 +119,30 @@ public class ExpandingTripList extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    /*
+    This is a background thread that runs to pull all the trips from the database.  I'm probably going
+    to simplify this by making it a runnable
+     */
+
     private class FillData extends AsyncTask<String, String, String> {
 
+        //I don't know why this isn't showing :(
         @Override
         protected void onPreExecute() {
-            bar.setVisibility(View.VISIBLE);
+            super.onPreExecute();
+            mDialog = new ProgressDialog(getApplicationContext());
+            mDialog.setMessage("Loading Trip....");
+            mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            mDialog.setIndeterminate(true);
+            mDialog.show();
+            //bar.setVisibility(View.VISIBLE);
         }
 
 
+        /*
+        Where the real work gets done.  This pulls down the trips from the database and generates the
+        children and parent elements.
+         */
         @Override
         protected String doInBackground(String... params) {
             String projection[] = {
@@ -133,6 +159,7 @@ public class ExpandingTripList extends Activity {
 
             Cursor c = getContentResolver().query(TrackerContentProvider.TRIP_URI,projection, null, null,null);
 
+            //Move backwards through the database, we want the newest data first.
             if (c != null && c.getCount() > 0) {
                 c.moveToPosition(c.getCount() + 1);//Move cursor one postion beyond end of list
                 while (c.moveToPrevious()) {
@@ -146,17 +173,28 @@ public class ExpandingTripList extends Activity {
             }
 
             if (c != null) c.close();
+            /*
+            Since we moved backwards through the database I now want the children to be reveresed
+            and show the oldest elements first.
+             */
             reverseChildren();
             return null;
         }
 
+        /*
+        Supposed to stop the progressbar
+         */
         @Override
         protected void onPostExecute(String result) {
 
-            bar.setVisibility(View.INVISIBLE);
+            //bar.setVisibility(View.INVISIBLE);
+            mDialog.hide();
             listAdapter.notifyDataSetChanged();
         }
 
+        /*
+        Take a group id and retrieve the groups
+         */
         private ExpandListGroup getGroup(int group_id){
             Iterator it = listGroups.iterator();
             while (it.hasNext()) {
@@ -170,6 +208,9 @@ public class ExpandingTripList extends Activity {
             return group;//Default to
         }
 
+        /*
+        Take the Cursor and pull down the children from one group
+         */
         private ExpandListChild buildChild(Cursor c) {
             long millis = c.getLong(c.getColumnIndexOrThrow(TripTable.TIME));
             String dateString = format.format(new Date(millis));
@@ -187,6 +228,7 @@ public class ExpandingTripList extends Activity {
             }
             return new ExpandListChild(dateString,millis,id,distance,group_id,lat,lon,businessRelated,address);
         }
+
 
         private void reverseChildren() {
             //Reverse the internal lists so the dates are in the correct order.
@@ -218,18 +260,25 @@ public class ExpandingTripList extends Activity {
         }
     }
 
-    private class SaveChild extends AsyncTask<ExpandListChild, String, String> {
+    /*
+    Updates the status of a child in the background
+     */
+    private class SaveChild implements Runnable {
+
+        private ExpandListChild child = null;
+
+        public SaveChild(ExpandListChild child) {
+            this.child  = child;
+        }
 
         @Override
-        protected String doInBackground(ExpandListChild... params) {
-            ExpandListChild child = params[0];
+        public void run() {
             if (child != null) {
-                //String projection[] = {TripTable.BUSINESS_RELATED, TripTable.TRIP_KEY};
                 ContentValues values = new ContentValues();
                 values.put(TripTable.BUSINESS_RELATED, child.isBusinessRelated());
                 getContentResolver().update(TrackerContentProvider.TRIP_URI,values, TripTable.COLUMN_ID + "=" + child.getId(), null);
             }
-            return null;
+
         }
     }
 }

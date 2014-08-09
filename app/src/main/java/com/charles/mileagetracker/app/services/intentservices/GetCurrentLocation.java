@@ -1,9 +1,12 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -12,6 +15,8 @@ import com.charles.mileagetracker.app.cache.TripVars;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripRowCreator;
+import com.charles.mileagetracker.app.database.TripTable;
+import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
@@ -38,6 +43,8 @@ public class GetCurrentLocation extends IntentService implements
     private static LocationListener locationListener = null;
 
     private static int locationTryCounter = 0;
+
+    private int locationResolution = 100;
 
 
     public GetCurrentLocation() {
@@ -97,7 +104,7 @@ public class GetCurrentLocation extends IntentService implements
         @Override
         public void onLocationChanged(Location location) {
             //Log.d("DEBUG: ", "Location Changed.  Accuracy: " + Double.toString(location.getAccuracy()));
-            if (location != null && location.getAccuracy() <= 100) {
+            if (location != null && location.getAccuracy() <= locationResolution) {
                 if (tooCloseToStartPoint(location)) {
                     locationClient.removeLocationUpdates(this);
                     locationClient.disconnect();
@@ -117,9 +124,19 @@ public class GetCurrentLocation extends IntentService implements
     }
 
     private void initLocation() {
+        final LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+
+
         locationClient = new LocationClient(getApplicationContext(), this, this);
         locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            locationResolution = 100;
+        } else {
+            locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+            locationResolution = 500;
+        }
+
 
         //locationRequest.setInterval(5000);
         //locationRequest.setFastestInterval(1000);
@@ -140,6 +157,8 @@ public class GetCurrentLocation extends IntentService implements
         if (distance > 1000) {//Larger than the geofence, gives me a margin of error
             TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());
             rowCreator.recordSegment(tripVars.getId(),lat, lon);
+            //Next line commented because it's untested
+            new LookupDistance(tripVars.getId(), lat, lon, tripVars.getLastLat(), tripVars.getLastLon()).run();
             tripVars.setSegmentRecorded(true);
             tripVars.setLastLat(lat);
             tripVars.setLastLon(lon);
@@ -194,5 +213,39 @@ public class GetCurrentLocation extends IntentService implements
 
 
         return tooClose;
+    }
+
+    private class LookupDistance implements Runnable {
+
+        private double startLat = Double.MAX_VALUE;
+        private double startLon = Double.MAX_VALUE;
+        private double endLat = Double.MAX_VALUE;
+        private double endLon = Double.MAX_VALUE;
+        private int id = -1;
+
+        public LookupDistance(int id, double startLat, double startLon, double endLat, double endLon) {
+            this.startLat = startLat;
+            this.startLon = startLon;
+            this.endLat = endLat;
+            this.endLon = endLon;
+            this.id = id;
+        }
+
+
+        @Override
+        public void run() {
+            if (id == -1) {
+
+                return;
+            }
+
+            AddressDistanceServices distanceServices = new AddressDistanceServices(getApplicationContext());
+            double distance = distanceServices.getDistance(startLat,startLon,endLat,endLon);
+            if (distance != -1) {
+                ContentValues values = new ContentValues();
+                values.put(TripTable.DISTANCE, distance);
+                getApplicationContext().getContentResolver().update(TrackerContentProvider.TRIP_URI, values, TripTable.COLUMN_ID + "=" + id, null);
+            }
+        }
     }
 }
