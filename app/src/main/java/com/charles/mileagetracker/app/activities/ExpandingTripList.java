@@ -1,8 +1,10 @@
 package com.charles.mileagetracker.app.activities;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -20,8 +22,10 @@ import com.charles.mileagetracker.app.adapter.ExpandableListAdapter;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
+import com.charles.mileagetracker.app.database.TripGroup;
 import com.charles.mileagetracker.app.database.TripTable;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
+import com.google.android.gms.analytics.Tracker;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -81,14 +85,18 @@ public class ExpandingTripList extends Activity {
             }
         );
 
+        //Long click events for group headers and children
         expListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 int itemType = ExpandableListView.getPackedPositionType(id);
                 if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
-                    Log.v("LONG CLICK: " , "GROUP");
+                    ExpandListGroup group = (ExpandListGroup)parent.getAdapter().getItem(position);
+                    groupLongClick(group);
+
                 } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_CHILD){
-                    Log.v("LONG CLICK: ", "CHILD");
+                    ExpandListChild child = (ExpandListChild)parent.getAdapter().getItem(position);
+                    childLongClick(child);
                 }
                 return false;
             }
@@ -99,8 +107,8 @@ public class ExpandingTripList extends Activity {
     public void onResume() {
         super.onResume();
         Log.v("DEBUG: ", "Resuming");
-        new FillData().doInBackground("");
-        listAdapter.notifyDataSetChanged();
+        new FillData().execute("");
+        //listAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -129,6 +137,38 @@ public class ExpandingTripList extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void groupLongClick(final ExpandListGroup group) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Trip?");
+        builder.setMessage("Delete all trips from:" +
+                "\n" + group.getName() +
+                "\n" + "This operation cannot be undone!");
+        builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                listGroups.clear();
+                getApplicationContext().getContentResolver().delete(TrackerContentProvider.GROUP_URI, TripGroup.GROUP_ID + "=" + group.getGroupId(), null);
+                getApplicationContext().getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.TRIP_KEY + "=" + group.getGroupId(), null);
+                new FillData().execute("");
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void childLongClick(ExpandListChild child) {
+
+    }
+
+
+
     /*
     This is a background thread that runs to pull all the trips from the database.  I'm probably going
     to simplify this by making it a runnable
@@ -140,8 +180,8 @@ public class ExpandingTripList extends Activity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            mDialog = new ProgressDialog(getApplicationContext());
-            mDialog.setMessage("Loading Trip....");
+            mDialog = new ProgressDialog(ExpandingTripList.this);
+            mDialog.setMessage("Loading Trips....");
             mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             mDialog.setIndeterminate(true);
             mDialog.show();
