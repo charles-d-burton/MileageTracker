@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ExpandableListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -74,15 +75,24 @@ public class ExpandingTripList extends Activity {
 
                     Runnable saveChild = new SaveChild(child);
                     saveChild.run();
-                    //new SaveChild().doInBackground(child);
                     listAdapter.notifyDataSetChanged();
-                    //v.setBackgroundColor(R.drawable.abc_ab_solid_light_holo);
                     return false;
                 }
             }
         );
 
-
+        expListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                int itemType = ExpandableListView.getPackedPositionType(id);
+                if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
+                    Log.v("LONG CLICK: " , "GROUP");
+                } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_CHILD){
+                    Log.v("LONG CLICK: ", "CHILD");
+                }
+                return false;
+            }
+        });
     }
 
     @Override

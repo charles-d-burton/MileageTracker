@@ -101,8 +101,10 @@ public class GetCurrentLocation extends IntentService implements
     get a good fix I'll just what it has.
      */
     private class MyLocationListener implements LocationListener {
+        private int counter = 0;
         @Override
         public void onLocationChanged(Location location) {
+
             //Log.d("DEBUG: ", "Location Changed.  Accuracy: " + Double.toString(location.getAccuracy()));
             if (location != null && location.getAccuracy() <= locationResolution) {
                 if (tooCloseToStartPoint(location)) {
@@ -119,6 +121,9 @@ public class GetCurrentLocation extends IntentService implements
                         e.printStackTrace();
                     }
                 }
+            } else if (location != null && location.getAccuracy() > locationResolution) {
+                counter = counter++;
+                if (counter == 10) locationResolution = 500;
             }
         }
     }
@@ -136,10 +141,6 @@ public class GetCurrentLocation extends IntentService implements
             locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
             locationResolution = 500;
         }
-
-
-        //locationRequest.setInterval(5000);
-        //locationRequest.setFastestInterval(1000);
         locationListener = new MyLocationListener();
         locationClient.connect();
     }

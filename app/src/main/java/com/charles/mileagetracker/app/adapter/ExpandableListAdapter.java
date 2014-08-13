@@ -2,6 +2,7 @@ package com.charles.mileagetracker.app.adapter;
 
 import android.content.Context;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -75,12 +76,12 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         ExpandListGroup group = (ExpandListGroup)getGroup(groupPosition);
         String headerTitle = group.getName();
 
+
         if (convertView == null) {
                 LayoutInflater inflater = (LayoutInflater) context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.trip_expand_header, null);
         }
-
         TextView lblListHeader = (TextView) convertView
                 .findViewById(R.id.list_header);
         lblListHeader.setTypeface(null, Typeface.BOLD);
