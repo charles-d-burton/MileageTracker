@@ -1,10 +1,16 @@
 package com.charles.mileagetracker.app.adapter.containers;
 
+import com.google.android.gms.maps.model.LatLng;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 /**
  * Created by charles on 7/9/14.
  * Container class that I'll load the values from the database into.
  */
-public class ExpandListChild {
+public class ExpandListChild implements Serializable {
 
     private String date = null;
     private long millis = -1;
@@ -15,8 +21,11 @@ public class ExpandListChild {
     private double lon = -1;
     private int businessRelated = -1;
     private String address = null;
+    private ExpandListGroup listGroup;
+    private LinkedList<LatLng> linePoints;
 
-    public ExpandListChild(String date, long millis, int id, double distance, int tripKey, double lat, double lon, int businessRelated, String address) {
+    public ExpandListChild(String date, long millis, int id, double distance, int tripKey, double lat,
+                           double lon, int businessRelated, String address) {
         this.date = date;
         this.millis = millis;
         this.id = id;
@@ -26,6 +35,7 @@ public class ExpandListChild {
         this.lon = lon;
         this.businessRelated = businessRelated;
         this.address = address;
+        linePoints = new LinkedList<LatLng>();
     }
 
 
@@ -66,4 +76,26 @@ public class ExpandListChild {
     public String getAddress() {
         return address;
     }
+
+    public void setExpandListGroup(ExpandListGroup listGroup) {
+        this.listGroup = listGroup;
+    }
+
+
+    public ExpandListGroup getExpandGroup() {
+        return listGroup;
+    }
+
+    public void addPoint(LatLng latLng) {
+        linePoints.add(latLng);
+    }
+
+    public void addAllPoints(LinkedList<LatLng> points) {
+        linePoints.addAll(points);
+    }
+
+    public LinkedList<LatLng> getLinePoints() {
+        return linePoints;
+    }
+
 }

@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -14,7 +15,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ExpandableListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
@@ -25,7 +25,6 @@ import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripGroup;
 import com.charles.mileagetracker.app.database.TripTable;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
-import com.google.android.gms.analytics.Tracker;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -41,7 +40,6 @@ public class ExpandingTripList extends Activity {
 
     private ExpandableListAdapter listAdapter;
     private ExpandableListView expListView;
-    private ProgressBar bar;
 
     private ArrayList<ExpandListGroup> listGroups;
     private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
@@ -53,15 +51,11 @@ public class ExpandingTripList extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expanding_trip_list);
         expListView = (ExpandableListView)findViewById(R.id.expanding_view);
-        bar = (ProgressBar)findViewById(R.id.progressBar);
 
         listGroups = new ArrayList<ExpandListGroup>();
         listAdapter = new ExpandableListAdapter(this, listGroups);
 
-
-
         expListView.setAdapter(listAdapter);
-
 
         expListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
                 @Override
@@ -107,8 +101,9 @@ public class ExpandingTripList extends Activity {
     public void onResume() {
         super.onResume();
         Log.v("DEBUG: ", "Resuming");
-        new FillData().execute("");
         //listAdapter.notifyDataSetChanged();
+        new FillData().execute("");
+
     }
 
     @Override
@@ -163,7 +158,20 @@ public class ExpandingTripList extends Activity {
         dialog.show();
     }
 
+
     private void childLongClick(ExpandListChild child) {
+        double lat = child.getLat();
+        double lon = child.getLon();
+        int id = child.getId();
+
+        Intent intent = new Intent(ExpandingTripList.this, ShowLocation.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("lat",lat);
+        intent.putExtra("lon", lon);
+        intent.putExtra("id", id);
+        intent.putExtra("child", child);
+        getApplicationContext().startActivity(intent);
+
 
     }
 
@@ -175,6 +183,10 @@ public class ExpandingTripList extends Activity {
      */
 
     private class FillData extends AsyncTask<String, String, String> {
+
+        //Necessary evil so that I can modify the data in the background and then quickly move it into place
+        //it's done processing.
+        private ArrayList<ExpandListGroup> groups = new ArrayList<ExpandListGroup>();
 
         //I don't know why this isn't showing :(
         @Override
@@ -238,15 +250,18 @@ public class ExpandingTripList extends Activity {
         protected void onPostExecute(String result) {
 
             //bar.setVisibility(View.INVISIBLE);
-            mDialog.hide();
+            listGroups.clear();
+            listGroups.addAll(groups);
             listAdapter.notifyDataSetChanged();
+            mDialog.hide();
+
         }
 
         /*
         Take a group id and retrieve the groups
          */
         private ExpandListGroup getGroup(int group_id){
-            Iterator it = listGroups.iterator();
+            Iterator it = groups.iterator();
             while (it.hasNext()) {
                 ExpandListGroup group = (ExpandListGroup)it.next();
                 if (group.getGroupId() == group_id) {
@@ -254,7 +269,7 @@ public class ExpandingTripList extends Activity {
                 }
             }
             ExpandListGroup group = new ExpandListGroup(group_id);
-            listGroups.add(group);
+            groups.add(group);
             return group;//Default to
         }
 
@@ -282,7 +297,7 @@ public class ExpandingTripList extends Activity {
 
         private void reverseChildren() {
             //Reverse the internal lists so the dates are in the correct order.
-            Iterator it = listGroups.iterator();
+            Iterator it = groups.iterator();
             while (it.hasNext()) {
                 ExpandListGroup group = (ExpandListGroup)it.next();
                 group.reverseChildren();
@@ -292,7 +307,7 @@ public class ExpandingTripList extends Activity {
 
         //Set the name of the group to the first date of a recorded trip
         private void setName(ExpandListGroup group) {
-            ExpandListChild child = group.getItems().get(0);
+            ExpandListChild child = group.getListChildren().get(0);
             group.setName(child.getDate());
         }
 

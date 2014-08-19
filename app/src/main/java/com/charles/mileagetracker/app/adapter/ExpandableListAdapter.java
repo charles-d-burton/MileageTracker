@@ -2,7 +2,6 @@ package com.charles.mileagetracker.app.adapter;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,9 +13,6 @@ import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 
 /**
  * Created by charles on 6/27/14.
@@ -40,7 +36,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        ArrayList<ExpandListChild> children = groups.get(groupPosition).getItems();
+        ArrayList<ExpandListChild> children = groups.get(groupPosition).getListChildren();
         return children.size();
     }
 
@@ -52,7 +48,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-        ArrayList<ExpandListChild> children = groups.get(groupPosition).getItems();
+        ArrayList<ExpandListChild> children = groups.get(groupPosition).getListChildren();
         return children.get(childPosition);
     }
 

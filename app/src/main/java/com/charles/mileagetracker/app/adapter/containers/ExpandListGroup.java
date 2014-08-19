@@ -1,20 +1,22 @@
 package com.charles.mileagetracker.app.adapter.containers;
 
+import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * Created by charles on 7/9/14.
  */
-public class ExpandListGroup {
+public class ExpandListGroup implements Serializable {
     private String name;
-    private ArrayList<ExpandListChild> items;
+    private ArrayList<ExpandListChild> listChildren;
     private int group_id = -1;
 
     public ExpandListGroup(int group_id) {
         this.group_id = group_id;
-        items = new ArrayList<ExpandListChild>();
+        listChildren = new ArrayList<ExpandListChild>();
     }
 
 
@@ -30,17 +32,22 @@ public class ExpandListGroup {
         this.name = name;
     }
 
-    public ArrayList<ExpandListChild> getItems() {
-        return items;
+    public ArrayList<ExpandListChild> getListChildren() {
+        return listChildren;
     }
 
     public void addItem(ExpandListChild item) {
-        items.add(item);
+        listChildren.add(item);
+        item.setExpandListGroup(this);
     }
 
 
     public void reverseChildren() {
 
-        Collections.reverse(items);
+        Collections.reverse(listChildren);
+    }
+
+    public int getChildCount() {
+        return listChildren.size();
     }
 }
