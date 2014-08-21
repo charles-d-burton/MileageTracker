@@ -1,6 +1,7 @@
 package com.charles.mileagetracker.app.activities;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.LoaderManager;
 import android.app.PendingIntent;
 import android.content.Loader;
@@ -11,8 +12,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.adapter.SetHomeDrawerAdapter;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
@@ -25,6 +29,7 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -51,12 +56,16 @@ public class ShowLocation extends Activity implements
     private int id;
 
     private GoogleMap gmap = null;
+    ListView drawerView = null;
+    //private Fragment drawer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
         gmap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map_view)).getMap();
+        drawerView = (ListView) findViewById(R.id.drawer_view_map);
+        //drawer = (Fragment)getFragmentManager().findFragmentById(R.id.drawer_view_map);
         gmap.setOnMapLongClickListener(this);
         gmap.setOnMarkerClickListener(this);
         gmap.setOnMarkerDragListener(this);
@@ -223,12 +232,29 @@ public class ShowLocation extends Activity implements
         protected void onPostExecute(ExpandListGroup expandListGroup) {
             super.onPostExecute(expandListGroup);
             ArrayList<ExpandListChild> children = expandListGroup.getListChildren();
+            SetHomeDrawerAdapter drawerAdapter = new SetHomeDrawerAdapter(ShowLocation.this, children);
+            drawerView.setAdapter(drawerAdapter);
             Iterator it = children.iterator();
+            Polyline polyline = null;
             while (it.hasNext()) {
+
                 ExpandListChild child = (ExpandListChild) it.next();
+
+                if (polyline != null && child.isBusinessRelated() == 1) {
+                    polyline.setColor(Color.GREEN);
+                }
+
+                gmap.addMarker(
+                        new MarkerOptions().position(new LatLng(child.getLat(), child.getLon()))
+                                .draggable(false)
+                                .title(child.getAddress())
+                                .flat(true)
+
+                );
                 LinkedList<LatLng> points = child.getLinePoints();
+
                 if (points.size() > 0) {
-                    Polyline line = gmap.addPolyline(new PolylineOptions().addAll(points).width(5).color(Color.RED).geodesic(true));
+                    polyline = gmap.addPolyline(new PolylineOptions().addAll(points).width(5).color(Color.RED).geodesic(true));
                 }
             }
         }
