@@ -3,7 +3,6 @@ package com.charles.mileagetracker.app.services.intentservices;
 import android.app.IntentService;
 import android.content.ContentValues;
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 
 import com.charles.mileagetracker.app.database.TrackerContentProvider;

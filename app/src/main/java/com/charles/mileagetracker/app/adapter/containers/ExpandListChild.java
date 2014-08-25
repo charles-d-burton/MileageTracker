@@ -3,7 +3,6 @@ package com.charles.mileagetracker.app.adapter.containers;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**

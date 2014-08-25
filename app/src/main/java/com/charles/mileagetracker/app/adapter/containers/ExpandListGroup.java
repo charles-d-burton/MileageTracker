@@ -1,10 +1,8 @@
 package com.charles.mileagetracker.app.adapter.containers;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 
 /**
  * Created by charles on 7/9/14.

@@ -7,7 +7,6 @@ import android.app.DialogFragment;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.DatePicker;
 
 import com.charles.mileagetracker.app.R;
 

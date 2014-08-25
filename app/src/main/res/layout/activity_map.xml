@@ -4,33 +4,28 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <fragment
+    android:layout_height="match_parent"
+    android:id="@+id/drawer_layout">
+    <!--<fragment
         android:id="@+id/map_view"
         android:name="com.google.android.gms.maps.MapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"/>-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/map_container"
+        android:orientation="vertical"/>
 
-   <!-- <fragment
+
+   <fragment
         android:id="@+id/drawer_view_map"
-        android:name="com.charles.mileagetracker.app.fragments.DrawerListFragment"
-        android:layout_width="200dp"
+        android:name="com.charles.mileagetracker.app.fragments.ExpandableListFragment"
+        android:layout_width="300dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp"
-        android:background="#111"/>-->
-    <ListView
-        android:id="@+id/drawer_view_map"
-        android:layout_width="200dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:divider="@android:color/background_dark"
-        android:dividerHeight="1dp"
-        android:background="@android:color/background_light"
-        android:drawSelectorOnTop="false" />
-
-
-
+        android:background="#111"/>
 
 </android.support.v4.widget.DrawerLayout>

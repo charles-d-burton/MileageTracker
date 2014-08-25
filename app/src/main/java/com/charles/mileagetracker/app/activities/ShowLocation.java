@@ -1,90 +1,63 @@
 package com.charles.mileagetracker.app.activities;
 
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.LoaderManager;
-import android.app.PendingIntent;
-import android.content.Loader;
-import android.database.Cursor;
-import android.graphics.Color;
-import android.os.AsyncTask;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.LinearLayout;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.adapter.SetHomeDrawerAdapter;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
-import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
+import com.charles.mileagetracker.app.fragments.ExpandableListFragment;
+import com.charles.mileagetracker.app.fragments.SetHomeFragment;
+import com.charles.mileagetracker.app.fragments.ShowTripsFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
-import com.google.android.gms.location.LocationClient;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
 
 public class ShowLocation extends Activity implements
-        GoogleMap.OnMapLongClickListener,
-        LoaderManager.LoaderCallbacks<Cursor>,
-        GoogleMap.OnMarkerDragListener,
-        GoogleMap.OnMarkerClickListener,
-        LocationClient.OnAddGeofencesResultListener,
-        LocationClient.OnRemoveGeofencesResultListener,
         GooglePlayServicesClient.ConnectionCallbacks,
-        GooglePlayServicesClient.OnConnectionFailedListener{
+        GooglePlayServicesClient.OnConnectionFailedListener,
+        ExpandableListFragment.ExpandableListInteractionListener,
+        SetHomeFragment.OnShowHomeInteractionListener,
+        ShowTripsFragment.OnShowTripsInteractionListener{
 
     private double lat;
     private double lon;
     private int id;
 
-    private GoogleMap gmap = null;
-    ListView drawerView = null;
-    //private Fragment drawer = null;
+    private LinearLayout containerLayout = null;
+    private ExpandableListFragment drawerFragment = null;
+    private DrawerLayout drawerLayout = null;
+    private ShowTripsFragment showTripFragment = null;
+    private SetHomeFragment showHomesFragment = null;
+
+    public static final int MAP_SHOW_TRIPS = 0;
+    public static final int MAP_SHOW_HOMES = 1;
+    private int CURRENT_MAP = MAP_SHOW_TRIPS;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-        gmap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map_view)).getMap();
-        drawerView = (ListView) findViewById(R.id.drawer_view_map);
-        //drawer = (Fragment)getFragmentManager().findFragmentById(R.id.drawer_view_map);
-        gmap.setOnMapLongClickListener(this);
-        gmap.setOnMarkerClickListener(this);
-        gmap.setOnMarkerDragListener(this);
 
-        Bundle bundle = getIntent().getExtras();
-        if (bundle != null) {
-            id = bundle.getInt("id");
-            ExpandListChild child = (ExpandListChild) bundle.getSerializable("child");
-            lat = child.getLat();
-            lon = child.getLon();
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        containerLayout = (LinearLayout) findViewById(R.id.map_container);
+        FragmentManager manager = getFragmentManager();
+        FragmentTransaction transaction = manager.beginTransaction();
 
-            CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(new LatLng(lat, lon))
-                    .zoom(13)
-                    .build();
-            gmap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-            ExpandListGroup listGroup = child.getExpandGroup();
-            new DrawLines().execute(listGroup);
-        }
+        showTripFragment = ShowTripsFragment.newInstance();
+        transaction.add(R.id.map_container, showTripFragment);
+        transaction.commit();
+        manager.executePendingTransactions();
+
+        drawerFragment = (ExpandableListFragment) getFragmentManager().findFragmentById(R.id.drawer_view_map);
     }
 
     @Override
@@ -123,141 +96,59 @@ public class ShowLocation extends Activity implements
     }
 
     @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return null;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-
-    }
-
-    @Override
-    public void onAddGeofencesResult(int i, String[] strings) {
-
-    }
-
-    @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
 
     @Override
-    public void onMapLongClick(LatLng latLng) {
-
-    }
-
-    @Override
-    public boolean onMarkerClick(Marker marker) {
-        return false;
-    }
-
-    @Override
-    public void onMarkerDragStart(Marker marker) {
-
-    }
-
-    @Override
-    public void onMarkerDrag(Marker marker) {
-
-    }
-
-    @Override
-    public void onMarkerDragEnd(Marker marker) {
-
-    }
-
-    @Override
-    public void onRemoveGeofencesByRequestIdsResult(int i, String[] strings) {
-
-    }
-
-    @Override
-    public void onRemoveGeofencesByPendingIntentResult(int i, PendingIntent pendingIntent) {
-
-    }
-
-    private class DrawLines extends AsyncTask<ExpandListGroup, Integer, ExpandListGroup>{
-
-        private AddressDistanceServices distanceServices;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            distanceServices = new AddressDistanceServices(ShowLocation.this);
+    public void expandListItemTouch(ExpandListChild child) {
+        if (child != null && showTripFragment != null) {
+            showTripFragment.redrawLines(child.getExpandGroup());
         }
+    }
 
-        @Override
-        protected ExpandListGroup doInBackground(ExpandListGroup... params) {
-            ExpandListGroup expandListGroup = params[0];
-            ArrayList children = expandListGroup.getListChildren();
-            for (int i = 0; i < children.size(); i++) {
-                if (i == children.size() -1){
-                    Log.v("LAST POINT: ", "LAST POINT");
-                    break;
-                }
-                ExpandListChild point1 = (ExpandListChild)children.get(i);
-                ExpandListChild point2 = (ExpandListChild)children.get(i + 1);
-
-                String url = distanceServices.getDirectionsURL(point1.getLat(), point1.getLon(), point2.getLat(), point2.getLon());
-                String result = distanceServices.getStringFromUrl(url);
-                try {
-                    JSONObject json = new JSONObject(result);
-                    JSONArray routeArray = json.getJSONArray("routes");
-                    JSONObject routes = routeArray.getJSONObject(0);
-                    JSONObject overviewPolylines = routes.getJSONObject("overview_polyline");
-                    String encodedString = overviewPolylines.getString("points");
-                    LinkedList lines = distanceServices.decodePoly(encodedString);
-                    Log.v("Number of lines: " , Integer.toString(lines.size()));
-                    point1.addAllPoints(lines);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-            }
-            return expandListGroup;
+    @Override
+    public void expandListItemLongTouch(ExpandListGroup group) {
+        drawerLayout.closeDrawer(drawerFragment.getView());
+        if (showTripFragment != null && group != null) {
+            Log.v("Redrawing Lines: ", group.getName());
+            showTripFragment.redrawLines(group);
+        } else {
+            Log.v("Redrawing Lines: ", "Something is null");
         }
+    }
 
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
+    @Override
+    public void switchMap(int map) {
+        FragmentManager fragmentManager = getFragmentManager();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        switch (map) {
+            case MAP_SHOW_HOMES:
+                showHomesFragment = SetHomeFragment.newInstance();
+                transaction.replace(R.id.map_container, showHomesFragment);
+                transaction.commit();
+                fragmentManager.executePendingTransactions();
+
+                break;
+            case MAP_SHOW_TRIPS:
+                showTripFragment = ShowTripsFragment.newInstance();
+                transaction.replace(R.id.map_container, showTripFragment);
+                transaction.commit();
+                fragmentManager.executePendingTransactions();
+                break;
+            default:
+                throw new IllegalStateException("Unknown Map Type");
         }
+    }
 
-        @Override
-        protected void onPostExecute(ExpandListGroup expandListGroup) {
-            super.onPostExecute(expandListGroup);
-            ArrayList<ExpandListChild> children = expandListGroup.getListChildren();
-            SetHomeDrawerAdapter drawerAdapter = new SetHomeDrawerAdapter(ShowLocation.this, children);
-            drawerView.setAdapter(drawerAdapter);
-            Iterator it = children.iterator();
-            Polyline polyline = null;
-            while (it.hasNext()) {
-
-                ExpandListChild child = (ExpandListChild) it.next();
-
-                if (polyline != null && child.isBusinessRelated() == 1) {
-                    polyline.setColor(Color.GREEN);
-                }
-
-                gmap.addMarker(
-                        new MarkerOptions().position(new LatLng(child.getLat(), child.getLon()))
-                                .draggable(false)
-                                .title(child.getAddress())
-                                .flat(true)
-
-                );
-                LinkedList<LatLng> points = child.getLinePoints();
-
-                if (points.size() > 0) {
-                    polyline = gmap.addPolyline(new PolylineOptions().addAll(points).width(5).color(Color.RED).geodesic(true));
-                }
-            }
-        }
+    @Override
+    public void onShowHomeInteraction() {
 
     }
+
+    @Override
+    public void onShowTripInteraction() {
+
+    }
+
 }

@@ -5,14 +5,11 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.location.Address;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
-import com.google.android.gms.analytics.Tracker;
-import com.google.android.gms.maps.model.LatLng;
 
 /**
  * Created by charles on 6/14/14.

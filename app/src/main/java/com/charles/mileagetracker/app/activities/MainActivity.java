@@ -12,8 +12,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
-import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -31,10 +29,8 @@ import android.widget.TextView;
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripTable;
-import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.maps.model.LatLng;
 
 import java.io.File;
 import java.io.FileReader;
@@ -92,7 +88,7 @@ public class MainActivity extends Activity implements
 
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, ExpandingTripList.class);
+                Intent intent = new Intent(MainActivity.this, ShowLocation.class);
                 MainActivity.this.startActivity(intent);
             }
         });

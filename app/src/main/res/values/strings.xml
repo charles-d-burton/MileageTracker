@@ -16,5 +16,6 @@
     <string name="title_activity_expanding_trip_list">ExpandingTripList</string>
     <string name="title_activity_report_generate">ReportGenerateActivity</string>
     <string name="title_activity_show_location">ShowLocation</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

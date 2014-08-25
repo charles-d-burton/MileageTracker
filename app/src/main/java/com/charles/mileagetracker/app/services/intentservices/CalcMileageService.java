@@ -9,7 +9,6 @@ import android.util.Log;
 
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripGroup;
-import com.charles.mileagetracker.app.database.TripRowCreator;
 import com.charles.mileagetracker.app.database.TripTable;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 
