@@ -11,17 +11,27 @@
         android:name="com.google.android.gms.maps.MapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>-->
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/map_container"
-        android:orientation="vertical"/>
+        android:orientation="vertical"
+        android:weightSum="1">
+
+        <TextView
+            android:layout_width="221dp"
+            android:layout_height="51dp"
+            android:text="TEXT"
+            android:id="@+id/textView"
+            android:layout_gravity="center_horizontal|bottom" />
+    </FrameLayout>
 
 
    <fragment
         android:id="@+id/drawer_view_map"
         android:name="com.charles.mileagetracker.app.fragments.ExpandableListFragment"
-        android:layout_width="300dp"
+        android:layout_width="fill_parent"
+        android:layout_weight="75"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:divider="@android:color/transparent"

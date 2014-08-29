@@ -134,6 +134,21 @@ public class ExpandableListFragment extends Fragment {
                 return false;
             }
         });
+
+        /*expListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+            @Override
+            public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+                if (expListView.isGroupExpanded(groupPosition)) {
+                    expListView.collapseGroup(groupPosition);
+                } else {
+                    expListView.expandGroup(groupPosition, true);
+                }
+
+                ExpandListGroup group = (ExpandListGroup) parent.getAdapter().getItem(groupPosition);
+                mListener.expandListGroupTouch(group);
+                return false;
+            }
+        });*/
         return view;
     }
 
@@ -379,7 +394,7 @@ public class ExpandableListFragment extends Fragment {
     public interface ExpandableListInteractionListener {
         public void expandListItemTouch(ExpandListChild child);
         public void expandListItemLongTouch(ExpandListGroup group);
-        public void switchMap(int map);
+        public void expandListGroupTouch(ExpandListGroup group);
     }
 
 }

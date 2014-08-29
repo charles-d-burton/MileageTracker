@@ -56,6 +56,10 @@ public class ShowTripsFragment extends MapFragment implements
     private OnShowTripsInteractionListener mListener;
     private GoogleMap gmap = null;
 
+    private static final String param1 = "group";
+
+    private ExpandListGroup group = null;
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -63,6 +67,13 @@ public class ShowTripsFragment extends MapFragment implements
      * @return A new instance of fragment ShowTripsFragment.
      */
     // TODO: Rename and change types and number of parameters
+    public static ShowTripsFragment newInstance(ExpandListGroup group) {
+        ShowTripsFragment fragment = new ShowTripsFragment();
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(param1, group);
+        return fragment;
+    }
+
     public static ShowTripsFragment newInstance() {
         ShowTripsFragment fragment = new ShowTripsFragment();
         return fragment;
@@ -73,7 +84,12 @@ public class ShowTripsFragment extends MapFragment implements
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            group = (ExpandListGroup)getArguments().getSerializable(param1);
+        }
+
     }
 
     @Override
@@ -84,6 +100,7 @@ public class ShowTripsFragment extends MapFragment implements
         gmap.setOnMapLongClickListener(this);
         gmap.setOnMarkerClickListener(this);
         gmap.setOnMarkerDragListener(this);
+        if (group != null) redrawLines(group);
         return view;
     }
 

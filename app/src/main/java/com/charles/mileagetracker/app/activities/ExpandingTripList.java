@@ -126,7 +126,7 @@ public class ExpandingTripList extends Activity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_email) {
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -193,7 +193,7 @@ public class ExpandingTripList extends Activity {
         protected void onPreExecute() {
             super.onPreExecute();
             mDialog = new ProgressDialog(ExpandingTripList.this);
-            mDialog.setMessage("Loading Trips....");
+            mDialog.setMessage("Generating CSV....");
             mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             mDialog.setIndeterminate(true);
             mDialog.show();

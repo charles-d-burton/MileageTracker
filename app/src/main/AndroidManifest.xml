@@ -10,11 +10,11 @@
         <activity
             android:name=".activities.MainActivity"
             android:label="@string/main_activity" >
-            <intent-filter>
+            <!--<intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            </intent-filter>-->
         </activity>
         <activity
             android:name=".activities.SetHome"
@@ -113,6 +113,11 @@
         <activity
             android:name=".activities.ShowLocation"
             android:label="@string/title_activity_show_location" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
     </application>
 

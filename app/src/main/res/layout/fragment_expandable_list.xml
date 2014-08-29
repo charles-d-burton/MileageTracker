@@ -9,12 +9,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Large Text"
-        android:id="@+id/textView2"
+        android:text="0 Miles"
+        android:id="@+id/total_miles"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:background="@android:color/background_light" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Start Point"
+        android:id="@+id/add_start_point"
+        android:layout_below="@+id/total_miles"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
 
     <ExpandableListView
@@ -28,6 +37,7 @@
         android:dividerHeight="2dp"
         android:drawSelectorOnTop="true"
         android:headerDividersEnabled="false" />
+
 
 
 
