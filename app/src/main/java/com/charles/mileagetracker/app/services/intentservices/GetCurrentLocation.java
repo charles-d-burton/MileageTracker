@@ -46,6 +46,8 @@ public class GetCurrentLocation extends IntentService implements
 
     private int locationResolution = 100;
 
+    private enum Provider {HIGH_ACCURACY, LOW_ACCURACy}
+
 
     public GetCurrentLocation() {
         super("CheckCurrentLocation");
@@ -55,26 +57,34 @@ public class GetCurrentLocation extends IntentService implements
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        if (intent.getBooleanExtra("stop", false)) {
-            Log.v("DEBUG: ", "Stopping location updates");
-            try {
-                locationClient.disconnect();
-            } catch (Exception e) {
+        if (intent != null) {
 
+            if (intent.getBooleanExtra("stop", false)) {
+                Log.v("DEBUG: ", "Stopping location updates");
+                try {
+                    locationClient.disconnect();
+                } catch (Exception e) {
+
+                }
+                return;
             }
-            return;
         }
 
-        if (intent != null) {
-            initLocation();
+        LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            initLocation(Provider.HIGH_ACCURACY);
+        } else {
+            initLocation(Provider.LOW_ACCURACy);
         }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (locationClient != null && locationClient.isConnected()) locationClient.disconnect();
-        //locationClient.disconnect();
+        if (locationClient != null && locationClient.isConnected()){
+            locationClient.removeLocationUpdates(locationListener);
+            locationClient.disconnect();
+        }
     }
 
     @Override
@@ -123,25 +133,38 @@ public class GetCurrentLocation extends IntentService implements
                 }
             } else if (location != null && location.getAccuracy() > locationResolution) {
                 counter = counter++;
-                if (counter == 10) locationResolution = 500;
+                if (counter == 10) initLocation(Provider.LOW_ACCURACy);
             }
         }
     }
 
-    private void initLocation() {
-        final LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+    //Uses the selected location provider to init the location callbacks
+    private void initLocation(Provider provider) {
 
+        if (locationListener != null && locationClient.isConnected()) {
+            locationClient.disconnect();
+        }
 
         locationClient = new LocationClient(getApplicationContext(), this, this);
         locationRequest = LocationRequest.create();
-        if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-            locationResolution = 100;
-        } else {
-            locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-            locationResolution = 500;
+
+        switch (provider) {
+            case HIGH_ACCURACY:
+                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                locationResolution = 100;
+                break;
+            case LOW_ACCURACy:
+                locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+                locationResolution = 750;
+                break;
+            default:
+                break;
         }
-        locationListener = new MyLocationListener();
+
+        if (locationListener == null) {
+            locationListener = new MyLocationListener();
+        }
+
         locationClient.connect();
     }
 

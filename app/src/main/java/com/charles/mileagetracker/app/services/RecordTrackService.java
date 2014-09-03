@@ -14,6 +14,7 @@ import android.util.Log;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
+import com.charles.mileagetracker.app.activities.ShowLocation;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripTable;
@@ -253,7 +254,7 @@ public class RecordTrackService extends Service {
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("Test")
                 .setContentText(message);
-        Intent resultIntent = new Intent(context, MainActivity.class);
+        Intent resultIntent = new Intent(context, ShowLocation.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(resultIntent);
@@ -269,7 +270,7 @@ public class RecordTrackService extends Service {
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("Test")
                 .setContentText(message);
-        Intent resultIntent = new Intent(context, MainActivity.class);
+        Intent resultIntent = new Intent(context, ShowLocation.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(resultIntent);
