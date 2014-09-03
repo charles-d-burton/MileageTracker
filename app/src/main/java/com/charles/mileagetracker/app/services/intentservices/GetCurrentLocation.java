@@ -142,6 +142,7 @@ public class GetCurrentLocation extends IntentService implements
     private void initLocation(Provider provider) {
 
         if (locationListener != null && locationClient.isConnected()) {
+            locationClient.removeLocationUpdates(locationListener);
             locationClient.disconnect();
         }
 
