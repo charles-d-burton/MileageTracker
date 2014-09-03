@@ -164,7 +164,7 @@ public class ExpandingTripList extends Activity {
         double lon = child.getLon();
         int id = child.getId();
 
-        Intent intent = new Intent(ExpandingTripList.this, ShowLocation.class);
+        Intent intent = new Intent(ExpandingTripList.this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("lat",lat);
         intent.putExtra("lon", lon);

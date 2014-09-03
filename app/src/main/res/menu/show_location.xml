@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.charles.mileagetracker.app.activities.ShowLocation" >
+    tools:context="com.charles.mileagetracker.app.activities.MainActivity" >
     <item android:id="@+id/action_email"
         android:title="@string/action_settings"
         android:orderInCategory="100"
