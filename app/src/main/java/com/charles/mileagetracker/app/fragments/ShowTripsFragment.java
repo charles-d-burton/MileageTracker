@@ -20,6 +20,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -60,6 +61,8 @@ public class ShowTripsFragment extends MapFragment implements
 
     private ExpandListGroup group = null;
 
+    private boolean mapStart = false;
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -78,6 +81,8 @@ public class ShowTripsFragment extends MapFragment implements
         ShowTripsFragment fragment = new ShowTripsFragment();
         return fragment;
     }
+
+
     public ShowTripsFragment() {
         // Required empty public constructor
     }
@@ -186,7 +191,13 @@ public class ShowTripsFragment extends MapFragment implements
                     .target(new LatLng(lat, lon))
                     .zoom(13)
                     .build();
-            gmap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+            if (mapStart) {
+                gmap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                mapStart = true;
+            } else {
+                gmap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+            }
+
         }
         new DrawLines().execute(group);
     }
@@ -206,12 +217,17 @@ public class ShowTripsFragment extends MapFragment implements
         protected ExpandListGroup doInBackground(ExpandListGroup... params) {
             ExpandListGroup expandListGroup = params[0];
             ArrayList children = expandListGroup.getListChildren();
+
             for (int i = 0; i < children.size(); i++) {
-                if (i == children.size() -1){
+                if (i == children.size() - 1){
                     break;
                 }
                 ExpandListChild point1 = (ExpandListChild)children.get(i);
                 ExpandListChild point2 = (ExpandListChild)children.get(i + 1);
+                //Why do more work than necessary?  The points have already been generated, we need to just skip that part
+                if (point1.getLinePoints().size() > 0) {
+                    continue;
+                }
 
                 String url = distanceServices.getDirectionsURL(point1.getLat(), point1.getLon(), point2.getLat(), point2.getLon());
                 String result = distanceServices.getStringFromUrl(url);
@@ -237,6 +253,11 @@ public class ShowTripsFragment extends MapFragment implements
             super.onProgressUpdate(values);
         }
 
+
+        /*
+        Take the group, pull out all of the children and then process all of the points that they posses
+        and draw them as a polyline on the screen.
+         */
         @Override
         protected void onPostExecute(ExpandListGroup expandListGroup) {
             super.onPostExecute(expandListGroup);
@@ -261,6 +282,7 @@ public class ShowTripsFragment extends MapFragment implements
 
                 );
                 LinkedList<LatLng> points = child.getLinePoints();
+                Log.v("POINTS: ", "Number of points: " + Integer.toString(points.size()));
 
                 if (points.size() > 0) {
                     polyline = gmap.addPolyline(new PolylineOptions().addAll(points).width(5).color(Color.RED).geodesic(true));

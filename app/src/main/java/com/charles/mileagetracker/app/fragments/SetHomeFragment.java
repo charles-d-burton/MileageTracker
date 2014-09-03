@@ -6,6 +6,7 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,6 +15,7 @@ import android.database.Cursor;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -120,6 +122,17 @@ public class SetHomeFragment extends MapFragment implements
 
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        LocationManager lm = (LocationManager)this.getActivity().getSystemService(Context.LOCATION_SERVICE);
+
+        location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if (location == null) {
+            location = lm.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+            if (location == null) {
+                location = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            }
+        }
+        if (location != null) zoomToLocation(location);
         //locationRequest.setInterval(5000);
         //locationRequest.setFastestInterval(1000);
 
@@ -659,6 +672,7 @@ public class SetHomeFragment extends MapFragment implements
         @Override
         public void onLocationChanged(Location location) {
             SetHomeFragment.this.location = location;
+
             if (!mapStarted) {
                 zoomToLocation(location);
                 //checkLocation(new LatLng(location.getLatitude(), location.getLongitude()));
@@ -696,6 +710,7 @@ public class SetHomeFragment extends MapFragment implements
     public interface OnShowHomeInteractionListener {
         // TODO: Update argument type and name
         public void onShowHomeInteraction();
+
         //public void onFragmentInteraction(Uri uri);
     }
 }

@@ -67,6 +67,8 @@ public class MainActivity extends Activity implements
     private final static int
             CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
+    private final static String TITLE = "Mileage Tracker";
+
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat sdf2 = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
 
@@ -82,7 +84,7 @@ public class MainActivity extends Activity implements
     private double lon;
     private int id;
 
-    private Button testButton = null;
+    private Button startPointButton = null;
 
     private FrameLayout containerLayout = null;
     private ExpandableListFragment drawerFragment = null;
@@ -114,14 +116,13 @@ public class MainActivity extends Activity implements
         transaction.commit();
         manager.executePendingTransactions();
 
-        testButton = (Button) findViewById(R.id.add_start_point);
-        testButton.setOnClickListener(new View.OnClickListener() {
+        startPointButton = (Button) findViewById(R.id.add_start_point);
+        startPointButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (CURRENT_MAP == MAP_SHOW_TRIPS) {
+                    drawerLayout.closeDrawers();
                     switchMap(MAP_SHOW_HOMES);
-                } else if (CURRENT_MAP == MAP_SHOW_HOMES ){
-                    switchMap(MAP_SHOW_TRIPS);
                 }
             }
         });
@@ -148,7 +149,7 @@ public class MainActivity extends Activity implements
 
             @Override
             public void onDrawerOpened(View drawerView) {
-                getActionBar().setTitle("Title");
+                getActionBar().setTitle(TITLE);
 
             }
         };
