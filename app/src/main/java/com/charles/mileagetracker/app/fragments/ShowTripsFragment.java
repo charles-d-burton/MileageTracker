@@ -20,7 +20,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -34,6 +33,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -62,6 +62,8 @@ public class ShowTripsFragment extends MapFragment implements
     private ExpandListGroup group = null;
 
     private boolean mapStart = false;
+
+    private HashMap<Marker, ExpandListChild> markerTracker = new HashMap<Marker,ExpandListChild>();
 
     /**
      * Use this factory method to create a new instance of
@@ -162,7 +164,8 @@ public class ShowTripsFragment extends MapFragment implements
     }
 
     @Override
-    public boolean onMarkerClick(Marker marker) {
+    public boolean onMarkerClick(final Marker marker) {
+
         return false;
     }
 
@@ -273,14 +276,15 @@ public class ShowTripsFragment extends MapFragment implements
                 if (polyline != null && child.isBusinessRelated() == 1) {
                     polyline.setColor(Color.GREEN);
                 }
-
-                gmap.addMarker(
+                Marker marker = gmap.addMarker(
                         new MarkerOptions().position(new LatLng(child.getLat(), child.getLon()))
                                 .draggable(false)
                                 .title(child.getAddress())
                                 .flat(true)
 
                 );
+
+                markerTracker.put(marker, child);
                 LinkedList<LatLng> points = child.getLinePoints();
                 Log.v("POINTS: ", "Number of points: " + Integer.toString(points.size()));
 

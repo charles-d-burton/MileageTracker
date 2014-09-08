@@ -192,11 +192,17 @@ public class ExpandableListFragment extends Fragment {
         super.onAttach(activity);
         try {
             mListener = (ExpandableListInteractionListener) activity;
-            new FillData().execute("");
+
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        new FillData().execute("");
     }
 
     @Override

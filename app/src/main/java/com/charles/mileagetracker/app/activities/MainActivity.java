@@ -67,8 +67,6 @@ public class MainActivity extends Activity implements
     private final static int
             CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
-    private final static String TITLE = "Mileage Tracker";
-
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat sdf2 = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
 
@@ -84,7 +82,7 @@ public class MainActivity extends Activity implements
     private double lon;
     private int id;
 
-    private Button startPointButton = null;
+    private Button testButton = null;
 
     private FrameLayout containerLayout = null;
     private ExpandableListFragment drawerFragment = null;
@@ -116,13 +114,14 @@ public class MainActivity extends Activity implements
         transaction.commit();
         manager.executePendingTransactions();
 
-        startPointButton = (Button) findViewById(R.id.add_start_point);
-        startPointButton.setOnClickListener(new View.OnClickListener() {
+        testButton = (Button) findViewById(R.id.add_start_point);
+        testButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (CURRENT_MAP == MAP_SHOW_TRIPS) {
-                    drawerLayout.closeDrawers();
                     switchMap(MAP_SHOW_HOMES);
+                } else if (CURRENT_MAP == MAP_SHOW_HOMES ){
+                    switchMap(MAP_SHOW_TRIPS);
                 }
             }
         });
@@ -149,7 +148,7 @@ public class MainActivity extends Activity implements
 
             @Override
             public void onDrawerOpened(View drawerView) {
-                getActionBar().setTitle(TITLE);
+                getActionBar().setTitle("Title");
 
             }
         };
@@ -318,7 +317,7 @@ public class MainActivity extends Activity implements
         newFragment.show(getFragmentManager(), "startDatePicker");
     }
 
-    // Define a DialogFragment that displays the error dialog
+    // Define a DialogFragment that displays the error dialog if Google play services is not connected
     public static class ErrorDialogFragment extends DialogFragment {
         // Global field to contain the error dialog
         private Dialog errorDialog;
@@ -426,6 +425,7 @@ public class MainActivity extends Activity implements
 
             private final String firstLine = "Date,Address,Distance(mi),Latitude,Longitude\n";
 
+            //Create a dialog telling the user that the app is doing something
             @Override
             protected void onPreExecute() {
                 csvDialog = new ProgressDialog(context);
@@ -433,10 +433,15 @@ public class MainActivity extends Activity implements
                 csvDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                 csvDialog.setIndeterminate(true);
                 csvDialog.show();
-                //bar.setVisibility(ProgressBar.VISIBLE);
             }
 
 
+
+            /*
+            Construct a query to pull the data out of the database between two dates.  Because of the way
+            it works I have to write the generated CSV to a file.  I then pass the URL of this file to the
+            email that is generated.
+             */
             @Override
             protected String doInBackground(Long... params) {
                 long start = params[0];
@@ -479,9 +484,9 @@ public class MainActivity extends Activity implements
             protected void onPostExecute(String csv) {
                 super.onPostExecute(csv);
                 csvDialog.dismiss();
-                //bar.setVisibility(ProgressBar.INVISIBLE);
             }
 
+            //Create a CSV line
             private String[] getLine(long date, String address, int distance, double lat, double lon) {
 
 
@@ -494,17 +499,9 @@ public class MainActivity extends Activity implements
                 array[3] = Double.toString(lat);
                 array[4] = Double.toString(lon);
                 return array;
-
-
-            /*line = line + dateString + ",";
-            line = line + address + ",";
-            line = line + (Double.toString(distance * 0.621)) + ",";//Convert to miles
-            line = line + Double.toString(lat) + ",";
-            line = line + Double.toString(lon) + "\n";
-            Log.v("CSV Line: " , line);*/
-                //return line;
             }
 
+            //Save the CSV array to a file.
             private boolean writeToFile(List<String[]> lines) {
                 if (isExternalStorageWritable()) {
                     File dir = new File(Environment.getExternalStorageDirectory(), MainActivity.dir);
@@ -524,6 +521,8 @@ public class MainActivity extends Activity implements
                 }
             }
 
+            //Create the intent to email the file.  It gets the default emaila address from the Android
+            //system, then attaches the file to that email.
             private void emailFile(String mailAddress) {
                 File file = new File(Environment.getExternalStorageDirectory(), dir + File.separator + fileName);
                 //File file = new File(context.getFilesDir(), "email.csv");

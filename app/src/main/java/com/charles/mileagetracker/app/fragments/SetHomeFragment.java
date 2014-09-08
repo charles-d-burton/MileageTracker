@@ -146,7 +146,7 @@ public class SetHomeFragment extends MapFragment implements
         gmap.setOnMapLongClickListener(this);
         gmap.setOnMarkerClickListener(this);
         gmap.setOnMarkerDragListener(this);
-        getLoaderManager().initLoader(LOADER_ID, null, this);
+        //getLoaderManager().initLoader(LOADER_ID, null, this);
         return view;
     }
 
@@ -170,6 +170,7 @@ public class SetHomeFragment extends MapFragment implements
     @Override
     public void onPause() {
         super.onPause();
+        getLoaderManager().destroyLoader(LOADER_ID);
         if (locationClient.isConnected()) {
             locationClient.removeLocationUpdates(locationListener);
         }
@@ -179,14 +180,16 @@ public class SetHomeFragment extends MapFragment implements
     @Override
     public void onResume() {
         super.onResume();
+        getLoaderManager().initLoader(LOADER_ID, null, this);
         locationClient.connect();
+
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        task.cancel(true);//Prevent the app from crashing if the Activity is closed before this can run
-        getLoaderManager().destroyLoader(LOADER_ID);
+        //task.cancel(true);//Prevent the app from crashing if the Activity is closed before this can run
+        //getLoaderManager().destroyLoader(LOADER_ID);
         super.onDestroy();
     }
 
@@ -206,6 +209,7 @@ public class SetHomeFragment extends MapFragment implements
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         String projection[] = {StartPoints.COLUMN_ID, StartPoints.NAME, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS};
+
         return new CursorLoader(getActivity().getApplicationContext(), TrackerContentProvider.STARTS_URI, projection,null,null,null);
     }
 
@@ -222,7 +226,7 @@ public class SetHomeFragment extends MapFragment implements
     }
 
     @Override
-    public void onLoaderReset(Loader loader) {
+    public void onLoaderReset(Loader<Cursor> loader) {
         switch(loader.getId()) {
             case LOADER_ID:
                 break;
@@ -284,7 +288,8 @@ public class SetHomeFragment extends MapFragment implements
         builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                getLoaderManager().initLoader(LOADER_ID, null, SetHomeFragment.this);
+                //getLoaderManager().initLoader(LOADER_ID, null, SetHomeFragment.this);
+
                 //Remove a marker from the map, homeList, and database
                 if (removeMarkerCheckBox.isChecked()) {
                     marker.remove();
@@ -299,6 +304,7 @@ public class SetHomeFragment extends MapFragment implements
                     int rowsUpdated = getActivity().getContentResolver().update(TrackerContentProvider.STARTS_URI,contentValues ,StartPoints.COLUMN_ID + "=" + id, null);
                     Log.v("ROWS UPDATED: ", Integer.toString(rowsUpdated));
                 }
+                getLoaderManager().restartLoader(LOADER_ID, null, SetHomeFragment.this);
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -325,7 +331,7 @@ public class SetHomeFragment extends MapFragment implements
 
     @Override
     public void onMarkerDragEnd(Marker marker) {
-        getLoaderManager().initLoader(LOADER_ID, null, this);
+        //getLoaderManager().initLoader(LOADER_ID, null, this);
         int id = getMarkerId(marker);
         Home home = (Home)homeMap.get(id);
         home.loc = marker.getPosition();
@@ -333,6 +339,7 @@ public class SetHomeFragment extends MapFragment implements
         values.put(StartPoints.START_LAT, marker.getPosition().latitude);
         values.put(StartPoints.START_LON, marker.getPosition().longitude);
         getActivity().getContentResolver().update(TrackerContentProvider.STARTS_URI,values, StartPoints.COLUMN_ID + "=" + id, null);
+        getLoaderManager().restartLoader(LOADER_ID, null, this);
 
         //TODO, update the GeoFence
     }
@@ -402,13 +409,14 @@ public class SetHomeFragment extends MapFragment implements
         builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                getLoaderManager().initLoader(LOADER_ID, null, SetHomeFragment.this);
+                //getLoaderManager().initLoader(LOADER_ID, null, SetHomeFragment.this);
                 ContentValues values = new ContentValues();
                 values.put(StartPoints.START_LAT, latLng.latitude);
                 values.put(StartPoints.START_LON, latLng.longitude);
                 values.put(StartPoints.NAME, nameField.getText().toString());
 
                 Uri uri = getActivity().getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
+                getLoaderManager().restartLoader(LOADER_ID, null, SetHomeFragment.this);
                 int id = Integer.parseInt(uri.getLastPathSegment());
 
                 if (location != null) {
@@ -610,7 +618,7 @@ public class SetHomeFragment extends MapFragment implements
                     homeMap.remove(key);
                 }
             }
-            getLoaderManager().destroyLoader(LOADER_ID);
+            //getLoaderManager().destroyLoader(LOADER_ID);
         }
     }
 
