@@ -133,6 +133,7 @@ public class SetHomeFragment extends MapFragment implements
         locationClient = new LocationClient(applicationContext, this, this);
         locationListener = new MyLocationListener();
 
+        gmap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 12));
         gmap.setMyLocationEnabled(true);
         gmap.setOnMapLongClickListener(this);
         gmap.setOnMarkerClickListener(this);

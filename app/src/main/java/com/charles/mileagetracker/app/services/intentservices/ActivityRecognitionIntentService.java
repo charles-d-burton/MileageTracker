@@ -129,16 +129,17 @@ public class ActivityRecognitionIntentService extends IntentService {
     //If driving then we're going to set the variables to their least known values and write them
 
     private void handleDriving() {
-        tripVars.setDriving(true);
-        tripVars.setNotDrivingCounter(0);
-        tripVars.setSegmentRecorded(false);
+        if (!tripVars.isDriving()) {
+            tripVars.setDriving(true);
+            tripVars.setNotDrivingCounter(0);
+            tripVars.setSegmentRecorded(false);
 
-        try {
-            accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
-        } catch (IOException e) {
-            e.printStackTrace();
+            try {
+                accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
     }
 
     /*If not driving then we're going to examine the variables
@@ -155,15 +156,17 @@ public class ActivityRecognitionIntentService extends IntentService {
         int counter = tripVars.getNotDrivingCounter();
         counter = counter + 1;
         tripVars.setNotDrivingCounter(counter);
-        if (counter > 1 && !tripVars.isSegmentRecorded() && !tripVars.isSegmentRecording()) {//Trip segment not recorded, the class GetCurrentLocation will set this flag to true
+        if (counter > 2 && !tripVars.isSegmentRecorded() && !tripVars.isSegmentRecording()) {//Trip segment not recorded, the class GetCurrentLocation will set this flag to true
             tripVars.setSegmentRecording(true);
             startLocationHandler();
         }
 
-        try {
-            accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (counter < 4) {
+            try {
+                accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -177,12 +180,13 @@ public class ActivityRecognitionIntentService extends IntentService {
             startLocationHandler();
         }
 
-        try {
-            accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (counter < 5) {
+            try {
+                accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
     }
 
     //Kills the GetCurrentLocation class.  Uses start service but sets a boolean to tell it to unregister and stop cleanly

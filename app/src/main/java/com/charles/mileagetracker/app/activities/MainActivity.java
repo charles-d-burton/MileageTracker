@@ -41,6 +41,7 @@ import com.charles.mileagetracker.app.fragments.ShowTripsFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.maps.GoogleMapOptions;
 
 import java.io.File;
 import java.io.FileReader;
@@ -62,7 +63,7 @@ public class MainActivity extends Activity implements
         GooglePlayServicesClient.OnConnectionFailedListener,
         ExpandableListFragment.ExpandableListInteractionListener,
         SetHomeFragment.OnShowHomeInteractionListener,
-        ShowTripsFragment.OnShowTripsInteractionListener{
+        ShowTripsFragment.OnShowTripsInteractionListener {
 
     private final static int
             CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
@@ -247,6 +248,7 @@ public class MainActivity extends Activity implements
         switch (map) {
             case MAP_SHOW_HOMES:
                 CURRENT_MAP = MAP_SHOW_HOMES;
+                GoogleMapOptions options = new GoogleMapOptions();
                 showHomesFragment = SetHomeFragment.newInstance();
                 transaction.replace(R.id.map_container, showHomesFragment);
                 transaction.commit();
@@ -272,6 +274,11 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onShowTripInteraction() {
+
+    }
+
+    @Override
+    public void markerAdded() {
 
     }
 

@@ -73,7 +73,7 @@ public class GetCurrentLocation extends IntentService implements
         LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
         if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             initLocation(Provider.HIGH_ACCURACY);
-        } else {
+        } else if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             initLocation(Provider.LOW_ACCURACy);
         }
     }
@@ -133,7 +133,19 @@ public class GetCurrentLocation extends IntentService implements
                 }
             } else if (location != null && location.getAccuracy() > locationResolution) {
                 counter = counter++;
-                if (counter == 10) initLocation(Provider.LOW_ACCURACy);
+                if (counter == 10) {
+                    LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+                    location = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    try {
+                        logLocation(location);
+                        locationClient.removeLocationUpdates(this);
+                        locationClient.disconnect();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }

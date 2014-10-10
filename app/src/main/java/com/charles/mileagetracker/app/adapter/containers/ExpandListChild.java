@@ -42,6 +42,10 @@ public class ExpandListChild implements Serializable {
         return date;
     }
 
+    public long getDateMillis() {
+        return millis;
+    }
+
     public int getId() {
         return id;
     }
