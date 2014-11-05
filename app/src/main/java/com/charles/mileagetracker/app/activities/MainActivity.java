@@ -12,6 +12,7 @@ import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
@@ -33,8 +34,10 @@ import android.widget.TextView;
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
+import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripTable;
+import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.fragments.ExpandableListFragment;
 import com.charles.mileagetracker.app.fragments.SetHomeFragment;
 import com.charles.mileagetracker.app.fragments.ShowTripsFragment;
@@ -155,6 +158,8 @@ public class MainActivity extends Activity implements
         };
         drawerLayout.setDrawerListener(drawerToggle);
 
+        upgradeDB();
+
 
     }
 
@@ -240,6 +245,23 @@ public class MainActivity extends Activity implements
         if (showTripFragment != null && group != null) {
             showTripFragment.redrawLines(group);
         }
+    }
+
+    private void upgradeDB() {
+        List<HomePoints> homes = HomePoints.listAll(HomePoints.class);
+        for (HomePoints home : homes) {
+            Log.i("Sugar ORM Data Point: ", home.name);
+        }
+        /*String projection[] = {StartPoints.COLUMN_ID, StartPoints.NAME, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS};
+        Cursor c = getContentResolver().query(TrackerContentProvider.STARTS_URI, projection, null, null, null);
+        c.moveToPosition(-1);
+        while(c.moveToNext()) {
+            String name = c.getString(c.getColumnIndexOrThrow(StartPoints.NAME));
+            double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
+            double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
+            //HomePoints homePoints = new HomePoints(name, lat, lon);
+            //homePoints.save();
+        }*/
     }
 
     public void switchMap(int map) {
