@@ -29,6 +29,7 @@ import android.widget.Toast;
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
+import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.Geofence;
@@ -60,7 +61,6 @@ import java.util.List;
  */
 public class SetHomeFragment extends MapFragment implements
         GoogleMap.OnMapLongClickListener,
-        LoaderManager.LoaderCallbacks<Cursor>,
         GoogleMap.OnMarkerDragListener,
         GoogleMap.OnMarkerClickListener,
         GooglePlayServicesClient.ConnectionCallbacks,
@@ -76,15 +76,12 @@ public class SetHomeFragment extends MapFragment implements
 
     private static LatLng coords = null;
 
-    private final int LOADER_ID = 1;
-    private static SimpleCursorAdapter mAdapter;
-
     private static Location location = null;
     private static LocationRequest locationRequest = null;
     private static LocationClient locationClient = null;
     private static LocationListener locationListener = null;
 
-    private HashMap<Marker, Integer> startPoints = new HashMap<Marker, Integer>();
+    private List<HomePoints> homePoints = null;
 
     private boolean mapStarted = false;
 
@@ -112,6 +109,7 @@ public class SetHomeFragment extends MapFragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         this.applicationContext = getActivity().getApplicationContext();
         View view = super.onCreateView(inflater, container, savedInstanceState);
         gmap = getMap();
@@ -139,6 +137,9 @@ public class SetHomeFragment extends MapFragment implements
         gmap.setOnMarkerClickListener(this);
         gmap.setOnMarkerDragListener(this);
 
+        homePoints = HomePoints.listAll(HomePoints.class);
+        addStartPoints(homePoints);
+
 
         return view;
     }
@@ -164,7 +165,6 @@ public class SetHomeFragment extends MapFragment implements
     @Override
     public void onPause() {
         super.onPause();
-        getLoaderManager().destroyLoader(LOADER_ID);
         if (locationClient.isConnected()) {
             locationClient.removeLocationUpdates(locationListener);
         }
@@ -174,7 +174,6 @@ public class SetHomeFragment extends MapFragment implements
     @Override
     public void onResume() {
         super.onResume();
-        getLoaderManager().initLoader(LOADER_ID, null, this);
         locationClient.connect();
     }
 
@@ -194,43 +193,6 @@ public class SetHomeFragment extends MapFragment implements
 
     }
 
-    /*
-   Loader methods that handle interfacing with the database.
-    */
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-
-        String projection[] = {StartPoints.COLUMN_ID, StartPoints.NAME, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS};
-
-        return new CursorLoader(applicationContext, TrackerContentProvider.STARTS_URI, projection,null,null,null);
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        Log.v("SetHomeFragment: ", "Callback");
-        switch(loader.getId()) {
-            case LOADER_ID:
-                gmap.clear();
-                startPoints.clear();
-                Log.v("SetHomeFragment: ", "Loader finished loading");
-                addStartPoints(cursor);
-                break;
-        }
-
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        Log.v("SetHomeFragment: ", "Dataset Changed");
-        switch(loader.getId()) {
-            case LOADER_ID:
-                Log.v("SetHomeFragment: ", "Found My Loader ID");
-                gmap.clear();
-                startPoints.clear();
-                break;
-
-        }
-    }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
@@ -241,7 +203,7 @@ public class SetHomeFragment extends MapFragment implements
     public void onMapLongClick(final LatLng latLng) {
         double distance = getDistance(latLng);
 
-        if (startPoints.size() <= 1 || distance > 2000) {
+        if (homePoints.size() <= 1 || distance > 2000) {
             createMarker(latLng);
         } else if (distance > 750) {
             //Need to add a dialog here to prompt
@@ -273,7 +235,10 @@ public class SetHomeFragment extends MapFragment implements
      */
     @Override
     public boolean onMarkerClick(final Marker marker) {
+
         zoomToLocation(marker.getPosition());
+
+        //Build the dialog and enter the necessary data
         LinearLayout modifyMarkerLayout = (LinearLayout)getActivity().getLayoutInflater().inflate(R.layout.marker_modify_layout, null);
         final EditText modifyMarkerText = (EditText)modifyMarkerLayout.findViewById(R.id.marker_name);
         final CheckBox removeMarkerCheckBox = (CheckBox)modifyMarkerLayout.findViewById(R.id.delete_marker_checkbox);
@@ -285,18 +250,29 @@ public class SetHomeFragment extends MapFragment implements
         builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                int id = startPoints.get(marker);
+                /*
+                Find the marker then assign it to a variable.  I'm checking if the remove checkbox is checked
+                and then removing the marker and associated geofence if it is.  If that's not checked
+                I check to see if the title was changed, if so I update the marker title and the
+                database entry.
+                 */
+                HomePoints updateHomePoint = null;
+                for (HomePoints homePoint : homePoints) {
+                    if (homePoint.getMarker().equals(marker)) {
+                        updateHomePoint = homePoint;
+                    }
+                }
                 if (removeMarkerCheckBox.isChecked()) {
-                    applicationContext.getContentResolver().delete(TrackerContentProvider.STARTS_URI, StartPoints.COLUMN_ID + "=" + id, null);
-                    List listOfGeofences = Collections.singletonList(Integer.toString(id));
+                    marker.remove();
+                    List listOfGeofences = Collections.singletonList(Integer.toString(updateHomePoint.getId().intValue()));
                     locationClient.removeGeofences(listOfGeofences, SetHomeFragment.this);
-                    getLoaderManager().initLoader(LOADER_ID, null, SetHomeFragment.this);
+                    updateHomePoint.delete();
+                    homePoints.remove(updateHomePoint);
                 } else if (!modifyMarkerText.getText().toString().endsWith(markerTitle)) {
                     Log.v("SetHomeFragment: ", "Title Changed");
-                    ContentValues values = new ContentValues();
-                    values.put(StartPoints.NAME, modifyMarkerText.getEditableText().toString());
-                    applicationContext.getContentResolver().update(TrackerContentProvider.STARTS_URI, values, StartPoints.COLUMN_ID + "=" + id, null);
-                    getLoaderManager().initLoader(LOADER_ID, null, SetHomeFragment.this);
+                    updateHomePoint.name = modifyMarkerText.getText().toString();
+                    updateHomePoint.save();
+                    updateHomePoint.getMarker().setTitle(updateHomePoint.name);
                 }
             }
         });
@@ -325,13 +301,14 @@ public class SetHomeFragment extends MapFragment implements
 
     @Override
     public void onMarkerDragEnd(Marker marker) {
-        getLoaderManager().initLoader(LOADER_ID, null, this);
-        int id = startPoints.get(marker);
-        ContentValues values = new ContentValues();
-        values.put(StartPoints.START_LAT, marker.getPosition().latitude);
-        values.put(StartPoints.START_LON, marker.getPosition().longitude);
-        getActivity().getContentResolver().update(TrackerContentProvider.STARTS_URI,values, StartPoints.COLUMN_ID + "=" + id, null);
-        addProximityAlert(marker.getPosition(), id);  //Replaces the old geofence
+        for (HomePoints home : homePoints) {
+            if (home.getMarker().equals(marker)) {
+                home.lat = marker.getPosition().latitude;
+                home.lon = marker.getPosition().longitude;
+                home.save();
+                addProximityAlert(marker.getPosition(), home.getId().intValue());  //Replaces the old geofence
+            }
+        }
     }
 
     /*
@@ -371,28 +348,29 @@ public class SetHomeFragment extends MapFragment implements
     }
 
     @Override
-    public void onRemoveGeofencesByPendingIntentResult(int i, PendingIntent pendingIntent) {
-
-    }
+    public void onRemoveGeofencesByPendingIntentResult(int i, PendingIntent pendingIntent) {    }
 
     /*
-    Iterate through the cursor creating a marker for every row
+    Iterate through all of the start points and add them to the map
      */
-    private void addStartPoints(Cursor c) {
-        c.moveToPosition(-1);
-        while (c.moveToNext()) {
-            String projection[] = {StartPoints.COLUMN_ID, StartPoints.NAME, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS};
-            int id = c.getInt(c.getColumnIndexOrThrow(StartPoints.COLUMN_ID));
-            String name = c.getString(c.getColumnIndexOrThrow(StartPoints.NAME));
-            double start_lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
-            double start_lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
+    private void addStartPoints(List<HomePoints> homePoints) {
+        for (HomePoints homePoint : homePoints) {
             Marker marker = gmap.addMarker(new MarkerOptions()
-                    .title(name)
-                    .position(new LatLng(start_lat,start_lon))
-                    .draggable(true));
-            startPoints.put(marker, id);
+                .title(homePoint.name)
+                .position(new LatLng(homePoint.lat, homePoint.lon))
+                .draggable(true)
+            );
+            homePoint.setMarker(marker);
         }
-        getLoaderManager().destroyLoader(LOADER_ID);
+    }
+
+    private void addStartPoint(HomePoints homePoint) {
+        Marker marker = gmap.addMarker(new MarkerOptions()
+                .title(homePoint.name)
+                .position(new LatLng(homePoint.lat, homePoint.lon))
+                .draggable(true)
+        );
+        homePoint.setMarker(marker);
     }
 
     /*
@@ -401,7 +379,7 @@ public class SetHomeFragment extends MapFragment implements
     This method creates a marker on the given LatLng.  It prompts with a Dialog to name the marker.
      */
     private void createMarker(final LatLng latLng) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(applicationContext);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this.getActivity());
         LinearLayout nameFieldLayout = (LinearLayout)getActivity().getLayoutInflater().inflate(R.layout.marker_title_layout, null);
         final EditText nameField = (EditText)nameFieldLayout.findViewById(R.id.marker_name);
         builder.setTitle("Set Name");
@@ -410,15 +388,9 @@ public class SetHomeFragment extends MapFragment implements
             //Insert the values if the user clicks ok
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ContentValues values = new ContentValues();
-                values.put(StartPoints.START_LAT, latLng.latitude);
-                values.put(StartPoints.START_LON, latLng.longitude);
-                values.put(StartPoints.NAME, nameField.getText().toString());
-
-                getLoaderManager().restartLoader(LOADER_ID, null, SetHomeFragment.this);
-                Uri uri = applicationContext.getContentResolver().insert(TrackerContentProvider.STARTS_URI, values);
-
-                int id = Integer.parseInt(uri.getLastPathSegment());
+                HomePoints newHomePoint = new HomePoints(nameField.getText().toString(), latLng.latitude, latLng.longitude);
+                newHomePoint.save();
+                addStartPoint(newHomePoint);
 
                 if (location != null) {
                     double lat = location.getLatitude();
@@ -427,11 +399,11 @@ public class SetHomeFragment extends MapFragment implements
                     double distance = getDistance(currentLocation);
 
                     if (distance > 500) {
-                        addProximityAlert(latLng, id);
+                        addProximityAlert(latLng, newHomePoint.getId().intValue());
                     } else if (distance < 500) {
                     }
                 } else {
-                    addProximityAlert(latLng, id);
+                    addProximityAlert(latLng, newHomePoint.getId().intValue());
                 }
 
             }
@@ -458,15 +430,12 @@ public class SetHomeFragment extends MapFragment implements
         a.setLatitude(point.latitude);
         a.setLongitude(point.longitude);
 
-        Iterator it = startPoints.keySet().iterator();
-        while (it.hasNext()) {
-            Marker marker = (Marker)it.next();
+        for (HomePoints homePoint: homePoints) {
+            Marker marker = homePoint.getMarker();
             Location b = new Location("point B");
             b.setLatitude(marker.getPosition().latitude);
             b.setLongitude(marker.getPosition().longitude);
-
             double newDistance = a.distanceTo(b);
-
             if (distance == 0) {
                 distance = newDistance;
             } else if (newDistance < distance) {
