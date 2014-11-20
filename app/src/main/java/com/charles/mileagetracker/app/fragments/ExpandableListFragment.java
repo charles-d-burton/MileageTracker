@@ -10,9 +10,11 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
@@ -42,6 +44,8 @@ import java.util.Iterator;
  */
 public class ExpandableListFragment extends Fragment {
 
+    private final String CLASS = ((Object)this).getClass().getName();
+
     private ExpandableListAdapter listAdapter;
     private ExpandableListView expListView;
 
@@ -53,6 +57,10 @@ public class ExpandableListFragment extends Fragment {
     private Context context = null;
 
     private ExpandableListInteractionListener mListener;
+
+    private int lastLoadedItemId = 0;
+    private int numberLoaded = 0;
+    private final int LOAD_NUMBER = 20;
 
     /**
      * Use this factory method to create a new instance of
@@ -135,6 +143,20 @@ public class ExpandableListFragment extends Fragment {
             }
         });
 
+        expListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                Log.v(CLASS, "Scrolling");
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                Log.v(CLASS, "Num Items Visible: " + Integer.toString(visibleItemCount));
+                Log.v(CLASS, "First Visible Item: " + Integer.toString(firstVisibleItem));
+                Log.v(CLASS, "Total Items: " + Integer.toString(totalItemCount));
+            }
+        });
+
         /*expListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
             @Override
             public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
@@ -161,10 +183,10 @@ public class ExpandableListFragment extends Fragment {
         builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                listGroups.clear();
+                //listGroups.clear();
                 context.getContentResolver().delete(TrackerContentProvider.GROUP_URI, TripGroup.GROUP_ID + "=" + group.getGroupId(), null);
                 context.getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.TRIP_KEY + "=" + group.getGroupId(), null);
-                new FillData().execute("");
+                new FillData().execute();
             }
         });
 
@@ -202,7 +224,7 @@ public class ExpandableListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        new FillData().execute("");
+        new FillData().execute(lastLoadedItemId);
     }
 
     @Override
@@ -217,7 +239,7 @@ public class ExpandableListFragment extends Fragment {
     to simplify this by making it a runnable
      */
 
-    private class FillData extends AsyncTask<String, String, ExpandListGroup> {
+    private class FillData extends AsyncTask<Integer, String, ExpandListGroup> {
 
         //Necessary evil so that I can modify the data in the background and then quickly move it into place
         //it's done processing.
@@ -241,7 +263,7 @@ public class ExpandableListFragment extends Fragment {
         children and parent elements.
          */
         @Override
-        protected ExpandListGroup doInBackground(String... params) {
+        protected ExpandListGroup doInBackground(Integer... params) {
             ExpandListGroup firstGroup = null;
             String projection[] = {
                     TripTable.DISTANCE,

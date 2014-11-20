@@ -12,6 +12,7 @@ import android.support.v4.app.TaskStackBuilder;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.ExpandingTripList;
+import com.charles.mileagetracker.app.activities.MainActivity;
 import com.charles.mileagetracker.app.cache.AccessInternalStorage;
 import com.charles.mileagetracker.app.cache.TripVars;
 import com.charles.mileagetracker.app.database.StartPoints;
@@ -151,9 +152,9 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
     private void generateNotification(String title, String message, int groupId) {
 
-        Intent pathIntent = new Intent(context, ExpandingTripList.class);
+        Intent pathIntent = new Intent(context, MainActivity.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(ExpandingTripList.class);
+        stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(pathIntent);
 
         PendingIntent selectPathSegments = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);

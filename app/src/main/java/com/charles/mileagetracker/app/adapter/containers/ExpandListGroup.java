@@ -3,6 +3,7 @@ package com.charles.mileagetracker.app.adapter.containers;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * Created by charles on 7/9/14.
@@ -41,7 +42,15 @@ public class ExpandListGroup implements Serializable {
 
 
     public void reverseChildren() {
-
+        Collections.sort(listChildren, new Comparator<ExpandListChild>() {
+            @Override
+            public int compare(ExpandListChild lhs, ExpandListChild rhs) {
+                Long lhsLong = lhs.getDateMillis();
+                Long rhsLong = rhs.getDateMillis();
+                return rhsLong.compareTo(lhsLong);
+                //return 0;
+            }
+        });
         Collections.reverse(listChildren);
     }
 

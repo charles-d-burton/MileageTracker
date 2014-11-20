@@ -61,6 +61,6 @@ public class GPSLocation implements GoogleApiClient.ConnectionCallbacks,
 
 
     public interface GPSCallback {
-        public void locationUpdate(LatLng latng, int accuracy);
+        public void locationUpdate(LatLng latng);
     }
 }

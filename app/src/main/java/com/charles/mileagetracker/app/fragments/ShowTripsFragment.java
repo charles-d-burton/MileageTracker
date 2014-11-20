@@ -3,9 +3,13 @@ package com.charles.mileagetracker.app.fragments;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.LoaderManager;
+import android.content.Context;
+import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,11 +19,14 @@ import android.view.ViewGroup;
 
 import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
 import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
+import com.charles.mileagetracker.app.database.TrackerContentProvider;
+import com.charles.mileagetracker.app.database.TripTable;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -32,7 +39,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -48,16 +57,18 @@ import java.util.LinkedList;
  */
 public class ShowTripsFragment extends MapFragment implements
         GoogleMap.OnMapLongClickListener,
-        LoaderManager.LoaderCallbacks<Cursor>,
         GoogleMap.OnMarkerDragListener,
         GoogleMap.OnMarkerClickListener,
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener {
 
+    private final String CLASS = ((Object)this).getClass().getName();
+
     private OnShowTripsInteractionListener mListener;
     private GoogleMap gmap = null;
 
     private static final String param1 = "group";
+    private static final String param2 = "id";
 
     private ExpandListGroup group = null;
 
@@ -65,13 +76,14 @@ public class ShowTripsFragment extends MapFragment implements
 
     private HashMap<Marker, ExpandListChild> markerTracker = new HashMap<Marker,ExpandListChild>();
 
+    private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
      * @return A new instance of fragment ShowTripsFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static ShowTripsFragment newInstance(ExpandListGroup group) {
         ShowTripsFragment fragment = new ShowTripsFragment();
         Bundle bundle = new Bundle();
@@ -81,6 +93,7 @@ public class ShowTripsFragment extends MapFragment implements
 
     public static ShowTripsFragment newInstance() {
         ShowTripsFragment fragment = new ShowTripsFragment();
+
         return fragment;
     }
 
@@ -94,19 +107,35 @@ public class ShowTripsFragment extends MapFragment implements
 
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            group = (ExpandListGroup)getArguments().getSerializable(param1);
+            if (getArguments().containsKey(param1)) {
+                group = (ExpandListGroup)getArguments().getSerializable(param1);
+            }
         }
-
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = super.onCreateView(inflater, container, savedInstanceState);
         gmap = getMap();
+        LocationManager lm = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
+        Location loc = null;
+        if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        } else if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        } else {
+            loc = lm.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+        }
+        if (loc != null ) {
+            gmap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(loc.getLatitude(), loc.getLongitude()), 12));
+        }
+
         gmap.setOnMapLongClickListener(this);
         gmap.setOnMarkerClickListener(this);
         gmap.setOnMarkerDragListener(this);
+
         if (group != null) redrawLines(group);
         return view;
     }
@@ -129,27 +158,23 @@ public class ShowTripsFragment extends MapFragment implements
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
     public void onConnected(Bundle bundle) {
 
     }
 
     @Override
     public void onDisconnected() {
-
-    }
-
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return null;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
 
     }
 
@@ -195,7 +220,8 @@ public class ShowTripsFragment extends MapFragment implements
                     .zoom(13)
                     .build();
             if (mapStart) {
-                gmap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                //gmap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                gmap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), 12));
                 mapStart = true;
             } else {
                 gmap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
@@ -308,6 +334,7 @@ public class ShowTripsFragment extends MapFragment implements
     public interface OnShowTripsInteractionListener {
         // TODO: Update argument type and name
         public void onShowTripInteraction();
+        public void markerAdded();
 
         //public void onFragmentInteraction(Uri uri);
     }
