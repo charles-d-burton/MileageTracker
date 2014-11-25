@@ -7,21 +7,21 @@ import java.util.Date;
 /**
  * Created by charles on 10/27/14.
  */
-public class TripsData extends SugarRecord<TripsData> {
+public class TripRow extends SugarRecord<TripRow> {
 
-    Date timeStart;
-    Date timeEnd;
-    double lat;
-    double lon;
-    String address;
-    double distance;
-    boolean businessRelated = false;
+    public Date timeStart;
+    public Date timeEnd;
+    public double lat;
+    public double lon;
+    public String address;
+    public double distance = 0;
+    public boolean businessRelated = false;
 
     //Relationship to a trip_group.  Meaning a collection of trips that are logically grouped together.
     //I may add additional columns for groups later.
-    TripGroup trip_group;
+    public TripGroup trip_group;
 
-    public TripsData( Date timeStart, double lat, double lon, String address, double distance, TripGroup trip_group) {
+    public TripRow(Date timeStart, double lat, double lon, String address, double distance, TripGroup trip_group) {
         this.timeStart = timeStart;
         this.lat = lat;
         this.lon = lon;
@@ -30,9 +30,7 @@ public class TripsData extends SugarRecord<TripsData> {
         this.trip_group = trip_group;
     }
 
-    public TripsData() {
+    public TripRow() {
 
     }
-
-
 }

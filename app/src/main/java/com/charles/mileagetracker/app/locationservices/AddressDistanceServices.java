@@ -195,4 +195,17 @@ public class AddressDistanceServices {
 
         return poly;
     }
+
+    public String getAddressFromLatLng(LatLng latLng) throws IOException {
+        Geocoder geocoder;
+        List<Address> addresses;
+        geocoder = new Geocoder(context, Locale.getDefault());
+        addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+
+        String address = addresses.get(0).getAddressLine(0);
+        String city = addresses.get(0).getAddressLine(1);
+        String country = addresses.get(0).getAddressLine(2);
+
+        return address + "\n" + city + "\n" + country;
+    }
 }

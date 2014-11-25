@@ -9,20 +9,22 @@ import com.orm.SugarRecord;
  */
 public class Status extends SugarRecord<Status> {
 
-    boolean driving;
-    double lastLat;
-    double lastLon;
-    double lat;
-    double lon;
-    int notDrivingCount;
-    int trip_group;
+    public boolean driving;
+    public double lastLat;
+    public double lastLon;
+    public double lat;
+    public double lon;
+    public int notDrivingCount;
+    public boolean stopRecorded = false;
+    public boolean stopRecording = false;
+    public TripGroup trip_group;
 
 
     public Status() {
     }
 
-    public Status(Context context, boolean driving, double lastLat, double lastLon, double lat,
-                  double lon, int notDrivingCount, int trip_group) {
+    public Status(boolean driving, double lastLat, double lastLon, double lat,
+                  double lon, int notDrivingCount, TripGroup trip_group) {
         this.driving = driving;
         this.lastLat = lastLat;
         this.lastLon = lastLon;

@@ -6,18 +6,15 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.activities.ExpandingTripList;
 import com.charles.mileagetracker.app.activities.MainActivity;
-import com.charles.mileagetracker.app.cache.AccessInternalStorage;
-import com.charles.mileagetracker.app.cache.TripVars;
-import com.charles.mileagetracker.app.database.StartPoints;
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.database.TripRowCreator;
+import com.charles.mileagetracker.app.database.orm.HomePoints;
+import com.charles.mileagetracker.app.database.orm.Status;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation;
 import com.charles.mileagetracker.app.services.intentservices.SaveBusinessRelated;
@@ -25,7 +22,8 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.model.LatLng;
 
-import java.io.IOException;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 public class GeofenceReceiver extends BroadcastReceiver {
@@ -61,18 +59,6 @@ public class GeofenceReceiver extends BroadcastReceiver {
         }
     }
 
-    private void initializeVars(int id, double lat, double lon, int transition) throws IOException {
-        AccessInternalStorage accessInternalStorage = new AccessInternalStorage();
-        TripVars vars = new TripVars();
-        vars.setId(id);
-        vars.setLat(lat);
-        vars.setLon(lon);
-        vars.setLastLat(lat);
-        vars.setLastLon(lon);
-        vars.setFenceTransitionType(transition);
-        accessInternalStorage.writeObject(this.context, TripVars.KEY, vars);
-    }
-
     private boolean isServiceRunning() {
         ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
@@ -81,24 +67,6 @@ public class GeofenceReceiver extends BroadcastReceiver {
             }
         }
         return false;
-    }
-
-    private LatLng getCenter(int id) {
-        LatLng center = null;
-        String projection[] = {StartPoints.COLUMN_ID, StartPoints.START_LAT, StartPoints.START_LON};
-
-        Cursor c = context.getContentResolver().query(TrackerContentProvider.STARTS_URI, projection,
-                StartPoints.COLUMN_ID + "=" + Integer.toString(id), null, null);
-
-        if (c != null && c.getCount() > 0) {
-            c.moveToFirst();
-            double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
-            double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
-            center = new LatLng(lat, lon);
-
-        }
-        if (c != null) c.close();
-        return center;
     }
 
     private void transitionEnter(int id, LatLng center) {
@@ -114,29 +82,20 @@ public class GeofenceReceiver extends BroadcastReceiver {
         this.context.startService(stopActivityService);
         this.context.stopService(new Intent(this.context,GetCurrentLocation.class));
 
-        AccessInternalStorage accessInternalStorage = new AccessInternalStorage();
-        TripVars tripVars = null;
-        try {
-            tripVars = (TripVars)accessInternalStorage.readObject(context, TripVars.KEY);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        //Record our end point then close out the trip
-        TripRowCreator creator = new TripRowCreator(this.context);
-        int groupId = creator.closeGroup(id, lat, lon);
-        generateNotification("Trip Complete","Were all stops business related?", groupId);
+        Status status = Status.listAll(Status.class).get(0);
+        TripGroup group = status.trip_group;
+
+        TripRow row = new TripRow(new Date(System.currentTimeMillis()), lat, lon, null, 0, group);
+        row.save();
+
+        Status.deleteAll(Status.class);
+
+        generateNotification("Trip Complete","Were all stops business related?", group.getId().intValue());
     }
 
     private void transitionExit(int id, LatLng center) {
-        try {
-            initializeVars(id, center.latitude, center.longitude, Geofence.GEOFENCE_TRANSITION_EXIT);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
 
-        }
+        initTables(center.latitude, center.longitude);
 
         String message = "Leaving Fence, starting record";
         Intent activityRecognitionService = new Intent(this.context, ActivityRecognitionService.class);
@@ -147,6 +106,39 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
         this.context.startService(activityRecognitionService);
         //generateNotification("Recording Trip",message, Geofence.GEOFENCE_TRANSITION_EXIT);
+    }
+
+
+    private void initTables(double lat, double lon) {
+        List<Status>  statuses = Status.listAll(Status.class);
+        if (!statuses.isEmpty()) {
+            for (Status status : statuses) {
+                status.delete();
+            }
+        } else {
+            TripGroup group = new TripGroup(false);
+            group.save();
+
+            Status status = new Status(false, lat, lon, lat, lon, 0, group);
+            status.save();
+        }
+    }
+
+    //Get the center of the geofence based on the id.
+    private LatLng getCenter(int id) {
+        LatLng center = null;
+
+        List<HomePoints> homePoints = HomePoints.listAll(HomePoints.class);
+        Iterator<HomePoints> it = homePoints.iterator();
+        while (it.hasNext()) {
+            HomePoints homePoint = it.next();
+            if (homePoint.getId().intValue() == id) {
+                center = new LatLng(homePoint.lat, homePoint.lon);
+                break;
+            }
+        }
+
+        return center;
     }
 
 

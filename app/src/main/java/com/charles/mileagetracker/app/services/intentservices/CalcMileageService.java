@@ -1,20 +1,16 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.database.TripGroup;
-import com.charles.mileagetracker.app.database.TripTable;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 
 /**
@@ -24,6 +20,9 @@ import java.util.Iterator;
  */
 public class CalcMileageService extends IntentService {
 
+    private final String CLASS_NAME = ((Object)this).getClass().getName();
+    private AddressDistanceServices locationServices = null;
+
     public CalcMileageService() {
         super("CalcMileageService");
     }
@@ -32,14 +31,49 @@ public class CalcMileageService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             Context context = getApplicationContext();
-            HashMap<Integer, Double> mileageUpdates = getUpdates(context);
+            locationServices = new AddressDistanceServices(context);
+            /*HashMap<Integer, Double> mileageUpdates = getUpdates(context);
             if (mileageUpdates.size() > 0) {
                 updateTripSegments(context, mileageUpdates);
+            }*/
+        }
+    }
+
+    private void iterateGroups() {
+        List<TripGroup> groups = TripGroup.listAll(TripGroup.class);
+        Iterator<TripGroup> it = groups.iterator();
+        while (it.hasNext()) {
+            TripGroup group = it.next();
+            processGroup(group);
+        }
+    }
+
+    //Process a group, find rows based on their relationship with the TripGroup.  Then iterate through the
+    //trips.
+    private void processGroup(TripGroup group) {
+        List<TripRow> stops = TripRow.find(TripRow.class, " trip_group = ? ", Long.toString(group.getId()), " ORDER BY id ASC");
+        if (stops.isEmpty() || stops.size() == 1) {
+
+            Log.v(CLASS_NAME, "Empty Trip Set");
+            group.delete();
+
+        } else {
+            Iterator<TripRow> it = stops.iterator();
+            TripRow stop = it.next();
+            while (it.hasNext()) {
+                TripRow nextStop = it.next();
+                if (stop.distance != 0) { //Skip Rows that have been computed
+                    stop = nextStop;//Re-assigns stop.
+                    continue;
+                } else {
+                    double distance = locationServices.getDistance(stop.lat, stop.lon, nextStop.lat, nextStop.lon);
+                    nextStop.distance = distance;
+                }
             }
         }
     }
 
-
+    /*
     //Get all the trip groups, then run the method to test the distance in each of those groups
     private HashMap<Integer, Double> getUpdates(Context context) {
         String projection[] = {
@@ -124,5 +158,5 @@ public class CalcMileageService extends IntentService {
             values.put(TripTable.DISTANCE, distance);
             context.getContentResolver().update(TrackerContentProvider.TRIP_URI,values,TripTable.COLUMN_ID + "=" + id,null);
         }
-    }
+    }*/
 }

@@ -30,6 +30,7 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.orm.HomePoints;
+import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.Geofence;
@@ -44,11 +45,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -305,7 +308,7 @@ public class SetHomeFragment extends MapFragment implements
             if (home.getMarker().equals(marker)) {
                 home.lat = marker.getPosition().latitude;
                 home.lon = marker.getPosition().longitude;
-                home.save();
+                Executors.newSingleThreadExecutor().execute(new RetrieveAddress(home)); //Get the address on a background thread
                 addProximityAlert(marker.getPosition(), home.getId().intValue());  //Replaces the old geofence
             }
         }
@@ -389,7 +392,8 @@ public class SetHomeFragment extends MapFragment implements
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 HomePoints newHomePoint = new HomePoints(nameField.getText().toString(), latLng.latitude, latLng.longitude);
-                newHomePoint.save();
+                Executors.newSingleThreadExecutor().execute(new RetrieveAddress(newHomePoint));
+                //newHomePoint.save();
                 addStartPoint(newHomePoint);
 
                 if (location != null) {
@@ -501,6 +505,27 @@ public class SetHomeFragment extends MapFragment implements
                 mapStarted = true;
             }
 
+        }
+    }
+
+    private class RetrieveAddress implements Runnable {
+        private HomePoints homePoint = null;
+        public RetrieveAddress(HomePoints homePoint) {
+            this.homePoint = homePoint;
+        }
+
+        @Override
+        public void run() {
+            LatLng latLng = new LatLng(homePoint.lat, homePoint.lon);
+            AddressDistanceServices addressDistanceServices = new AddressDistanceServices(SetHomeFragment.this.getActivity());
+            try {
+                String address = addressDistanceServices.getAddressFromLatLng(latLng);
+                homePoint.address = address;
+                homePoint.save();
+            } catch (IOException e) {
+                Log.d(CLASS_NAME, "Failed to Retrieve Address");
+                e.printStackTrace();
+            }
         }
     }
 

@@ -1,21 +1,16 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.cache.AccessInternalStorage;
-import com.charles.mileagetracker.app.cache.TripVars;
-import com.charles.mileagetracker.app.database.StartPoints;
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.database.TripRowCreator;
-import com.charles.mileagetracker.app.database.TripTable;
+import com.charles.mileagetracker.app.database.orm.HomePoints;
+import com.charles.mileagetracker.app.database.orm.Status;
+import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -25,6 +20,8 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -62,7 +59,10 @@ public class GetCurrentLocation extends IntentService implements
             if (intent.getBooleanExtra("stop", false)) {
                 Log.v("DEBUG: ", "Stopping location updates");
                 try {
-                    locationClient.disconnect();
+                    if (locationListener != null && locationClient.isConnected()) {
+                        locationClient.removeLocationUpdates(locationListener);
+                        locationClient.disconnect();
+                    }
                 } catch (Exception e) {
 
                 }
@@ -106,9 +106,41 @@ public class GetCurrentLocation extends IntentService implements
         Log.d("DEBUG: ", "Location Client Connection Failed");
 
     }
+
+    //Uses the selected location provider to init the location callbacks
+    private void initLocation(Provider provider) {
+
+        if (locationListener != null && locationClient.isConnected()) {
+            locationClient.removeLocationUpdates(locationListener);
+            locationClient.disconnect();
+        }
+
+        locationClient = new LocationClient(getApplicationContext(), this, this);
+        locationRequest = LocationRequest.create();
+
+        switch (provider) {
+            case HIGH_ACCURACY:
+                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                locationResolution = 200;
+                break;
+            case LOW_ACCURACy:
+                locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+                locationResolution = 1000;
+                break;
+            default:
+                break;
+        }
+
+        if (locationListener == null) {
+            locationListener = new MyLocationListener();
+        }
+
+        locationClient.connect();
+    }
+
     /*
     Listen for location changes.  If it's not very accurate continue through, if after 10 attempts it can't
-    get a good fix I'll just what it has.
+    get a good fix I'll just take what it has.
      */
     private class MyLocationListener implements LocationListener {
         private int counter = 0;
@@ -132,7 +164,7 @@ public class GetCurrentLocation extends IntentService implements
                     }
                 }
             } else if (location != null && location.getAccuracy() > locationResolution) {
-                counter = counter++;
+                counter = counter + 1;
                 if (counter == 10) {
                     LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
                     location = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -150,57 +182,29 @@ public class GetCurrentLocation extends IntentService implements
         }
     }
 
-    //Uses the selected location provider to init the location callbacks
-    private void initLocation(Provider provider) {
-
-        if (locationListener != null && locationClient.isConnected()) {
-            locationClient.removeLocationUpdates(locationListener);
-            locationClient.disconnect();
-        }
-
-        locationClient = new LocationClient(getApplicationContext(), this, this);
-        locationRequest = LocationRequest.create();
-
-        switch (provider) {
-            case HIGH_ACCURACY:
-                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-                locationResolution = 100;
-                break;
-            case LOW_ACCURACy:
-                locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-                locationResolution = 750;
-                break;
-            default:
-                break;
-        }
-
-        if (locationListener == null) {
-            locationListener = new MyLocationListener();
-        }
-
-        locationClient.connect();
-    }
-
-
     private void logLocation(Location location) throws IOException, ClassNotFoundException {
-        AccessInternalStorage accessCache = new AccessInternalStorage();
-        TripVars tripVars = (TripVars)accessCache.readObject(getApplicationContext(), TripVars.KEY);
+        Status status = Status.listAll(Status.class).get(0);
         double lat = location.getLatitude();
         double lon = location.getLongitude();
 
-        LatLng oldLocation = new LatLng(tripVars.getLastLat(), tripVars.getLastLon());
+        LatLng oldLocation = new LatLng(status.lastLat, status.lastLon);
         double distance = getDistance(oldLocation, new LatLng(lat, lon));
 
         if (distance > 1000) {//Larger than the geofence, gives me a margin of error
-            TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());
-            rowCreator.recordSegment(tripVars.getId(),lat, lon);
-            //Next line commented because it's untested
-            new LookupDistance(tripVars.getId(), lat, lon, tripVars.getLastLat(), tripVars.getLastLon()).run();
-            tripVars.setSegmentRecorded(true);
-            tripVars.setLastLat(lat);
-            tripVars.setLastLon(lon);
-            tripVars.setSegmentRecording(false);
-            accessCache.writeObject(getApplicationContext(), TripVars.KEY, tripVars);
+            AddressDistanceServices distanceServices = new AddressDistanceServices(this.getApplicationContext());
+            String address = distanceServices.getAddressFromLatLng(new LatLng(lat, lon));
+
+            TripRow row = new TripRow(new Date(System.currentTimeMillis()), lat, lon, address, 0, status.trip_group);
+            row.save();
+
+            new LookupDistance(row, lat, lon, status.lastLat, status.lastLon).run();
+
+            //Update Status to reflect that a row has been recorded, where it was last recorded, and we're no longer processing
+            status.stopRecorded = true;
+            status.lastLat = lat;
+            status.lastLon = lon;
+            status.stopRecording = false;
+            status.save();
         }
 
     }
@@ -227,61 +231,53 @@ public class GetCurrentLocation extends IntentService implements
 
     private boolean tooCloseToStartPoint(Location currentLocation) {
         boolean tooClose = false;
-        LatLng currentPoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-        String projection[] = {
-                StartPoints.START_LAT,
-                StartPoints.START_LON
 
-        };
-        Cursor c = getContentResolver().query(TrackerContentProvider.STARTS_URI,projection, null, null, null);
-        if (c != null && c.getCount() > 0) {
-            c.moveToPosition(-1);
-            while (c.moveToNext()) {
-                double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
-                double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
-                LatLng startPoint = new LatLng(lat, lon);
-                double distance = getDistance(currentPoint, startPoint);
-                if (distance < 1000) {//Closer than a kilometer which is within the margin of error
-                    tooClose = true;
-                }
+        LatLng currentPoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+
+        List<HomePoints> homePointsList = HomePoints.listAll(HomePoints.class);
+        if (homePointsList.isEmpty()) return false;
+
+        for (HomePoints home : homePointsList) {
+            double lat = home.lat;
+            double lon = home.lon;
+            LatLng startPoint = new LatLng(lat, lon);
+            double distance = getDistance(currentPoint, startPoint);
+            if (distance < 1000) {
+                tooClose = true;
             }
         }
-        if (c != null) c.close();
-
 
         return tooClose;
     }
 
+    //Process distance on a background thread.
     private class LookupDistance implements Runnable {
 
         private double startLat = Double.MAX_VALUE;
         private double startLon = Double.MAX_VALUE;
         private double endLat = Double.MAX_VALUE;
         private double endLon = Double.MAX_VALUE;
-        private int id = -1;
+        private TripRow row = null;
 
-        public LookupDistance(int id, double startLat, double startLon, double endLat, double endLon) {
+        public LookupDistance(TripRow row , double startLat, double startLon, double endLat, double endLon) {
             this.startLat = startLat;
             this.startLon = startLon;
             this.endLat = endLat;
             this.endLon = endLon;
-            this.id = id;
+            this.row = row;
         }
 
 
         @Override
         public void run() {
-            if (id == -1) {
-
+            if (row == null) {
                 return;
             }
-
             AddressDistanceServices distanceServices = new AddressDistanceServices(getApplicationContext());
             double distance = distanceServices.getDistance(startLat,startLon,endLat,endLon);
             if (distance != -1) {
-                ContentValues values = new ContentValues();
-                values.put(TripTable.DISTANCE, distance);
-                getApplicationContext().getContentResolver().update(TrackerContentProvider.TRIP_URI, values, TripTable.COLUMN_ID + "=" + id, null);
+                row.distance = distance;
+                row.save();
             }
         }
     }

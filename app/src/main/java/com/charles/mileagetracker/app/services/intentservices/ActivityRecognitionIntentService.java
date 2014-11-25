@@ -6,12 +6,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.cache.AccessInternalStorage;
-import com.charles.mileagetracker.app.cache.TripVars;
+import com.charles.mileagetracker.app.database.orm.Status;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
-import java.io.IOException;
+import java.util.List;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -37,9 +36,6 @@ public class ActivityRecognitionIntentService extends IntentService {
     private GetCurrentLocation mService = null;
     private boolean mBound = false;
 
-    private TripVars tripVars = null;
-    private AccessInternalStorage accessCache = null;
-
     @Override
     public void onCreate() {
 
@@ -52,19 +48,8 @@ public class ActivityRecognitionIntentService extends IntentService {
      */
     @Override
     protected void onHandleIntent(Intent intent) {
-        accessCache = new AccessInternalStorage();
-        try {
-            tripVars = (TripVars)accessCache.readObject(getApplicationContext(), TripVars.KEY);
-            Log.d("DEBUG: ", "Driving Counter: " + Integer.toString(tripVars.getNotDrivingCounter()));
-            //Log.d("DEBUG: ", "ID: " + Integer.toString(tripVars.getId()));
-            //Log.d("DEBUG: ", "SegmentRecorded: " + Boolean.toString(tripVars.isSegmentRecorded()));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            return;
-        }
+        List<Status> statuses = Status.listAll(Status.class);
+        if (statuses.isEmpty()) return;
 
         if (intent != null) {
 
@@ -129,16 +114,10 @@ public class ActivityRecognitionIntentService extends IntentService {
     //If driving then we're going to set the variables to their least known values and write them
 
     private void handleDriving() {
-        if (!tripVars.isDriving()) {
-            tripVars.setDriving(true);
-            tripVars.setNotDrivingCounter(0);
-            tripVars.setSegmentRecorded(false);
-
-            try {
-                accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        Status status = loadStatus();
+        if (!status.driving) {
+            status.driving = true;
+            status.save();
         }
     }
 
@@ -151,42 +130,36 @@ public class ActivityRecognitionIntentService extends IntentService {
      */
 
     private void handleWalking(int confidence) {
-        tripVars.setDriving(false);
+        Status status = loadStatus();
+        status.driving = false;
 
-        int counter = tripVars.getNotDrivingCounter();
+        int counter = status.notDrivingCount;
         counter = counter + 1;
-        tripVars.setNotDrivingCounter(counter);
-        if (counter > 2 && !tripVars.isSegmentRecorded() && !tripVars.isSegmentRecording()) {//Trip segment not recorded, the class GetCurrentLocation will set this flag to true
-            tripVars.setSegmentRecording(true);
+        if (counter < 5) {
+            status.notDrivingCount = counter;
+        }
+
+        if (counter > 2 && !status.stopRecorded && !status.stopRecording) {//Trip segment not recorded, the class GetCurrentLocation will set this flag to true
+            status.stopRecording = true;
             startLocationHandler();
         }
 
-        if (counter < 4) {
-            try {
-                accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        status.save();
     }
 
+
+    //Handle sitting still, if you've been sitting still for 4 minutes then record a stop
     private void handleStill(int confidence) {
-        tripVars.setDriving(false);
-        int counter = tripVars.getNotDrivingCounter();
+        Status status = loadStatus();
+        status.driving = false;
+        int counter = status.notDrivingCount;
         counter = counter + 1;
-        tripVars.setNotDrivingCounter(counter);
-        if (counter >= 4 && !tripVars.isSegmentRecorded() && !tripVars.isSegmentRecording()) {
-            tripVars.setSegmentRecording(true);
+        status.notDrivingCount = counter;
+        if (counter >= 4 && !status.stopRecorded && !status.stopRecording) {
+            status.stopRecording = true;
             startLocationHandler();
         }
-
-        if (counter < 5) {
-            try {
-                accessCache.writeObject(getApplicationContext(), tripVars.KEY, tripVars);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        status.save();
     }
 
     //Kills the GetCurrentLocation class.  Uses start service but sets a boolean to tell it to unregister and stop cleanly
@@ -212,5 +185,10 @@ public class ActivityRecognitionIntentService extends IntentService {
             }
         }
         return false;
+    }
+
+    private Status loadStatus() {
+        Status status = Status.listAll(Status.class).get(0);
+        return status;
     }
 }
