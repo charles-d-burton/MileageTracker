@@ -7,6 +7,10 @@ import android.os.Bundle;
 
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripTable;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.TripRow;
+
+import java.util.List;
 
 
 /**
@@ -35,9 +39,10 @@ public class SaveBusinessRelated extends IntentService {
     }
 
     private void markAllAsBusiness(int group) {
-        ContentValues values = new ContentValues();
-        values.put(TripTable.BUSINESS_RELATED, 1);
-        getContentResolver().update(TrackerContentProvider.TRIP_URI, values, TripTable.TRIP_KEY + "=" + group, null);
+        List<TripRow>  tripRows = TripRow.find(TripRow.class, " trip_group = ? ", Integer.toString(group));
+        for (TripRow tripRow : tripRows) {
+            tripRow.businessRelated = true;
+        }
     }
 
 }

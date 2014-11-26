@@ -209,6 +209,7 @@ public class GetCurrentLocation extends IntentService implements
 
     }
 
+    //Find straight line distance between two points
     private double getDistance(LatLng pointA, LatLng pointB) {
         double distance = 0f;
 
@@ -226,7 +227,7 @@ public class GetCurrentLocation extends IntentService implements
     }
 
     /*
-    Get a cursor and check if we're too close check if we're too close to start point
+    Check if the straight line distance between two points is too close for a useful stop
      */
 
     private boolean tooCloseToStartPoint(Location currentLocation) {
@@ -250,7 +251,12 @@ public class GetCurrentLocation extends IntentService implements
         return tooClose;
     }
 
-    //Process distance on a background thread.
+    /*
+    This work happens on a background thread.  It takes the two points and then calculates the ROAD
+    distance between them.  It then updates the database with the distance value for the stop that
+    was just created.  Doing this on a background thread is much saner and more efficient, allows the
+    program to continue running without waiting for network IO to fulfill this request.
+     */
     private class LookupDistance implements Runnable {
 
         private double startLat = Double.MAX_VALUE;

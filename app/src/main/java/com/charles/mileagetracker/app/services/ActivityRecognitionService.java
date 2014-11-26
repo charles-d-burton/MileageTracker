@@ -7,12 +7,16 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.database.TripRowCreator;
+import com.charles.mileagetracker.app.database.orm.Status;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
 import com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+
+import java.util.Date;
 
 /**
  *A long-running service that starts when you leave a fenced in area.  This registers an IntentService
@@ -90,9 +94,10 @@ public class ActivityRecognitionService extends Service implements
             lon = intent.getDoubleExtra("lon", -1);
             Log.v("DEBUG: ", "Lat/Lng from ActivityService: "+ "Lat: " + Double.toString(lat) + " Lon: " + Double.toString(lon));
 
-            TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());//Record our starting path location
-            rowCreator.recordSegment(id, lat, lon);
+            Status status = Status.listAll(Status.class).get(0);
+            TripGroup group = status.trip_group;
 
+            TripRow row = new TripRow(new Date(System.currentTimeMillis()), lat, lon, null, 0, group);
 
             Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
             mInProgress = false;
