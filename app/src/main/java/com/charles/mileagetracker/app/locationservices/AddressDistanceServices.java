@@ -5,6 +5,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.apache.http.HttpEntity;
@@ -23,6 +24,7 @@ import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Executors;
 
 /**
  * Created by charles on 6/23/14.
@@ -207,5 +209,37 @@ public class AddressDistanceServices {
         String country = addresses.get(0).getAddressLine(2);
 
         return address + "\n" + city + "\n" + country;
+    }
+
+    public void setAddress(TripRow row) {
+        Executors.newSingleThreadExecutor().execute(new GetAddressInBackground(row));
+    }
+
+    /*
+    Retrieve the address on a background thread.  Will not block the program from continuing in
+    case something is not working for HTTP
+     */
+    private class GetAddressInBackground implements Runnable {
+
+        private TripRow row = null;
+
+        public GetAddressInBackground(TripRow row) {
+            this.row = row;
+        }
+
+
+        @Override
+        public void run() {
+            if (row == null) {
+                return;
+            }
+            try {
+                String address = getAddressFromLatLng(new LatLng(row.lat, row.lon));
+                row.address = address;
+                row.save();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

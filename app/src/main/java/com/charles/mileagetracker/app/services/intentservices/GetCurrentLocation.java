@@ -22,6 +22,7 @@ import com.google.android.gms.maps.model.LatLng;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -191,13 +192,12 @@ public class GetCurrentLocation extends IntentService implements
         double distance = getDistance(oldLocation, new LatLng(lat, lon));
 
         if (distance > 1000) {//Larger than the geofence, gives me a margin of error
-            AddressDistanceServices distanceServices = new AddressDistanceServices(this.getApplicationContext());
-            String address = distanceServices.getAddressFromLatLng(new LatLng(lat, lon));
-
-            TripRow row = new TripRow(status.lastStopTime, new Date(), lat, lon, address, 0, status.trip_group);
+            TripRow row = new TripRow(status.lastStopTime, new Date(), lat, lon, null, 0, status.trip_group);
             row.save();
 
-            new LookupDistance(row, lat, lon, status.lastLat, status.lastLon).run();
+            new AddressDistanceServices(this.getApplicationContext()).setAddress(row);
+
+            Executors.newSingleThreadExecutor().execute(new LookupDistance(row, lat, lon, status.lastLat, status.lastLon));
 
             //Update Status to reflect that a row has been recorded, where it was last recorded, and we're no longer processing
             status.stopRecorded = true;

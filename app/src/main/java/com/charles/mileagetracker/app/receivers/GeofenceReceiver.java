@@ -15,6 +15,7 @@ import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
+import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation;
 import com.charles.mileagetracker.app.services.intentservices.SaveBusinessRelated;
@@ -89,6 +90,9 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
         TripRow row = new TripRow(status.lastStopTime, new Date(), lat, lon, null, 0, group);
         row.save();
+
+        //Set the address in the background
+        new AddressDistanceServices(context).setAddress(row);
 
         Status.deleteAll(Status.class);
 

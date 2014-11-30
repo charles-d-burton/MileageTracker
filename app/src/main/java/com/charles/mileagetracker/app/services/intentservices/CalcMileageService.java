@@ -69,10 +69,18 @@ public class CalcMileageService extends IntentService {
                 } else {
                     double distance = locationServices.getDistance(stop.lat, stop.lon, nextStop.lat, nextStop.lon);
                     nextStop.distance = distance;
+                    stop = nextStop;
                 }
             }
         }
     }
+
+    private void updateAddress(TripRow row) {
+        if (row.address == null || row.address.equals("") || row.address.equalsIgnoreCase("NULL")) {
+            new AddressDistanceServices(getApplicationContext()).setAddress(row);
+        }
+    }
+
 
     /*
     //Get all the trip groups, then run the method to test the distance in each of those groups
