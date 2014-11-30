@@ -194,7 +194,7 @@ public class GetCurrentLocation extends IntentService implements
             AddressDistanceServices distanceServices = new AddressDistanceServices(this.getApplicationContext());
             String address = distanceServices.getAddressFromLatLng(new LatLng(lat, lon));
 
-            TripRow row = new TripRow(new Date(System.currentTimeMillis()), lat, lon, address, 0, status.trip_group);
+            TripRow row = new TripRow(status.lastStopTime, new Date(), lat, lon, address, 0, status.trip_group);
             row.save();
 
             new LookupDistance(row, lat, lon, status.lastLat, status.lastLon).run();
@@ -204,10 +204,12 @@ public class GetCurrentLocation extends IntentService implements
             status.lastLat = lat;
             status.lastLon = lon;
             status.stopRecording = false;
+            status.lastStopTime = new Date();
             status.save();
         }
 
     }
+
 
     //Find straight line distance between two points
     private double getDistance(LatLng pointA, LatLng pointB) {

@@ -23,6 +23,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -237,8 +238,9 @@ public class PostBootGeofenceService extends IntentService implements
         if (!statuses.isEmpty()){
             status = statuses.get(0);
         } else {
-            status = new Status(false, lat, lon, lat, lon, 0, group);
+            status = new Status(false, lat, lon, lat, lon, 0, new Date(), group);
         }
+
         status.save();
 
         Intent intent = new Intent(context, ActivityRecognitionService.class);

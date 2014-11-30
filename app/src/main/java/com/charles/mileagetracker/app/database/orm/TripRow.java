@@ -21,8 +21,9 @@ public class TripRow extends SugarRecord<TripRow> {
     //I may add additional columns for groups later.
     public TripGroup trip_group;
 
-    public TripRow(Date timeStart, double lat, double lon, String address, double distance, TripGroup trip_group) {
+    public TripRow(Date timeStart, Date timeEnd, double lat, double lon, String address, double distance, TripGroup trip_group) {
         this.timeStart = timeStart;
+        this.timeEnd = timeEnd;
         this.lat = lat;
         this.lon = lon;
         this.address = address;

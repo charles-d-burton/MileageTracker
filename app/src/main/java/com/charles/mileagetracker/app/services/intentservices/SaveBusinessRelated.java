@@ -42,6 +42,7 @@ public class SaveBusinessRelated extends IntentService {
         List<TripRow>  tripRows = TripRow.find(TripRow.class, " trip_group = ? ", Integer.toString(group));
         for (TripRow tripRow : tripRows) {
             tripRow.businessRelated = true;
+            tripRow.save();
         }
     }
 

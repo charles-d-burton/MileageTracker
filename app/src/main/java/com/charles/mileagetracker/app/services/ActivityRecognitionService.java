@@ -97,7 +97,7 @@ public class ActivityRecognitionService extends Service implements
             Status status = Status.listAll(Status.class).get(0);
             TripGroup group = status.trip_group;
 
-            TripRow row = new TripRow(new Date(System.currentTimeMillis()), lat, lon, null, 0, group);
+            TripRow row = new TripRow(new Date(), new Date(), lat, lon, null, 0, group);
 
             Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
             mInProgress = false;

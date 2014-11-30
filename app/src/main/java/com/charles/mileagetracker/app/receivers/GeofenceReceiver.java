@@ -84,8 +84,10 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
         Status status = Status.listAll(Status.class).get(0);
         TripGroup group = status.trip_group;
+        group.group_closed = true;
+        group.save();
 
-        TripRow row = new TripRow(new Date(System.currentTimeMillis()), lat, lon, null, 0, group);
+        TripRow row = new TripRow(status.lastStopTime, new Date(), lat, lon, null, 0, group);
         row.save();
 
         Status.deleteAll(Status.class);
@@ -119,7 +121,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
             TripGroup group = new TripGroup(false);
             group.save();
 
-            Status status = new Status(false, lat, lon, lat, lon, 0, group);
+            Status status = new Status(false, lat, lon, lat, lon, 0, new Date(), group);
             status.save();
         }
     }

@@ -4,6 +4,8 @@ import android.content.Context;
 
 import com.orm.SugarRecord;
 
+import java.util.Date;
+
 /**
  * Created by charles on 10/27/14.
  */
@@ -14,6 +16,7 @@ public class Status extends SugarRecord<Status> {
     public double lastLon;
     public double lat;
     public double lon;
+    public Date lastStopTime;
     public int notDrivingCount;
     public boolean stopRecorded = false;
     public boolean stopRecording = false;
@@ -24,7 +27,7 @@ public class Status extends SugarRecord<Status> {
     }
 
     public Status(boolean driving, double lastLat, double lastLon, double lat,
-                  double lon, int notDrivingCount, TripGroup trip_group) {
+                  double lon, int notDrivingCount, Date lastStopTime, TripGroup trip_group) {
         this.driving = driving;
         this.lastLat = lastLat;
         this.lastLon = lastLon;
@@ -32,5 +35,6 @@ public class Status extends SugarRecord<Status> {
         this.lon = lon;
         this.notDrivingCount = notDrivingCount;
         this.trip_group = trip_group;
+        this.lastStopTime = lastStopTime;
     }
 }

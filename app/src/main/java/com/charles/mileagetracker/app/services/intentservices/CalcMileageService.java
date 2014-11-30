@@ -32,6 +32,7 @@ public class CalcMileageService extends IntentService {
         if (intent != null) {
             Context context = getApplicationContext();
             locationServices = new AddressDistanceServices(context);
+            iterateGroups();
             /*HashMap<Integer, Double> mileageUpdates = getUpdates(context);
             if (mileageUpdates.size() > 0) {
                 updateTripSegments(context, mileageUpdates);

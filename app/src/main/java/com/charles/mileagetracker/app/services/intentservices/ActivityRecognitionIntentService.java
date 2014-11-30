@@ -10,6 +10,7 @@ import com.charles.mileagetracker.app.database.orm.Status;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -117,6 +118,7 @@ public class ActivityRecognitionIntentService extends IntentService {
         Status status = loadStatus();
         if (!status.driving) {
             status.driving = true;
+            status.lastStopTime = new Date();
             status.save();
         }
     }
