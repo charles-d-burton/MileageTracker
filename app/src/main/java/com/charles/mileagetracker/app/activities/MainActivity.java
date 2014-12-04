@@ -10,9 +10,7 @@ import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
@@ -32,12 +30,10 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
-import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
-import com.charles.mileagetracker.app.database.StartPoints;
 import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.TripTable;
-import com.charles.mileagetracker.app.database.orm.HomePoints;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.fragments.ExpandableListFragment;
 import com.charles.mileagetracker.app.fragments.SetHomeFragment;
 import com.charles.mileagetracker.app.fragments.ShowTripsFragment;
@@ -74,7 +70,7 @@ public class MainActivity extends Activity implements
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat sdf2 = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
 
-    private static ContentResolver resolver;
+    //private static ContentResolver resolver;
     private static Context context;
 
     protected static final String dir = "MileageTracker";
@@ -106,7 +102,7 @@ public class MainActivity extends Activity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
         context = this;
-        resolver = context.getContentResolver();
+        //resolver = context.getContentResolver();
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         containerLayout = (FrameLayout) findViewById(R.id.map_container);
@@ -157,9 +153,6 @@ public class MainActivity extends Activity implements
             }
         };
         drawerLayout.setDrawerListener(drawerToggle);
-
-        upgradeDB();
-
 
     }
 
@@ -222,16 +215,16 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    public void expandListItemTouch(ExpandListChild child) {
+    public void expandListItemTouch(TripRow child) {
         if (child != null && showTripFragment != null) {
             if (CURRENT_MAP != MAP_SHOW_TRIPS) switchMap(MAP_SHOW_TRIPS);
-            showTripFragment.redrawLines(child.getExpandGroup());//Redraw to update colors
+            showTripFragment.redrawLines(child.trip_group);//Redraw to update colors
             new CalculateMileage().execute();
         }
     }
 
     @Override
-    public void expandListItemLongTouch(ExpandListGroup group) {
+    public void expandListItemLongTouch(TripGroup group) {
         drawerLayout.closeDrawer(drawerFragment.getView());
         if (CURRENT_MAP != MAP_SHOW_TRIPS) switchMap(MAP_SHOW_TRIPS);
         if (showTripFragment != null && group != null) {
@@ -240,28 +233,11 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    public void expandListGroupTouch(ExpandListGroup group) {
+    public void expandListGroupTouch(TripGroup group) {
         if (CURRENT_MAP != MAP_SHOW_TRIPS) switchMap(MAP_SHOW_TRIPS);
         if (showTripFragment != null && group != null) {
             showTripFragment.redrawLines(group);
         }
-    }
-
-    private void upgradeDB() {
-        List<HomePoints> homes = HomePoints.listAll(HomePoints.class);
-        for (HomePoints home : homes) {
-            Log.i("Sugar ORM Data Point: ", home.name);
-        }
-        /*String projection[] = {StartPoints.COLUMN_ID, StartPoints.NAME, StartPoints.START_LAT, StartPoints.START_LON, StartPoints.ATTRS};
-        Cursor c = getContentResolver().query(TrackerContentProvider.STARTS_URI, projection, null, null, null);
-        c.moveToPosition(-1);
-        while(c.moveToNext()) {
-            String name = c.getString(c.getColumnIndexOrThrow(StartPoints.NAME));
-            double lat = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LAT));
-            double lon = c.getDouble(c.getColumnIndexOrThrow(StartPoints.START_LON));
-            //HomePoints homePoints = new HomePoints(name, lat, lon);
-            //homePoints.save();
-        }*/
     }
 
     public void switchMap(int map) {
@@ -375,26 +351,10 @@ public class MainActivity extends Activity implements
         private double totalDistance = 0.0;
         @Override
         protected Void doInBackground(Void... params) {
-            String projection[] = {
-                    TripTable.COLUMN_ID,
-                    TripTable.DISTANCE,
-                    TripTable.BUSINESS_RELATED
-            };
-            Cursor c = getContentResolver().query(TrackerContentProvider.TRIP_URI, projection, null, null, null);
-            if (c != null && c.getCount() > 0) {
-                c.moveToPosition(-1);
-                while (c.moveToNext()) {
-                    int business = c.getInt(c.getColumnIndexOrThrow(TripTable.BUSINESS_RELATED));
-                    if (business == 1) {
-
-                        double distance = c.getDouble(c.getColumnIndexOrThrow(TripTable.DISTANCE));
-
-                        totalDistance = totalDistance + (distance * 0.621);//Convert to mileage
-                        //Log.v("DISTANCE: " , Double.toString(totalDistance));
-                    }
-                }
+            List<TripGroup> tripGroups = TripGroup.listAll(TripGroup.class);
+            for (TripGroup group : tripGroups) {
+                totalDistance = totalDistance + group.billableMileage;
             }
-            if (c != null) c.close();
             return null;
         }
 
@@ -484,7 +444,7 @@ public class MainActivity extends Activity implements
                         TripTable.LON,
                         TripTable.TIME
                 };
-                Cursor c = resolver.query(TrackerContentProvider.TRIP_URI, projection, TripTable.TIME + " BETWEEN " + start + " AND " + end, null, null);
+                /*Cursor c = resolver.query(TrackerContentProvider.TRIP_URI, projection, TripTable.TIME + " BETWEEN " + start + " AND " + end, null, null);
                 List<String[]> lines = new ArrayList<String[]>();
                 if (c != null) {
                     c.moveToPosition(-1);
@@ -503,7 +463,7 @@ public class MainActivity extends Activity implements
                 }
                 writeToFile(lines);
                 String mailAddress = getEmail();
-                emailFile(mailAddress);
+                emailFile(mailAddress);*/
                 //readFromFile();
 
                 return null;

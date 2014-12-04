@@ -9,10 +9,12 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
-import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.TripRow;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by charles on 6/27/14.
@@ -20,10 +22,12 @@ import java.util.ArrayList;
 public class ExpandableListAdapter extends BaseExpandableListAdapter {
 
     private Context context;
-    private ArrayList<ExpandListGroup> groups;
+    private ArrayList<TripGroup> groups;
+
+    private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
 
 
-    public ExpandableListAdapter(Context context, ArrayList<ExpandListGroup> groups) {
+    public ExpandableListAdapter(Context context, ArrayList<TripGroup> groups) {
         this.context = context;
         this.groups = groups;
     }
@@ -36,7 +40,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        ArrayList<ExpandListChild> children = groups.get(groupPosition).getListChildren();
+        ArrayList<TripRow> children = groups.get(groupPosition).getChildren();
         return children.size();
     }
 
@@ -48,7 +52,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-        ArrayList<ExpandListChild> children = groups.get(groupPosition).getListChildren();
+        ArrayList<TripRow> children = groups.get(groupPosition).getChildren();
         return children.get(childPosition);
     }
 
@@ -69,8 +73,10 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-        ExpandListGroup group = (ExpandListGroup)getGroup(groupPosition);
-        String headerTitle = group.getName();
+        TripGroup group = (TripGroup)getGroup(groupPosition);
+        Date date = group.getChildren().get(0).timeStart;
+
+        String headerTitle = format.format(date);
 
 
         if (convertView == null) {
@@ -89,7 +95,8 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
 
-        ExpandListChild child = (ExpandListChild)getChild(groupPosition, childPosition);
+        TripGroup group = groups.get(groupPosition);
+        TripRow child = group.getChildren().get(childPosition);
 
         //if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) context
@@ -98,7 +105,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         //}
 
 
-        if (child.isBusinessRelated() == 1) {
+        if (child.businessRelated) {
             convertView.setBackgroundColor(context.getResources().getColor(R.color.semi_lightblue));
         } else {
             convertView.setBackgroundColor(context.getResources().getColor(R.color.white));
@@ -110,8 +117,9 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         TextView dateView = (TextView) convertView
                 .findViewById(R.id.end_trip_date_time);
 
-        addressView.setText(child.getAddress());
-        dateView.setText(child.getDate());
+        addressView.setText(child.address);
+        Date date = child.timeStart;
+        dateView.setText(format.format(date));
         return convertView;
     }
 

@@ -1,5 +1,6 @@
 package com.charles.mileagetracker.app.receivers;
 
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,11 +17,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class WifiReceiver extends BroadcastReceiver {
+
+
+    private Context context = null;
     public WifiReceiver() {
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        this.context = context;
         NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
         Log.v("WIFI: ", "Wifi connection changed");
         if(info!=null){
@@ -37,15 +42,16 @@ public class WifiReceiver extends BroadcastReceiver {
         protected Void doInBackground(Context... params) {
             Context context = params[0];
             Log.v("Connected To Wifi: ", "CONNECTED");
-            //This tests to make sure there is no proxy or anything blocking the connection.
+            //This tests to make sure there is nothing blocking the connection.  I might make a retry loop here
             try {
                 URL url = new URL("http://www.google.com");
                 HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
                 urlc.setConnectTimeout(3000);
                 urlc.connect();
                 if (urlc.getResponseCode() == 200) {
-                    Intent connectedIntent = new Intent(context, CalcMileageService.class);
-                    context.startService(connectedIntent);
+                    //Intent connectedIntent = new Intent(context, CalcMileageService.class);
+                    //context.startService(connectedIntent);
+                    calculateDistanceInBackground();
                 }
             } catch (MalformedURLException e1) {
                 e1.printStackTrace();
@@ -53,6 +59,25 @@ public class WifiReceiver extends BroadcastReceiver {
                 e.printStackTrace();
             }
             return null;
+        }
+    }
+
+    private void calculateDistanceInBackground() {
+        boolean alreadyRunning = false;
+        ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
+
+        //Iterate through all the running services to try and find the CalcMileageService
+        for (ActivityManager.RunningServiceInfo service: activityManager.getRunningServices(Integer.MAX_VALUE)) {
+            if (CalcMileageService.class.getName().equals(service.service.getClassName())) {
+                alreadyRunning = true;
+                break;
+            }
+        }
+
+        //If the service isn't running, start it.
+        if (!alreadyRunning) {
+            Intent connectedIntent = new Intent(context, CalcMileageService.class);
+            context.startService(connectedIntent);
         }
     }
 }

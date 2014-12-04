@@ -32,13 +32,6 @@
                 <action android:name="com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE" />
             </intent-filter>
         </receiver>
-
-        <service
-            android:name=".services.RecordTrackService"
-            android:enabled="true"
-            android:exported="true" >
-        </service>
-
         <receiver
             android:name=".receivers.BootReceiver"
             android:enabled="true"

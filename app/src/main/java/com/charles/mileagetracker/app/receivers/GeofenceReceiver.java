@@ -17,6 +17,7 @@ import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
+import com.charles.mileagetracker.app.services.intentservices.CalcMileageService;
 import com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation;
 import com.charles.mileagetracker.app.services.intentservices.SaveBusinessRelated;
 import com.google.android.gms.location.Geofence;
@@ -70,6 +71,22 @@ public class GeofenceReceiver extends BroadcastReceiver {
         return false;
     }
 
+    private void calculateDistanceInBackground() {
+        boolean alreadyRunning = false;
+        ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service: activityManager.getRunningServices(Integer.MAX_VALUE)) {
+            if (CalcMileageService.class.getName().equals(service.service.getClassName())){
+                alreadyRunning = true;
+                break;
+            }
+        }
+
+        if (!alreadyRunning) {
+            Intent connectedIntent = new Intent(context, CalcMileageService.class);
+            context.startService(connectedIntent);
+        }
+    }
+
     private void transitionEnter(int id, LatLng center) {
         double lat = center.latitude;
         double lon = center.longitude;
@@ -93,6 +110,8 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
         //Set the address in the background
         new AddressDistanceServices(context).setAddress(row);
+
+
 
         Status.deleteAll(Status.class);
 

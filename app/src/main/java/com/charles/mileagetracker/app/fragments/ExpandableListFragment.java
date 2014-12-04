@@ -21,17 +21,15 @@ import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.adapter.ExpandableListAdapter;
-import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
-import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.database.TripGroup;
-import com.charles.mileagetracker.app.database.TripTable;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -49,7 +47,7 @@ public class ExpandableListFragment extends Fragment {
     private ExpandableListAdapter listAdapter;
     private ExpandableListView expListView;
 
-    private ArrayList<ExpandListGroup> listGroups;
+    private ArrayList<TripGroup> listGroups;
     private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
 
     private ProgressDialog mDialog = null;
@@ -100,7 +98,7 @@ public class ExpandableListFragment extends Fragment {
 
         expListView = (ExpandableListView)view.findViewById(R.id.expanding_view);
 
-        listGroups = new ArrayList<ExpandListGroup>();
+        listGroups = new ArrayList<TripGroup>();
         listAdapter = new ExpandableListAdapter(this.getActivity(), listGroups);
 
         expListView.setAdapter(listAdapter);
@@ -111,15 +109,15 @@ public class ExpandableListFragment extends Fragment {
 
                 TextView text = (TextView)v.findViewById(R.id.end_trip_item_address);
 
-                ExpandListChild child = (ExpandListChild)listAdapter.getChild(groupPosition,childPosition);
-                if (child.isBusinessRelated() ==1) {
-                    child.setBusinessRelated(0);
+                TripRow child = (TripRow)listAdapter.getChild(groupPosition,childPosition);
+                if (child.businessRelated) {
+                    child.businessRelated = false;
+                    child.save();
                 } else {
-                    child.setBusinessRelated(1);
+                    child.businessRelated = true;
+                    child.save();
                 }
 
-                Runnable saveChild = new SaveChild(child);
-                saveChild.run();
                 listAdapter.notifyDataSetChanged();
                 mListener.expandListItemTouch(child);
                 return false;
@@ -132,11 +130,11 @@ public class ExpandableListFragment extends Fragment {
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 int itemType = ExpandableListView.getPackedPositionType(id);
                 if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
-                    ExpandListGroup group = (ExpandListGroup)parent.getAdapter().getItem(position);
+                    TripGroup group = (TripGroup)parent.getAdapter().getItem(position);
                     groupLongClick(group);
 
                 } else if (itemType == ExpandableListView.PACKED_POSITION_TYPE_CHILD){
-                    ExpandListChild child = (ExpandListChild)parent.getAdapter().getItem(position);
+                    TripRow child = (TripRow)parent.getAdapter().getItem(position);
                     childLongClick(child);
                 }
                 return false;
@@ -174,18 +172,20 @@ public class ExpandableListFragment extends Fragment {
         return view;
     }
 
-    private void groupLongClick(final ExpandListGroup group) {
+    private void groupLongClick(final TripGroup group) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Delete Trip?");
         builder.setMessage("Delete all trips from:" +
-                "\n" + group.getName() +
+                "\n" + getNameFromGroup(group) +
                 "\n" + "This operation cannot be undone!");
         builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 //listGroups.clear();
-                context.getContentResolver().delete(TrackerContentProvider.GROUP_URI, TripGroup.GROUP_ID + "=" + group.getGroupId(), null);
-                context.getContentResolver().delete(TrackerContentProvider.TRIP_URI, TripTable.TRIP_KEY + "=" + group.getGroupId(), null);
+                for (TripRow child : group.getChildren()) {
+                    child.delete();
+                }
+                group.delete();
                 new FillData().execute();
             }
         });
@@ -200,12 +200,17 @@ public class ExpandableListFragment extends Fragment {
         dialog.show();
     }
 
+    private String getNameFromGroup(TripGroup group) {
+        Date date = group.getChildren().get(0).timeStart;
+        return format.format(date)
+    }
 
-    private void childLongClick(ExpandListChild child) {
-        double lat = child.getLat();
-        double lon = child.getLon();
-        int id = child.getId();
-        mListener.expandListItemLongTouch(child.getExpandGroup());
+
+    private void childLongClick(TripRow child) {
+        double lat = child.lat;
+        double lon = child.lon;
+        int id = child.getId().intValue();
+        mListener.expandListItemLongTouch(child);
 
     }
 
@@ -235,15 +240,15 @@ public class ExpandableListFragment extends Fragment {
 
 
     /*
-    This is a background thread that runs to pull all the trips from the database.  I'm probably going
-    to simplify this by making it a runnable
+    This is a background thread that runs to pull all the trips from the database.  Provides a
+    dialog that waits for everything to load.
      */
 
-    private class FillData extends AsyncTask<Integer, String, ExpandListGroup> {
+    private class FillData extends AsyncTask<Integer, String, TripGroup> {
 
         //Necessary evil so that I can modify the data in the background and then quickly move it into place
         //it's done processing.
-        private ArrayList<ExpandListGroup> groups = new ArrayList<ExpandListGroup>();
+        private ArrayList<TripGroup> groups = new ArrayList<TripGroup>();
 
         //I don't know why this isn't showing :(
         @Override
@@ -263,51 +268,30 @@ public class ExpandableListFragment extends Fragment {
         children and parent elements.
          */
         @Override
-        protected ExpandListGroup doInBackground(Integer... params) {
-            ExpandListGroup firstGroup = null;
-            String projection[] = {
-                    TripTable.DISTANCE,
-                    TripTable.TRIP_KEY,
-                    TripTable.COLUMN_ID,
-                    TripTable.LAT,
-                    TripTable.LON,
-                    TripTable.BUSINESS_RELATED,
-                    TripTable.CLOSED,
-                    TripTable.TIME,
-                    TripTable.ADDRESS
-            };
+        protected TripGroup doInBackground(Integer... params) {
 
-            Cursor c = context.getContentResolver().query(TrackerContentProvider.TRIP_URI,projection, null, null,null);
+            //TripGroup group = null;
 
-            //Move backwards through the database, we want the newest data first.
-            if (c != null && c.getCount() > 0) {
-                c.moveToPosition(c.getCount() + 1);//Move cursor one postion beyond end of list
-                while (c.moveToPrevious()) {
-
-                    int group_id = c.getInt(c.getColumnIndexOrThrow(TripTable.TRIP_KEY));
-                    double distance = c.getDouble(c.getColumnIndexOrThrow(TripTable.DISTANCE));
-                    ExpandListGroup group = getGroup(group_id);
-                    ExpandListChild child = buildChild(c);
-                    group.addItem(child);
-                    if (c.isLast()) firstGroup = group;
-
+            List<TripGroup> tripGroups = TripGroup.find(TripGroup.class, " ORDER BY id DESC");
+            for (TripGroup group : tripGroups) {
+                List<TripRow> rows = TripRow.find(TripRow.class, " trip_group = ? ", Long.toString(group.getId()), " ORDER BY id ASC");
+                for (TripRow row : rows) {
+                    if (row.distance != 0 && row.units.equalsIgnoreCase("km")) {
+                        row.distance = convertKmToMi(row.distance);
+                        row.units = "mi";
+                        row.save();
+                    }
                 }
+                group.setChildren(rows);
             }
-
-            if (c != null) c.close();
-            /*
-            Since we moved backwards through the database I now want the children to be reveresed
-            and show the oldest elements first.
-             */
-            reverseChildren();
-            return firstGroup;
+            return tripGroups.get(0);
         }
 
         /*
         Supposed to stop the progressbar
          */
         @Override
-        protected void onPostExecute(ExpandListGroup group) {
+        protected void onPostExecute(TripGroup group) {
 
             //bar.setVisibility(View.INVISIBLE);
             listGroups.clear();
@@ -319,59 +303,6 @@ public class ExpandableListFragment extends Fragment {
 
         }
 
-        /*
-        Take a group id and retrieve the groups
-         */
-        private ExpandListGroup getGroup(int group_id){
-            Iterator it = groups.iterator();
-            while (it.hasNext()) {
-                ExpandListGroup group = (ExpandListGroup)it.next();
-                if (group.getGroupId() == group_id) {
-                    return group;
-                }
-            }
-            ExpandListGroup group = new ExpandListGroup(group_id);
-            groups.add(group);
-            return group;//Default to
-        }
-
-        /*
-        Take the Cursor and pull down the children from one group
-         */
-        private ExpandListChild buildChild(Cursor c) {
-            long millis = c.getLong(c.getColumnIndexOrThrow(TripTable.TIME));
-            String dateString = format.format(new Date(millis));
-            double lat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
-            double lon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
-            double distance = c.getDouble(c.getColumnIndexOrThrow(TripTable.DISTANCE));
-            double miles =  convertKmToMi(distance);
-            //Log.v("DEBUG: ", "DISTANCE: " + Double.toString(miles) + "mi");
-            int businessRelated = c.getInt(c.getColumnIndexOrThrow(TripTable.BUSINESS_RELATED));
-            int id = c.getInt(c.getColumnIndexOrThrow(TripTable.COLUMN_ID));
-            String address = c.getString(c.getColumnIndexOrThrow(TripTable.ADDRESS));
-            int group_id = c.getInt(c.getColumnIndexOrThrow(TripTable.TRIP_KEY));
-            if (address.trim().length() == 0) {
-                address = getAddress(lat, lon);
-            }
-            return new ExpandListChild(dateString,millis,id,distance,group_id,lat,lon,businessRelated,address);
-        }
-
-
-        private void reverseChildren() {
-            //Reverse the internal lists so the dates are in the correct order.
-            Iterator it = groups.iterator();
-            while (it.hasNext()) {
-                ExpandListGroup group = (ExpandListGroup)it.next();
-                group.reverseChildren();
-                setName(group);
-            }
-        }
-
-        //Set the name of the group to the first date of a recorded trip
-        private void setName(ExpandListGroup group) {
-            ExpandListChild child = group.getListChildren().get(0);
-            group.setName(child.getDate());
-        }
 
         private String getAddress(double lat, double lon) {
             AddressDistanceServices services = new AddressDistanceServices(context);
@@ -385,27 +316,10 @@ public class ExpandableListFragment extends Fragment {
             double miles = kilometers * 0.621;
             return miles;
         }
-    }
 
-    /*
-    Updates the status of a child in the background
-     */
-    private class SaveChild implements Runnable {
-
-        private ExpandListChild child = null;
-
-        public SaveChild(ExpandListChild child) {
-            this.child  = child;
-        }
-
-        @Override
-        public void run() {
-            if (child != null) {
-                ContentValues values = new ContentValues();
-                values.put(TripTable.BUSINESS_RELATED, child.isBusinessRelated());
-                context.getContentResolver().update(TrackerContentProvider.TRIP_URI,values, TripTable.COLUMN_ID + "=" + child.getId(), null);
-            }
-
+        private double convertMitoKM(double miles ) {
+            double km = miles * 1.60934;
+            return km;
         }
     }
 
@@ -420,9 +334,9 @@ public class ExpandableListFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface ExpandableListInteractionListener {
-        public void expandListItemTouch(ExpandListChild child);
-        public void expandListItemLongTouch(ExpandListGroup group);
-        public void expandListGroupTouch(ExpandListGroup group);
+        public void expandListItemTouch(TripRow child);
+        public void expandListItemLongTouch(TripGroup group);
+        public void expandListGroupTouch(TripGroup group);
     }
 
 }

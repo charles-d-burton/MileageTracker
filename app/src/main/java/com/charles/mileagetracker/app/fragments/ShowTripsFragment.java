@@ -2,11 +2,7 @@ package com.charles.mileagetracker.app.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.LoaderManager;
 import android.content.Context;
-import android.content.CursorLoader;
-import android.content.Loader;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
@@ -17,16 +13,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.charles.mileagetracker.app.adapter.containers.ExpandListChild;
-import com.charles.mileagetracker.app.adapter.containers.ExpandListGroup;
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.database.TripTable;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -41,10 +34,10 @@ import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -70,11 +63,12 @@ public class ShowTripsFragment extends MapFragment implements
     private static final String param1 = "group";
     private static final String param2 = "id";
 
-    private ExpandListGroup group = null;
+    private TripGroup group = null;
 
     private boolean mapStart = false;
 
-    private HashMap<Marker, ExpandListChild> markerTracker = new HashMap<Marker,ExpandListChild>();
+    private HashMap<Marker, TripRow> markerTracker = new HashMap<Marker,TripRow>();
+    private HashMap<TripRow, List<LatLng>> polyLineTracker = new HashMap<TripRow, List<LatLng>>();
 
     private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
 
@@ -84,10 +78,10 @@ public class ShowTripsFragment extends MapFragment implements
      *
      * @return A new instance of fragment ShowTripsFragment.
      */
-    public static ShowTripsFragment newInstance(ExpandListGroup group) {
+    public static ShowTripsFragment newInstance(TripGroup group) {
         ShowTripsFragment fragment = new ShowTripsFragment();
         Bundle bundle = new Bundle();
-        bundle.putSerializable(param1, group);
+        //bundle.putSerializable(param1, group);
         return fragment;
     }
 
@@ -106,11 +100,11 @@ public class ShowTripsFragment extends MapFragment implements
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
+        /*if (getArguments() != null) {
             if (getArguments().containsKey(param1)) {
                 group = (ExpandListGroup)getArguments().getSerializable(param1);
             }
-        }
+        }*/
     }
 
 
@@ -209,11 +203,11 @@ public class ShowTripsFragment extends MapFragment implements
 
     }
 
-    public void redrawLines(ExpandListGroup group) {
+    public void redrawLines(TripGroup group) {
         if (group != null) {
-            ExpandListChild child = group.getListChildren().get(0);
-            double lat = child.getLat();
-            double lon = child.getLon();
+            TripRow child = group.getChildren().get(0);
+            double lat = child.lat;
+            double lon = child.lon;
 
             CameraPosition cameraPosition = new CameraPosition.Builder()
                     .target(new LatLng(lat, lon))
@@ -228,10 +222,17 @@ public class ShowTripsFragment extends MapFragment implements
             }
 
         }
+        markerTracker.clear();
+        polyLineTracker.clear();
         new DrawLines().execute(group);
     }
 
-    private class DrawLines extends AsyncTask<ExpandListGroup, Integer, ExpandListGroup> {
+
+    /*
+    This class takes a TripGroup and generates the PolyLine points in a background thread.  It then
+    puts them on the map after it generates them.
+     */
+    private class DrawLines extends AsyncTask<TripGroup, Integer, TripGroup> {
 
         private AddressDistanceServices distanceServices;
 
@@ -243,22 +244,23 @@ public class ShowTripsFragment extends MapFragment implements
         }
 
         @Override
-        protected ExpandListGroup doInBackground(ExpandListGroup... params) {
-            ExpandListGroup expandListGroup = params[0];
-            ArrayList children = expandListGroup.getListChildren();
+        protected TripGroup doInBackground(TripGroup... params) {
 
+            TripGroup expandListGroup = params[0];
+            ArrayList children = expandListGroup.getChildren();
             for (int i = 0; i < children.size(); i++) {
                 if (i == children.size() - 1){
                     break;
                 }
-                ExpandListChild point1 = (ExpandListChild)children.get(i);
-                ExpandListChild point2 = (ExpandListChild)children.get(i + 1);
-                //Why do more work than necessary?  The points have already been generated, we need to just skip that part
-                if (point1.getLinePoints().size() > 0) {
-                    continue;
-                }
+                TripRow point1 = (TripRow)children.get(i);
+                TripRow point2 = (TripRow)children.get(i + 1);
 
-                String url = distanceServices.getDirectionsURL(point1.getLat(), point1.getLon(), point2.getLat(), point2.getLon());
+                //Why do more work than necessary?  The points have already been generated, we need to just skip that part
+                /*if (point1.getLinePoints().size() > 0) {
+                    continue;
+                }*/
+
+                String url = distanceServices.getDirectionsURL(point1.lat, point1.lon, point2.lat, point2.lon);
                 String result = distanceServices.getStringFromUrl(url);
                 try {
                     JSONObject json = new JSONObject(result);
@@ -266,9 +268,10 @@ public class ShowTripsFragment extends MapFragment implements
                     JSONObject routes = routeArray.getJSONObject(0);
                     JSONObject overviewPolylines = routes.getJSONObject("overview_polyline");
                     String encodedString = overviewPolylines.getString("points");
-                    LinkedList lines = distanceServices.decodePoly(encodedString);
+                    List lines = distanceServices.decodePoly(encodedString);
                     Log.v("Number of lines: " , Integer.toString(lines.size()));
-                    point1.addAllPoints(lines);
+                    polyLineTracker.put(point1, lines);
+                    //point1.addAllPoints(lines);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -288,31 +291,31 @@ public class ShowTripsFragment extends MapFragment implements
         and draw them as a polyline on the screen.
          */
         @Override
-        protected void onPostExecute(ExpandListGroup expandListGroup) {
-            super.onPostExecute(expandListGroup);
-            ArrayList<ExpandListChild> children = expandListGroup.getListChildren();
+        protected void onPostExecute(TripGroup group) {
+            super.onPostExecute(group);
+            ArrayList<TripRow> children = group.getChildren();
             //SetHomeDrawerAdapter drawerAdapter = new SetHomeDrawerAdapter(ShowTripsFragment.this.getActivity(), children);
             //drawerView.setAdapter(drawerAdapter);
             Iterator it = children.iterator();
             Polyline polyline = null;
             while (it.hasNext()) {
 
-                ExpandListChild child = (ExpandListChild) it.next();
+                TripRow child = (TripRow) it.next();
 
-                if (polyline != null && child.isBusinessRelated() == 1) {
+                if (polyline != null && child.businessRelated) {
                     polyline.setColor(Color.GREEN);
                 }
                 Marker marker = gmap.addMarker(
-                        new MarkerOptions().position(new LatLng(child.getLat(), child.getLon()))
+                        new MarkerOptions().position(new LatLng(child.lat, child.lon))
                                 .draggable(false)
-                                .title(child.getAddress())
+                                .title(child.address)
                                 .flat(true)
 
                 );
 
                 markerTracker.put(marker, child);
-                LinkedList<LatLng> points = child.getLinePoints();
-                Log.v("POINTS: ", "Number of points: " + Integer.toString(points.size()));
+                List<LatLng> points = polyLineTracker.get(child);
+                //Log.v("POINTS: ", "Number of points: " + Integer.toString(points.size()));
 
                 if (points.size() > 0) {
                     polyline = gmap.addPolyline(new PolylineOptions().addAll(points).width(5).color(Color.RED).geodesic(true));

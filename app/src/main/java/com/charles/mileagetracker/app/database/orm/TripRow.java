@@ -1,6 +1,8 @@
 package com.charles.mileagetracker.app.database.orm;
 
+import com.google.android.gms.maps.model.Marker;
 import com.orm.SugarRecord;
+import com.orm.dsl.Ignore;
 
 import java.util.Date;
 
@@ -15,6 +17,7 @@ public class TripRow extends SugarRecord<TripRow> {
     public double lon;
     public String address;
     public double distance = 0;
+    public String units = "km";
     public boolean businessRelated = false;
 
     //Relationship to a trip_group.  Meaning a collection of trips that are logically grouped together.
