@@ -3,18 +3,12 @@ package com.charles.mileagetracker.app.fragments;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
-import android.app.LoaderManager;
 import android.app.PendingIntent;
-import android.content.ContentValues;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.Loader;
-import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,12 +17,9 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.database.StartPoints;
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
 import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.google.android.gms.common.ConnectionResult;
@@ -48,8 +39,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -204,6 +193,8 @@ public class SetHomeFragment extends MapFragment implements
 
     @Override
     public void onMapLongClick(final LatLng latLng) {
+        Log.v(CLASS_NAME, "Map Long Clicked");
+
         double distance = getDistance(latLng);
 
         if (homePoints.size() <= 1 || distance > 2000) {

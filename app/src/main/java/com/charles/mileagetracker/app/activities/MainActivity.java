@@ -13,13 +13,13 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.Menu;
@@ -30,8 +30,6 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.database.TripTable;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.fragments.ExpandableListFragment;
@@ -47,7 +45,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -57,7 +54,7 @@ import java.util.regex.Pattern;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
-public class MainActivity extends Activity implements
+public class MainActivity extends ActionBarActivity implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener,
         ExpandableListFragment.ExpandableListInteractionListener,
@@ -115,6 +112,10 @@ public class MainActivity extends Activity implements
         manager.executePendingTransactions();
 
         testButton = (Button) findViewById(R.id.add_start_point);
+
+        if (TripGroup.listAll(TripGroup.class).isEmpty()) {
+            CURRENT_MAP = MAP_SHOW_HOMES;
+        }
         testButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -435,15 +436,6 @@ public class MainActivity extends Activity implements
             protected String doInBackground(Long... params) {
                 long start = params[0];
                 long end = params[1];
-                String projection[] = {
-                        TripTable.ADDRESS,
-                        TripTable.BUSINESS_RELATED,
-                        TripTable.DISTANCE,
-                        TripTable.COLUMN_ID,
-                        TripTable.LAT,
-                        TripTable.LON,
-                        TripTable.TIME
-                };
                 /*Cursor c = resolver.query(TrackerContentProvider.TRIP_URI, projection, TripTable.TIME + " BETWEEN " + start + " AND " + end, null, null);
                 List<String[]> lines = new ArrayList<String[]>();
                 if (c != null) {

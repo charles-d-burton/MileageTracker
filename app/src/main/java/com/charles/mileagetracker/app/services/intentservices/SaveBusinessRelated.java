@@ -1,13 +1,9 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.database.TripTable;
-import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 
 import java.util.List;

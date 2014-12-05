@@ -100,7 +100,11 @@ public class GeofenceReceiver extends BroadcastReceiver {
         this.context.startService(stopActivityService);
         this.context.stopService(new Intent(this.context,GetCurrentLocation.class));
 
-        Status status = Status.listAll(Status.class).get(0);
+
+        List<Status> statuses = Status.listAll(Status.class);
+        if (statuses.isEmpty()) return;
+
+        Status status = statuses.get(0);
         TripGroup group = status.trip_group;
         group.group_closed = true;
         group.save();

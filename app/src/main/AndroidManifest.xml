@@ -14,12 +14,6 @@
         <meta-data android:name="QUERY_LOG" android:value="true" />
         <meta-data android:name="DOMAIN_PACKAGE_NAME" android:value="com.charles.mileagetracker.app.database.orm" />
 
-        <provider
-            android:name=".database.TrackerContentProvider"
-            android:authorities="com.charles.mileagetracker.app.database.TrackerContentProvider"
-            android:exported="true" >
-        </provider>
-
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyCWLe7RmQQR4AJaMx8xPIZcjSg2FnQ5if4" />
@@ -63,14 +57,6 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
-
-        <activity
-            android:name=".activities.ExpandingTripList"
-            android:label="@string/title_activity_expanding_trip_list" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".activities.MainActivity" />
-        </activity>
 
         <service
             android:name=".services.intentservices.SaveBusinessRelated"

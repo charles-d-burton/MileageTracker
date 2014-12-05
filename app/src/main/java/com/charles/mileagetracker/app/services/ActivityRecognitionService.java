@@ -24,7 +24,7 @@ import java.util.Date;
  * ActivityRecognitionIntentService to process your current activity.
  */
 
-//TODO: I need to rework this class so that it initialized the variables as well as handles creating the db start entry
+//TODO: I need to rework this class so that it initializes the variables as well as handles creating the db start entry
 public class ActivityRecognitionService extends Service implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener {

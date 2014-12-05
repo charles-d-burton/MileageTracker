@@ -4,10 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.ProgressDialog;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,7 +26,6 @@ import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -202,7 +199,7 @@ public class ExpandableListFragment extends Fragment {
 
     private String getNameFromGroup(TripGroup group) {
         Date date = group.getChildren().get(0).timeStart;
-        return format.format(date)
+        return format.format(date);
     }
 
 
@@ -210,7 +207,7 @@ public class ExpandableListFragment extends Fragment {
         double lat = child.lat;
         double lon = child.lon;
         int id = child.getId().intValue();
-        mListener.expandListItemLongTouch(child);
+        mListener.expandListItemLongTouch(child.trip_group);
 
     }
 
@@ -271,10 +268,10 @@ public class ExpandableListFragment extends Fragment {
         protected TripGroup doInBackground(Integer... params) {
 
             //TripGroup group = null;
-
-            List<TripGroup> tripGroups = TripGroup.find(TripGroup.class, " ORDER BY id DESC");
+            List<TripGroup> tripGroups = TripGroup.find(TripGroup.class, null, null, null, " id DESC ", null);
             for (TripGroup group : tripGroups) {
-                List<TripRow> rows = TripRow.find(TripRow.class, " trip_group = ? ", Long.toString(group.getId()), " ORDER BY id ASC");
+                String entries[] = {Long.toString(group.getId())};
+                List<TripRow> rows = TripRow.find(TripRow.class, " trip_group = ? ", entries, null, " id ASC", null);
                 for (TripRow row : rows) {
                     if (row.distance != 0 && row.units.equalsIgnoreCase("km")) {
                         row.distance = convertKmToMi(row.distance);
@@ -283,6 +280,9 @@ public class ExpandableListFragment extends Fragment {
                     }
                 }
                 group.setChildren(rows);
+            }
+            if (tripGroups.isEmpty()) {
+                return null;
             }
             return tripGroups.get(0);
         }

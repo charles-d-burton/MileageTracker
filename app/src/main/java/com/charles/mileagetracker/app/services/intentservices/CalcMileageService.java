@@ -53,7 +53,8 @@ public class CalcMileageService extends IntentService {
     private void processGroup(TripGroup group) {
         AddressDistanceServices addressDistanceServices = new AddressDistanceServices(getApplicationContext());
 
-        List<TripRow> stops = TripRow.find(TripRow.class, " trip_group = ? ", Long.toString(group.getId()), " ORDER BY id ASC");
+        String params[] = {Long.toString(group.getId())};
+        List<TripRow> stops = TripRow.find(TripRow.class, " trip_group = ? ", params ,null , " ORDER BY id ASC",null);
 
         double totalMileage = 0;
         double billableMileage = 0;
