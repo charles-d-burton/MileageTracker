@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.util.Log;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MainActivity;
@@ -127,11 +128,13 @@ public class GeofenceReceiver extends BroadcastReceiver {
         initTables(center.latitude, center.longitude);
 
         String message = "Leaving Fence, starting record";
+        Log.v("From Geofence: ", message);
         Intent activityRecognitionService = new Intent(this.context, ActivityRecognitionService.class);
         activityRecognitionService.putExtra("id", id);
         activityRecognitionService.putExtra("lat", center.latitude);
         activityRecognitionService.putExtra("lon", center.longitude);
         activityRecognitionService.putExtra("transition", "exit");
+
 
         this.context.startService(activityRecognitionService);
         //generateNotification("Recording Trip",message, Geofence.GEOFENCE_TRANSITION_EXIT);

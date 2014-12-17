@@ -1,0 +1,35 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    tools:context="com.charles.mileagetracker.app.activities.MapDrawerActivity">
+    <include layout="@layout/toolbar"/>
+
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Main layout -->
+        <fragment
+            android:id="@+id/activity_map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            class="com.google.android.gms.maps.MapFragment" />
+
+        <!-- Nav drawer -->
+        <fragment
+            android:id="@+id/fragment_drawer"
+            android:name="com.charles.mileagetracker.app.fragments.ExpandableListFragment"
+            android:layout_width="fill_parent"
+            android:layout_weight="75"
+            android:layout_height="match_parent"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="0dp"
+            android:layout_gravity="left|start" />
+    </android.support.v4.widget.DrawerLayout>
+
+
+
+</LinearLayout>

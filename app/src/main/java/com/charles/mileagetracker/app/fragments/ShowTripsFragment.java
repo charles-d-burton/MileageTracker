@@ -1,7 +1,6 @@
 package com.charles.mileagetracker.app.fragments;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Color;
 import android.location.Location;
@@ -20,7 +19,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -39,7 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * A simple {@link Fragment} subclass.
+ * A simple {@link } subclass.
  * Activities that contain this fragment must implement the
  * {@link com.charles.mileagetracker.app.fragments.ShowTripsFragment.OnShowTripsInteractionListener} interface
  * to handle interaction events.
@@ -47,7 +46,7 @@ import java.util.List;
  * create an instance of this fragment.
  *
  */
-public class ShowTripsFragment extends MapFragment implements
+public class ShowTripsFragment extends SupportMapFragment implements
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMarkerDragListener,
         GoogleMap.OnMarkerClickListener,
@@ -112,6 +111,7 @@ public class ShowTripsFragment extends MapFragment implements
                              Bundle savedInstanceState) {
         View view = super.onCreateView(inflater, container, savedInstanceState);
         gmap = getMap();
+
         LocationManager lm = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
         Location loc = null;
         if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {

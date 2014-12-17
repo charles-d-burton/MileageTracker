@@ -7,8 +7,7 @@ import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -17,9 +16,12 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.Menu;
@@ -92,18 +94,27 @@ public class MainActivity extends ActionBarActivity implements
     public static final int MAP_SHOW_HOMES = 1;
     private int CURRENT_MAP = MAP_SHOW_TRIPS;
 
+    private Toolbar toolBar = null;
 
+
+    /*@Override
+    protected int getLayoutResource() {
+        return R.layout.activity_map;
+    }*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+        toolBar = (Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolBar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         context = this;
-        //resolver = context.getContentResolver();
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         containerLayout = (FrameLayout) findViewById(R.id.map_container);
-        FragmentManager manager = getFragmentManager();
+        FragmentManager manager = getSupportFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
 
         showTripFragment = ShowTripsFragment.newInstance();
@@ -114,7 +125,7 @@ public class MainActivity extends ActionBarActivity implements
         testButton = (Button) findViewById(R.id.add_start_point);
 
         if (TripGroup.listAll(TripGroup.class).isEmpty()) {
-            CURRENT_MAP = MAP_SHOW_HOMES;
+            //CURRENT_MAP = MAP_SHOW_HOMES;
         }
         testButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -129,27 +140,26 @@ public class MainActivity extends ActionBarActivity implements
 
         drawerFragment = (ExpandableListFragment) getFragmentManager().findFragmentById(R.id.drawer_view_map);
 
-        ActionBar actionBar = getActionBar();
+        /*ActionBar actionBar = getActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setHomeButtonEnabled(true);
+        actionBar.setHomeButtonEnabled(true);*/
 
         // ActionBarDrawerToggle ties together the the proper interactions
         // between the navigation drawer and the action bar app icon.
         drawerToggle = new ActionBarDrawerToggle(
                 this,                             /* host Activity */
-                drawerLayout,                    /* DrawerLayout object */
-                R.drawable.ic_navigation_drawer,             /* nav drawer image to replace 'Up' caret */
+                drawerLayout,                    /* DrawerLayout object */             /* nav drawer image to replace 'Up' caret */
                 R.string.drawer_open,  /* "open drawer" description for accessibility */
                 R.string.drawer_closed  /* "close drawer" description for accessibility */
         ) {
             @Override
             public void onDrawerClosed(View drawerView) {
-                getActionBar().setTitle("Title");
+                //getActionBar().setTitle("Title");
             }
 
             @Override
             public void onDrawerOpened(View drawerView) {
-                getActionBar().setTitle("Title");
+                //getActionBar().setTitle("Title");
 
             }
         };
@@ -242,7 +252,7 @@ public class MainActivity extends ActionBarActivity implements
     }
 
     public void switchMap(int map) {
-        FragmentManager fragmentManager = getFragmentManager();
+        FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         switch (map) {
             case MAP_SHOW_HOMES:

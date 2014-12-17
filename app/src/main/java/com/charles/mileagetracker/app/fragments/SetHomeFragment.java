@@ -2,7 +2,6 @@ package com.charles.mileagetracker.app.fragments;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Fragment;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -31,7 +30,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationStatusCodes;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -43,7 +42,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 
 /**
- * A simple {@link Fragment} subclass.
+ * A simple {@link } subclass.
  * Activities that contain this fragment must implement the
  * {@link com.charles.mileagetracker.app.fragments.SetHomeFragment.OnShowHomeInteractionListener} interface
  * to handle interaction events.
@@ -51,7 +50,7 @@ import java.util.concurrent.Executors;
  * create an instance of this fragment.
  *
  */
-public class SetHomeFragment extends MapFragment implements
+public class SetHomeFragment extends SupportMapFragment implements
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMarkerDragListener,
         GoogleMap.OnMarkerClickListener,
@@ -95,6 +94,7 @@ public class SetHomeFragment extends MapFragment implements
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
     }
 
@@ -103,6 +103,7 @@ public class SetHomeFragment extends MapFragment implements
                              Bundle savedInstanceState) {
 
         this.applicationContext = getActivity().getApplicationContext();
+        getActivity().getActionBar().show();
         View view = super.onCreateView(inflater, container, savedInstanceState);
         gmap = getMap();
 
@@ -365,6 +366,7 @@ public class SetHomeFragment extends MapFragment implements
                 .draggable(true)
         );
         homePoint.setMarker(marker);
+        homePoint.save();
     }
 
     /*
