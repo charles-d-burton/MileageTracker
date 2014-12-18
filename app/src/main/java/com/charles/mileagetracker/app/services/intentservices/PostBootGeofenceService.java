@@ -5,23 +5,17 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.location.LocationManager;
-import android.os.Bundle;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.locationservices.GetCurrentLocation;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.model.LatLng;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -32,21 +26,14 @@ import java.util.List;
  * a service on a separate handler thread.
  */
 public class PostBootGeofenceService extends IntentService implements
-        GooglePlayServicesClient.ConnectionCallbacks,
-        GooglePlayServicesClient.OnConnectionFailedListener,
-        LocationClient.OnAddGeofencesResultListener{
-
-    private LocationClient locationClient = null;
-    private LocationRequest locationRequest = null;
-    private LocationListener locationListener = null;
+        GetCurrentLocation.GetLocationCallback,
+        LocationClient.OnAddGeofencesResultListener {
     private Context context;
+    private GetCurrentLocation getCurrentLocation = null;
 
     //private HashMap<Integer, LatLng> fenceCenters = new HashMap<Integer, LatLng>();
     private List<HomePoints> homePointsList = null;
-    private boolean addingProximityAlerts = false;
     private boolean startedActivityRecognition = false;
-
-    private int locationResolution = 200;
 
     public PostBootGeofenceService() {
         super("PostBootGeofenceService");
@@ -57,72 +44,24 @@ public class PostBootGeofenceService extends IntentService implements
         context = getApplicationContext();
         if (intent != null) {
             final String action = intent.getAction();
-            initLocationUpdates();
+            homePointsList = HomePoints.listAll(HomePoints.class);
+            if (!homePointsList.isEmpty()) {
+                for (HomePoints homePoint : homePointsList) {
+                    //After a reboot you have to re-add the geofences.  This handles that.
+                    addProximityAlert(new LatLng(homePoint.lat, homePoint.lon), homePoint.getId().intValue());
+                }
+                getCurrentLocation = new GetCurrentLocation(context, 10, GetCurrentLocation.PRECISION.HIGH);
+                getCurrentLocation.updateLocation(this, false);
+            }
+
             Log.v("DEBUG: ", "Trying to start locationclient from boot");
 
         }
     }
 
-    /*
-    Retrieve the fence centers from the database and then start the process to add them into the locationservices
-     */
-    @Override
-    public void onConnected(Bundle bundle) {
-        //Log.v("DEBUG: ", "Location Services Connected from Boot");
-        addingProximityAlerts = true;
-        locationClient.requestLocationUpdates(locationRequest, locationListener);
-
-        homePointsList = HomePoints.listAll(HomePoints.class);
-
-        if (homePointsList.isEmpty()) { //No fences defined disconnect so everything can close
-            locationClient.removeLocationUpdates(locationListener);
-            locationClient.disconnect();
-        } else {
-            for (HomePoints homePoint : homePointsList) {
-                //After a reboot you have to re-add the geofences.  This handles that.
-                addProximityAlert(new LatLng(homePoint.lat, homePoint.lon), homePoint.getId().intValue());
-            }
-        }
-        addingProximityAlerts = false;
-
-    }
-
-    @Override
-    public void onDisconnected() {
-        Log.v("DEBUG: ", "Geofences added, disconnected from location services");
-
-    }
-
     @Override
     public void onAddGeofencesResult(int i, String[] strings) {
 
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-
-    }
-
-    private void initLocationUpdates() {
-
-        final LocationManager manager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
-
-        locationClient = new LocationClient(context, this, this);
-        locationRequest = LocationRequest.create();
-
-        if (manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-            locationResolution = 100;
-        } else {
-            locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-            locationResolution = 1000;
-        }
-
-
-        locationRequest.setInterval(5000);
-        locationRequest.setFastestInterval(1000);
-        locationListener = new MyLocationListener();
-        locationClient.connect();
     }
 
     /*
@@ -146,34 +85,21 @@ public class PostBootGeofenceService extends IntentService implements
                 .build();
         List fencesList = new ArrayList();
         fencesList.add(fence);
-        locationClient.addGeofences(fencesList, pendingIntent, this);
+        getCurrentLocation.addGeoFence(fencesList, pendingIntent, this);
         Log.d("DEBUG: ", "Adding proximity alert");
     }
 
-
-
-    /*
-    Provides the location updatese
-     */
-    private class MyLocationListener implements LocationListener {
-
-        @Override
-        public void onLocationChanged(Location location) {
-            Log.v("DEBUG: ", "Current Accuracy: " + Double.toString(location.getAccuracy()));
-            if (!addingProximityAlerts && location != null) {
-                if (location.getAccuracy() <= locationResolution) {
-                    LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                    int infenceId = checkInFence(currentLocation);
-                    if (infenceId != -1) {
-                        startUpdates(location, infenceId);
-                    } else {
-                    }
-
-                    locationClient.removeLocationUpdates(locationListener);
-                    locationClient.disconnect();
-                }
-            }
+    @Override
+    public void retrievedLocation(double resolution, Location location) {
+        int infenceId = checkInFence(new LatLng(location.getLatitude(), location.getLongitude()));
+        if (infenceId != -1) {
+            startUpdates(location, infenceId);
         }
+    }
+
+    @Override
+    public void locationConnectionFailed() {
+
     }
 
     /*

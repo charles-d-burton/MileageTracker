@@ -12,6 +12,7 @@ import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
+import com.charles.mileagetracker.app.locationservices.GetCurrentLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
@@ -29,25 +30,15 @@ import java.util.concurrent.Executors;
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
  */
-public class GetCurrentLocation extends IntentService implements
-        GooglePlayServicesClient.ConnectionCallbacks,
-        GooglePlayServicesClient.OnConnectionFailedListener {
+public class LogLocation extends IntentService implements
+        GetCurrentLocation.GetLocationCallback {
 
     public static final String LOCATION_MESSENGER = "com.charles.milagetracker.app.LOCATION_MESSENGER";
     public static final int GET_LOCATION_MSG_ID = 2;
 
-    private static LocationClient locationClient = null;
-    private static LocationRequest locationRequest = null;
-    private static LocationListener locationListener = null;
+    private GetCurrentLocation getLocation = null;
 
-    private static int locationTryCounter = 0;
-
-    private int locationResolution = 100;
-
-    private enum Provider {HIGH_ACCURACY, LOW_ACCURACy}
-
-
-    public GetCurrentLocation() {
+    public LogLocation() {
         super("CheckCurrentLocation");
     }
 
@@ -58,130 +49,37 @@ public class GetCurrentLocation extends IntentService implements
         if (intent != null) {
 
             if (intent.getBooleanExtra("stop", false)) {
-                Log.v("DEBUG: ", "Stopping location updates");
-                try {
-                    if (locationListener != null && locationClient.isConnected()) {
-                        locationClient.removeLocationUpdates(locationListener);
-                        locationClient.disconnect();
-                    }
-                } catch (Exception e) {
-
-                }
-                return;
+                getLocation = new GetCurrentLocation(getApplicationContext(), 10, GetCurrentLocation.PRECISION.HIGH);
+                getLocation.updateLocation(this, false);
             }
-        }
-
-        LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-        if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            initLocation(Provider.HIGH_ACCURACY);
-        } else if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            initLocation(Provider.LOW_ACCURACy);
         }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (locationClient != null && locationClient.isConnected()){
-            locationClient.removeLocationUpdates(locationListener);
-            locationClient.disconnect();
+        if (getLocation != null) {
+            getLocation.forceDisconnect();
         }
     }
 
-    @Override
-    public void onConnected(Bundle bundle) {
-        Log.d("DEBUG: ", "Location Client Connected");
-        locationClient.requestLocationUpdates(locationRequest, locationListener);
+     @Override
+     public void retrievedLocation(double resolution, Location location) {
+         if (!tooCloseToStartPoint(location)) {
+             try {
+                 logLocation(location);
+             } catch (IOException e) {
+                 e.printStackTrace();
+             } catch (ClassNotFoundException e) {
+                 e.printStackTrace();
+             }
+         }
+     }
 
-    }
+     @Override
+     public void locationConnectionFailed() {
 
-    @Override
-    public void onDisconnected() {
-        //locationClient.removeLocationUpdates(locationListener);
-        //stopSelf();
-
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        Log.d("DEBUG: ", "Location Client Connection Failed");
-
-    }
-
-    //Uses the selected location provider to init the location callbacks
-    private void initLocation(Provider provider) {
-
-        if (locationListener != null && locationClient.isConnected()) {
-            locationClient.removeLocationUpdates(locationListener);
-            locationClient.disconnect();
-        }
-
-        locationClient = new LocationClient(getApplicationContext(), this, this);
-        locationRequest = LocationRequest.create();
-
-        switch (provider) {
-            case HIGH_ACCURACY:
-                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-                locationResolution = 200;
-                break;
-            case LOW_ACCURACy:
-                locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-                locationResolution = 1000;
-                break;
-            default:
-                break;
-        }
-
-        if (locationListener == null) {
-            locationListener = new MyLocationListener();
-        }
-
-        locationClient.connect();
-    }
-
-    /*
-    Listen for location changes.  If it's not very accurate continue through, if after 10 attempts it can't
-    get a good fix I'll just take what it has.
-     */
-    private class MyLocationListener implements LocationListener {
-        private int counter = 0;
-        @Override
-        public void onLocationChanged(Location location) {
-
-            //Log.d("DEBUG: ", "Location Changed.  Accuracy: " + Double.toString(location.getAccuracy()));
-            if (location != null && location.getAccuracy() <= locationResolution) {
-                if (tooCloseToStartPoint(location)) {
-                    locationClient.removeLocationUpdates(this);
-                    locationClient.disconnect();
-                } else {
-                    try {
-                        logLocation(location);
-                        //generateMessage(location.getLatitude(), location.getLongitude());
-                        locationClient.removeLocationUpdates(this);
-                        locationClient.disconnect();
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            } else if (location != null && location.getAccuracy() > locationResolution) {
-                counter = counter + 1;
-                if (counter == 10) {
-                    LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-                    location = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                    try {
-                        logLocation(location);
-                        locationClient.removeLocationUpdates(this);
-                        locationClient.disconnect();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-    }
+     }
 
     private void logLocation(Location location) throws IOException, ClassNotFoundException {
         Status status = Status.listAll(Status.class).get(0);

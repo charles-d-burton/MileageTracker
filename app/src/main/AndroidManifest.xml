@@ -74,7 +74,7 @@
             android:exported="false" >
         </service>
         <service
-            android:name="com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation"
+            android:name=".services.intentservices.LogLocation"
             android:exported="false" >
         </service>
 

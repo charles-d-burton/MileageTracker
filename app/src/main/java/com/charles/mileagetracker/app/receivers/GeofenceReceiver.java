@@ -19,7 +19,7 @@ import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.charles.mileagetracker.app.services.intentservices.CalcMileageService;
-import com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation;
+import com.charles.mileagetracker.app.services.intentservices.LogLocation;
 import com.charles.mileagetracker.app.services.intentservices.SaveBusinessRelated;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
@@ -99,7 +99,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
         stopActivityService.putExtra("lon", lon);
 
         this.context.startService(stopActivityService);
-        this.context.stopService(new Intent(this.context,GetCurrentLocation.class));
+        this.context.stopService(new Intent(this.context,LogLocation.class));
 
 
         List<Status> statuses = Status.listAll(Status.class);

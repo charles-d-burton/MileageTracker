@@ -1,5 +1,6 @@
 package com.charles.mileagetracker.app.locationservices;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
@@ -10,7 +11,8 @@ import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.maps.model.LatLng;
+
+import java.util.List;
 
 
 /**
@@ -21,7 +23,7 @@ import com.google.android.gms.maps.model.LatLng;
  */
 public class GetCurrentLocation implements
         GooglePlayServicesClient.ConnectionCallbacks,
-        GooglePlayServicesClient.OnConnectionFailedListener {
+        GooglePlayServicesClient.OnConnectionFailedListener{
 
     public enum PRECISION {HIGH, LOW};
     private PRECISION precision = PRECISION.LOW;
@@ -29,7 +31,8 @@ public class GetCurrentLocation implements
     private Context context = null;
 
     private double resolution   = 1000;
-    private double retries = 5;
+    private int retries = 5;
+    private int attempts = 0;
 
     private boolean continuous = false;
 
@@ -39,6 +42,9 @@ public class GetCurrentLocation implements
     private static LocationRequest locationRequest = null;
     private static LocationClient locationClient = null;
     private static LocationListener locationListener = null;
+
+    private boolean disconnect = false;
+
 
     public GetCurrentLocation(Context context, int retries, PRECISION precision) {
         this.retries = retries;
@@ -58,6 +64,7 @@ public class GetCurrentLocation implements
      */
     public void updateLocation(GetLocationCallback callback, boolean updateImmediately) {
         this.callback = callback;
+        disconnect = false;
 
         locationRequest = LocationRequest.create();
 
@@ -71,7 +78,7 @@ public class GetCurrentLocation implements
         }
 
         if (updateImmediately) {
-            callback.retrievedLocation(resolution, new LatLng(location.getLatitude(), location.getLongitude()));
+            callback.retrievedLocation(resolution,location);
         }
 
         if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -99,6 +106,17 @@ public class GetCurrentLocation implements
 
     }
 
+    public void forceDisconnect() {
+        disconnect = true;
+        if (locationClient != null) {
+            locationClient.disconnect();
+        }
+    }
+
+    public void addGeoFence(List fences, PendingIntent intent, LocationClient.OnAddGeofencesResultListener callback) {
+        locationClient.addGeofences(fences, intent, callback);
+    }
+
     @Override
     public void onConnected(Bundle bundle) {
         locationClient.requestLocationUpdates(locationRequest, locationListener);
@@ -124,14 +142,28 @@ public class GetCurrentLocation implements
 
         @Override
         public void onLocationChanged(Location location) {
-            if (callback == null) {
+            if (callback == null || disconnect) {
                 locationClient.disconnect();
+                disconnect = false;
+            } else if (location != null) {
+                if (location.getAccuracy() <= resolution) {
+                    callback.retrievedLocation(location.getAccuracy(), location);
+                    if (!continuous) {
+                        locationClient.disconnect();
+                    }
+                } else if (location.getAccuracy() > resolution && attempts < retries) {
+                    attempts = attempts + 1;
+                } else if (location.getAccuracy() > resolution && attempts >= retries) {
+                    attempts = attempts +1;
+                    callback.retrievedLocation(location.getAccuracy(), location);
+                    locationClient.disconnect();
+                }
             }
         }
     }
 
     public interface GetLocationCallback {
-        public void retrievedLocation(double resolution, LatLng location);
+        public void retrievedLocation(double resolution, Location location);
         public void locationConnectionFailed();
     }
 }

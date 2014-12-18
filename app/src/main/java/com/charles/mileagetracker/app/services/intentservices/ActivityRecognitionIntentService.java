@@ -34,7 +34,7 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private ACTIVITY_TYPE mActivityType;
 
-    private GetCurrentLocation mService = null;
+    private LogLocation mService = null;
     private boolean mBound = false;
 
     @Override
@@ -167,7 +167,7 @@ public class ActivityRecognitionIntentService extends IntentService {
     //Kills the GetCurrentLocation class.  Uses start service but sets a boolean to tell it to unregister and stop cleanly
     private void killGetLocation() {
         if (isLocationServiceRunning()) {
-            Intent intent = new Intent(getApplicationContext(), GetCurrentLocation.class);
+            Intent intent = new Intent(getApplicationContext(), LogLocation.class);
             intent.putExtra("stop", true);
             startService(intent);
         }
@@ -175,14 +175,14 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private void startLocationHandler() {
 
-        Intent startLocationIntent = new Intent(getApplicationContext(), GetCurrentLocation.class);
+        Intent startLocationIntent = new Intent(getApplicationContext(), LogLocation.class);
         startService(startLocationIntent);
     }
 
     private boolean isLocationServiceRunning() {
         ActivityManager activityManager = (ActivityManager)getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
-            if (GetCurrentLocation.class.getName().equals(service.service.getClassName())) {
+            if (LogLocation.class.getName().equals(service.service.getClassName())) {
                 return true;
             }
         }
