@@ -106,6 +106,8 @@ public class GetCurrentLocation implements
 
     }
 
+    //This forces the app to disconnect the location services, if it's called while still setting up everything
+    //it sets a boolean to be read later to disconnect.
     public void forceDisconnect() {
         disconnect = true;
         if (locationClient != null) {
@@ -113,6 +115,7 @@ public class GetCurrentLocation implements
         }
     }
 
+    //Add geofences for the app
     public void addGeoFence(List fences, PendingIntent intent, LocationClient.OnAddGeofencesResultListener callback) {
         locationClient.addGeofences(fences, intent, callback);
     }
@@ -137,7 +140,13 @@ public class GetCurrentLocation implements
         }
     }
 
-
+    /*
+    This is where the location updates are actually processed.  It checks to make sure that there
+    is a callback to send to and make sure that it hasn't been called on to disconnect.  It compares
+    the requested resolution against the actual resolution.  If the resolution is too low(number larger
+    than requested) it keeps listening and trying.  It will eventually based on the maximum requested
+    attempts take the best location that it has and send that to the callback.
+     */
     private class MyLocationListener implements LocationListener {
 
         @Override
