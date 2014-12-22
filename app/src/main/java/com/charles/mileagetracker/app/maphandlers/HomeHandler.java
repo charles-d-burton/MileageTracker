@@ -5,6 +5,7 @@ import android.location.Location;
 import com.charles.mileagetracker.app.locationservices.GetCurrentLocation;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 
 /**
  * Created by charles on 12/15/14.

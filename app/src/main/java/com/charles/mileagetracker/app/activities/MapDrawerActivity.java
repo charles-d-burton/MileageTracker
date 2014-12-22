@@ -1,9 +1,12 @@
 package com.charles.mileagetracker.app.activities;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
@@ -23,9 +26,11 @@ import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.fragments.ExpandableListFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.text.SimpleDateFormat;
 
@@ -80,7 +85,21 @@ public class MapDrawerActivity extends ActionBarActivity
         addStartPointButton = (Button)findViewById(R.id.add_start_point);
         addStartPointButton.setOnClickListener(new StartButtonClickListener());
 
+        LocationManager lm = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
+        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if (location == null) {
+            location = lm.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+            if (location == null) {
+                location = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            }
+        }
+
         googleMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.activity_map)).getMap();
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 12));
+        googleMap.setMyLocationEnabled(true);
+        //googleMap.setOnMapLongClickListener(this);
+        //googleMap.setOnMarkerClickListener(this);
+        //googleMap.setOnMarkerDragListener(this);
 
     }
 
