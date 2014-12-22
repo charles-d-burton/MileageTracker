@@ -95,7 +95,7 @@ public class MapDrawerActivity extends ActionBarActivity
         }
 
         googleMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.activity_map)).getMap();
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 12));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 16));
         googleMap.setMyLocationEnabled(true);
         //googleMap.setOnMapLongClickListener(this);
         //googleMap.setOnMarkerClickListener(this);
