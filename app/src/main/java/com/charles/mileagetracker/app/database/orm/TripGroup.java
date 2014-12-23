@@ -3,7 +3,6 @@ package com.charles.mileagetracker.app.database.orm;
 import com.orm.SugarRecord;
 import com.orm.dsl.Ignore;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 

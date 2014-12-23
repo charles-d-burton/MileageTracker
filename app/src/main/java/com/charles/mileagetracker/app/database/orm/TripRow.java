@@ -1,8 +1,6 @@
 package com.charles.mileagetracker.app.database.orm;
 
-import com.google.android.gms.maps.model.Marker;
 import com.orm.SugarRecord;
-import com.orm.dsl.Ignore;
 
 import java.util.Date;
 

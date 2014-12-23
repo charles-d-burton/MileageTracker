@@ -1,7 +1,5 @@
 package com.charles.mileagetracker.app.database.orm;
 
-import android.content.Context;
-
 import com.orm.SugarRecord;
 
 import java.util.Date;

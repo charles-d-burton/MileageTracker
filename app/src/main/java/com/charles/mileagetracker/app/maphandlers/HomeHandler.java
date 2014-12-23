@@ -5,12 +5,13 @@ import android.location.Location;
 import com.charles.mileagetracker.app.locationservices.GetCurrentLocation;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 
 /**
  * Created by charles on 12/15/14.
  */
-public class HomeHandler implements GetCurrentLocation.GetLocationCallback {
+public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
+    GoogleMap.OnMapLongClickListener,
+    GoogleMap.OnMapClickListener {
     private GoogleMap map;
 
     public HomeHandler(GoogleMap map) {
@@ -24,6 +25,16 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback {
 
     @Override
     public void locationConnectionFailed() {
+
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+
+    }
+
+    @Override
+    public void onMapLongClick(LatLng latLng) {
 
     }
 }

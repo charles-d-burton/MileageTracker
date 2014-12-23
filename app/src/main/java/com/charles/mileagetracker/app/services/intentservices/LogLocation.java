@@ -1,23 +1,14 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
-import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.location.LocationManager;
-import android.os.Bundle;
-import android.util.Log;
 
 import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.locationservices.GetCurrentLocation;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
-import com.google.android.gms.location.LocationClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;

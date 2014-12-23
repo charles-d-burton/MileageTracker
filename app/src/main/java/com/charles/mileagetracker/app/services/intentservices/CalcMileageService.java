@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
