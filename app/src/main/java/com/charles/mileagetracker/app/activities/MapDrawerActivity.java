@@ -22,6 +22,8 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.fragments.ExpandableListFragment;
+import com.charles.mileagetracker.app.locationservices.GetCurrentLocation;
+import com.charles.mileagetracker.app.maphandlers.HomeHandler;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -50,6 +52,8 @@ public class MapDrawerActivity extends ActionBarActivity
     private ActionBarDrawerToggle drawerToggle = null;
 
     private GoogleMap googleMap = null;
+    private Location location = null;
+    private MapHandlerInterface handler = null;
 
 
     @Override
@@ -83,7 +87,7 @@ public class MapDrawerActivity extends ActionBarActivity
         addStartPointButton.setOnClickListener(new StartButtonClickListener());
 
         LocationManager lm = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
-        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         if (location == null) {
             location = lm.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
             if (location == null) {
@@ -94,9 +98,6 @@ public class MapDrawerActivity extends ActionBarActivity
         googleMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.activity_map)).getMap();
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 16));
         googleMap.setMyLocationEnabled(true);
-        //googleMap.setOnMapLongClickListener(this);
-        //googleMap.setOnMarkerClickListener(this);
-        //googleMap.setOnMarkerDragListener(this);
 
     }
 
@@ -105,8 +106,18 @@ public class MapDrawerActivity extends ActionBarActivity
         super.onResume();
         if (checkPlayServices()) {
             Log.v("Services Check: ", "Good!");
+        }
+        if (handler != null) {
+            handler.connect(googleMap, this);
+        }
+    }
 
-
+    @Override
+    protected  void onPause() {
+        super.onPause();
+        googleMap.clear();
+        if (handler != null) {
+            handler.disconnect();
         }
     }
 
@@ -175,6 +186,15 @@ public class MapDrawerActivity extends ActionBarActivity
 
         @Override
         public void onClick(View v) {
+            googleMap.clear();
+
+            if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
+                drawerLayout.closeDrawers();
+            }
+            handler = new HomeHandler();
+            handler.connect(googleMap, MapDrawerActivity.this);
+            //handler.addMarker(location);
+            //Log.v("Start Button Clicked: ", "CLICK");
 
         }
     }
@@ -213,4 +233,8 @@ public class MapDrawerActivity extends ActionBarActivity
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    public interface MapHandlerInterface {
+        public void disconnect();
+        public void connect(GoogleMap map, Context context);
+    }
 }

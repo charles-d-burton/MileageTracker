@@ -25,6 +25,8 @@ public class GetCurrentLocation implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener{
 
+    private final String CLASS_NAME = ((Object)this).getClass().getName();
+
     public enum PRECISION {HIGH, LOW};
     private PRECISION precision = PRECISION.LOW;
 
@@ -102,6 +104,10 @@ public class GetCurrentLocation implements
 
         locationClient = new LocationClient(context, this, this);
         locationListener = new MyLocationListener();
+        if (continuous) {
+            locationRequest.setInterval(10000);
+            locationRequest.setFastestInterval(10000);
+        }
         locationClient.connect();
 
     }
@@ -118,6 +124,11 @@ public class GetCurrentLocation implements
     //Add geofences for the app
     public void addGeoFence(List fences, PendingIntent intent, LocationClient.OnAddGeofencesResultListener callback) {
         locationClient.addGeofences(fences, intent, callback);
+    }
+
+    //Remove geofences for the app
+    public void removeGeoFence(List fences, LocationClient.OnRemoveGeofencesResultListener callback) {
+        locationClient.removeGeofences(fences, callback);
     }
 
     @Override
@@ -155,11 +166,11 @@ public class GetCurrentLocation implements
                 locationClient.disconnect();
                 disconnect = false;
             } else if (location != null) {
-                if (location.getAccuracy() <= resolution) {
+                if (continuous) {
+                    callback.retrievedLocation(resolution, location);
+                } else if (location.getAccuracy() <= resolution) {
                     callback.retrievedLocation(location.getAccuracy(), location);
-                    if (!continuous) {
-                        locationClient.disconnect();
-                    }
+                    locationClient.disconnect();
                 } else if (location.getAccuracy() > resolution && attempts < retries) {
                     attempts = attempts + 1;
                 } else if (location.getAccuracy() > resolution && attempts >= retries) {
