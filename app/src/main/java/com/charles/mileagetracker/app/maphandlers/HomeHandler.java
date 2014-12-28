@@ -55,6 +55,8 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
 
     private List<HomePoints> homePoints = null;
 
+    private AlertDialog runningDialog = null;
+
     public HomeHandler() {
 
         /*this.map = map;
@@ -177,13 +179,13 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
             }
         });
         AlertDialog dialog = builder.create();
-        dialog.show();
+        runningDialog = builder.show();
         return false;
     }
 
     @Override
     public void onMarkerDragStart(Marker marker) {
-        zoomToLocation(marker.getPosition());
+        //zoomToLocation(marker.getPosition());
     }
 
     @Override
@@ -310,7 +312,7 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
             }
         });
         builder.create();
-        builder.show();
+        runningDialog = builder.show();
     }
 
     /*I don't think it will be necessary for people to create starting points less than a km apart
@@ -371,14 +373,18 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
 
     private void zoomToLocation(LatLng latLng) {
         if (latLng != null) {
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 9));
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
         }
     }
 
+    //App paused, stop listening for location updates and cleanup.
     @Override
     public void disconnect() {
         if (getCurrentLocation != null) {
             getCurrentLocation.forceDisconnect();
+        }
+        if ( runningDialog != null) {
+            runningDialog.dismiss();
         }
     }
 
