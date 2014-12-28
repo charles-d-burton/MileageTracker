@@ -208,6 +208,7 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
 
     @Override
     public void onAddGeofencesResult(int i, String[] strings) {
+        Log.v(CLASS_NAME, "Added Geofence");
         if (LocationStatusCodes.SUCCESS == i) {
             Log.v(CLASS_NAME, "Successfully Added Geofence");
         } else {
@@ -286,6 +287,7 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
                 Executors.newSingleThreadExecutor().execute(new RetrieveAddress(newHomePoint));
                 //newHomePoint.save();
                 addStartPoint(newHomePoint);
+                Log.v(CLASS_NAME, "Adding Proximity Alert");
                 addProximityAlert(latLng, newHomePoint.getId().intValue());
 
                 /*if (location != null) {
