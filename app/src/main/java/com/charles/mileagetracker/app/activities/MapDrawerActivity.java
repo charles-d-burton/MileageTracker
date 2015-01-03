@@ -1,5 +1,6 @@
 package com.charles.mileagetracker.app.activities;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -22,7 +23,7 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.fragments.ExpandableListFragment;
-import com.charles.mileagetracker.app.locationservices.GetCurrentLocation;
+import com.charles.mileagetracker.app.fragments.TripFragment;
 import com.charles.mileagetracker.app.maphandlers.HomeHandler;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -34,7 +35,7 @@ import com.google.android.gms.maps.model.LatLng;
 import java.text.SimpleDateFormat;
 
 public class MapDrawerActivity extends ActionBarActivity
-    implements ExpandableListFragment.ExpandableListInteractionListener{
+    implements TripFragment.OnTripFragmentInteraction {
 
     static final int REQUEST_CODE_RECOVER_PLAY_SERVICES = 1001;
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -48,12 +49,13 @@ public class MapDrawerActivity extends ActionBarActivity
     private Toolbar toolbar;
     private Button addStartPointButton;
     private DrawerLayout drawerLayout;
+    private ProgressDialog loadingDialog;
 
     private ActionBarDrawerToggle drawerToggle = null;
 
     private GoogleMap googleMap = null;
     private Location location = null;
-    private MapHandlerInterface handler = null;
+    private MapHandlerInterface mapHandlerInterface = null;
 
 
     @Override
@@ -83,7 +85,7 @@ public class MapDrawerActivity extends ActionBarActivity
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        addStartPointButton = (Button)findViewById(R.id.add_start_point);
+        addStartPointButton = (Button)findViewById(R.id.add_start_point_trip);
         addStartPointButton.setOnClickListener(new StartButtonClickListener());
 
         LocationManager lm = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
@@ -107,8 +109,8 @@ public class MapDrawerActivity extends ActionBarActivity
         if (checkPlayServices()) {
             Log.v("Services Check: ", "Good!");
         }
-        if (handler != null) {
-            handler.connect(googleMap, this);
+        if (mapHandlerInterface != null) {
+            mapHandlerInterface.connect(googleMap, this);
         }
     }
 
@@ -116,8 +118,8 @@ public class MapDrawerActivity extends ActionBarActivity
     protected  void onPause() {
         super.onPause();
         googleMap.clear();
-        if (handler != null) {
-            handler.disconnect();
+        if (mapHandlerInterface != null) {
+            mapHandlerInterface.disconnect();
         }
     }
 
@@ -168,18 +170,29 @@ public class MapDrawerActivity extends ActionBarActivity
     }
 
     @Override
-    public void expandListItemTouch(TripRow child) {
+    public void onFragmentInteraction() {
 
     }
 
     @Override
-    public void expandListItemLongTouch(TripGroup group) {
-
+    public void onTripFragmentStartLoad() {
+        Log.v("Loading Data: ", "Started");
+        if (loadingDialog != null) {
+            loadingDialog.dismiss();
+            loadingDialog.cancel();
+            loadingDialog = null;
+        }
+        loadingDialog = new ProgressDialog(this);
+        loadingDialog.setMessage("Loading Trips....");
+        loadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        loadingDialog.setIndeterminate(true);
+        loadingDialog.show();
     }
 
     @Override
-    public void expandListGroupTouch(TripGroup group) {
-
+    public void onTripFragmentFinishLoad() {
+        Log.v("Loading Data: ", "Finished");
+        loadingDialog.dismiss();
     }
 
     private class StartButtonClickListener implements Button.OnClickListener {
@@ -191,10 +204,10 @@ public class MapDrawerActivity extends ActionBarActivity
             if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
                 drawerLayout.closeDrawers();
             }
-            handler = new HomeHandler();
-            handler.connect(googleMap, MapDrawerActivity.this);
-            //handler.addMarker(location);
-            //Log.v("Start Button Clicked: ", "CLICK");
+            mapHandlerInterface = new HomeHandler();
+            mapHandlerInterface.connect(googleMap, MapDrawerActivity.this);
+            //mapHandlerInterface.addMarker(location);
+            Log.v("Start Button Clicked: ", "CLICK");
 
         }
     }

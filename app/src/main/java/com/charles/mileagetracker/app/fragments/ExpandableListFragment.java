@@ -183,7 +183,7 @@ public class ExpandableListFragment extends Fragment {
                     child.delete();
                 }
                 group.delete();
-                new FillData().execute();
+                new FillData(getActivity()).execute();
             }
         });
 
@@ -226,7 +226,7 @@ public class ExpandableListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        new FillData().execute(lastLoadedItemId);
+        new FillData(getActivity()).execute(lastLoadedItemId);
     }
 
     @Override
@@ -246,12 +246,23 @@ public class ExpandableListFragment extends Fragment {
         //Necessary evil so that I can modify the data in the background and then quickly move it into place
         //it's done processing.
         private ArrayList<TripGroup> groups = new ArrayList<TripGroup>();
+        private Context context;
 
         //I don't know why this isn't showing :(
+
+        public FillData(Context context) {
+            this.context = context;
+        }
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            mDialog = new ProgressDialog(ExpandableListFragment.this.getActivity());
+
+            if (mDialog != null) {
+                mDialog.dismiss();
+                mDialog = null;
+            }
+            mDialog = new ProgressDialog(context);
             mDialog.setMessage("Loading Trips....");
             mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             mDialog.setIndeterminate(true);
@@ -292,7 +303,6 @@ public class ExpandableListFragment extends Fragment {
          */
         @Override
         protected void onPostExecute(TripGroup group) {
-
             //bar.setVisibility(View.INVISIBLE);
             listGroups.clear();
             listGroups.addAll(groups);
