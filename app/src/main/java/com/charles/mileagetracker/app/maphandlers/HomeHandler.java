@@ -87,6 +87,11 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
     }
 
     @Override
+    public void locationClientConnected() {
+
+    }
+
+    @Override
     public void locationConnectionFailed() {
 
     }

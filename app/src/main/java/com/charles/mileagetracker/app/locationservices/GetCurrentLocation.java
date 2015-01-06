@@ -12,6 +12,8 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -47,16 +49,20 @@ public class GetCurrentLocation implements
 
     private boolean disconnect = false;
 
+    private HashMap<String, List> pendingFences;
+
 
     public GetCurrentLocation(Context context, int retries, PRECISION precision) {
         this.retries = retries;
         this.precision = precision;
         this.context = context;
+        this.pendingFences = new HashMap<String, List>();
     }
 
     public GetCurrentLocation(Context context) {
         this.continuous = true;
         this.context = context;
+        this.pendingFences = new HashMap<String, List>();
     }
 
     /*
@@ -123,7 +129,9 @@ public class GetCurrentLocation implements
 
     //Add geofences for the app
     public void addGeoFence(List fences, PendingIntent intent, LocationClient.OnAddGeofencesResultListener callback) {
-        locationClient.addGeofences(fences, intent, callback);
+        if (locationClient.isConnected()) {
+            locationClient.addGeofences(fences, intent, callback);
+        }
     }
 
     //Remove geofences for the app
@@ -134,6 +142,7 @@ public class GetCurrentLocation implements
     @Override
     public void onConnected(Bundle bundle) {
         locationClient.requestLocationUpdates(locationRequest, locationListener);
+        callback.locationClientConnected();
     }
 
     @Override
@@ -184,6 +193,7 @@ public class GetCurrentLocation implements
 
     public interface GetLocationCallback {
         public void retrievedLocation(double resolution, Location location);
+        public void locationClientConnected();
         public void locationConnectionFailed();
     }
 }

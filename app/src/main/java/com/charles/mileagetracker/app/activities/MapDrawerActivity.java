@@ -121,6 +121,9 @@ public class MapDrawerActivity extends ActionBarActivity
         if (mapHandlerInterface != null) {
             mapHandlerInterface.disconnect();
         }
+        if (loadingDialog != null) {
+            loadingDialog.dismiss();
+        }
     }
 
     @Override

@@ -13,9 +13,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
+import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
+import com.google.android.gms.maps.model.LatLng;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -129,10 +133,21 @@ public class TripFragment extends Fragment {
         protected Void doInBackground(Void... params) {
             List<TripGroup> groupsList = TripGroup.listAll(TripGroup.class);
             for (TripGroup group :groupsList) {
-                List<TripRow> rows = group.getChildren();
+                //Log.v("GROUP: ", Long.toString(group.getId()));
+                String entries[] = {Long.toString(group.getId())};
+                List<TripRow> rows = TripRow.listAll(TripRow.class);
+                for (TripRow row: rows) {
+                    Log.v("GROUP ID: ", Long.toString(row.trip_group.getId()));
+                    if (row.address == null) {
+                        row = getAddress(row);
+                    }
+                    Log.v("ADDRESS: ", row.address);
+
+                }
+                /*List<TripRow> rows = TripRow.find(TripRow.class, "trip_group = ? ", entries, null, " id ASC", null);
                 for (TripRow row : rows){
                     Log.v("Address: ", row.address);
-                }
+                };*/
             }
             return null;
         }
@@ -143,6 +158,19 @@ public class TripFragment extends Fragment {
             //loadingDialog.dismiss();
             mListener.onTripFragmentFinishLoad();
         }
+
+        private TripRow getAddress(TripRow row) {
+            AddressDistanceServices addressDistanceServices = new AddressDistanceServices(TripFragment.this.getActivity());
+            try {
+                String address = addressDistanceServices.getAddressFromLatLng(new LatLng(row.lat, row.lon));
+                row.address = address;
+                row.save();
+            } catch (IOException ioe) {
+
+            }
+            return row;
+        }
+
     }
 
     /**

@@ -39,6 +39,11 @@ public class PostBootGeofenceService extends IntentService implements
         super("PostBootGeofenceService");
     }
 
+
+    /*
+    Received the boot Intent.  Check if there are geofence HomePoints that need to be added.  If there are
+    then start the connection to the Location Services and then add the HomePoints.
+     */
     @Override
     protected void onHandleIntent(Intent intent) {
         context = getApplicationContext();
@@ -46,10 +51,6 @@ public class PostBootGeofenceService extends IntentService implements
             final String action = intent.getAction();
             homePointsList = HomePoints.listAll(HomePoints.class);
             if (!homePointsList.isEmpty()) {
-                for (HomePoints homePoint : homePointsList) {
-                    //After a reboot you have to re-add the geofences.  This handles that.
-                    addProximityAlert(new LatLng(homePoint.lat, homePoint.lon), homePoint.getId().intValue());
-                }
                 getCurrentLocation = new GetCurrentLocation(context, 10, GetCurrentLocation.PRECISION.HIGH);
                 getCurrentLocation.updateLocation(this, false);
             }
@@ -94,6 +95,20 @@ public class PostBootGeofenceService extends IntentService implements
         int infenceId = checkInFence(new LatLng(location.getLatitude(), location.getLongitude()));
         if (infenceId != -1) {
             startUpdates(location, infenceId);
+        }
+    }
+
+    /*
+    This will only be called because above the code was ran to connect to the Location Services.
+    Once the LocationClient is connected this means that geofences can be added.
+     */
+    @Override
+    public void locationClientConnected() {
+        if (!homePointsList.isEmpty()) {
+            for (HomePoints homePoint : homePointsList) {
+                //After a reboot you have to re-add the geofences.  This handles that.
+                addProximityAlert(new LatLng(homePoint.lat, homePoint.lon), homePoint.getId().intValue());
+            }
         }
     }
 

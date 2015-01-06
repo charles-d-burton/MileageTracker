@@ -10,6 +10,7 @@ import com.charles.mileagetracker.app.database.orm.Status;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -36,6 +37,8 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private LogLocation mService = null;
     private boolean mBound = false;
+
+    private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
 
     @Override
     public void onCreate() {
@@ -85,10 +88,11 @@ public class ActivityRecognitionIntentService extends IntentService {
         }*/
         switch (activityType) {
             case DetectedActivity.IN_VEHICLE:
-                //Log.v("DEBUG: " , "Driving");
+                Log.v("DEBUG: " , "Driving");
                 handleDriving();
                 break;
             case DetectedActivity.ON_FOOT:
+                Log.v("DEBUG: ", "WALKING");
                 handleWalking(confidence);
                 //notDriving(confidence, "walking");
                 break;
@@ -99,6 +103,7 @@ public class ActivityRecognitionIntentService extends IntentService {
                 //Log.v("DEBUG:", "Bike");
                 break;
             case DetectedActivity.STILL:
+                Log.v("DEBUG: ", "Still");
                 handleStill(confidence);
                 break;
             case DetectedActivity.TILTING:
@@ -116,6 +121,8 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private void handleDriving() {
         Status status = loadStatus();
+        Log.v("DEBUG: ", "Driving=" + Boolean.toString(status.driving));
+        Log.v("DEBUG: ", "LastStopTime=" + format.format(status.lastStopTime));
         if (!status.driving) {
             status.driving = true;
             status.lastStopTime = new Date();
@@ -132,21 +139,24 @@ public class ActivityRecognitionIntentService extends IntentService {
      */
 
     private void handleWalking(int confidence) {
-        Status status = loadStatus();
-        status.driving = false;
+        if (confidence > 75) {
+            Status status = loadStatus();
+            Log.v("DEBUG: ", "Walking Count=" + Integer.toString(status.notDrivingCount));
+            status.driving = false;
 
-        int counter = status.notDrivingCount;
-        counter = counter + 1;
-        if (counter < 5) {
-            status.notDrivingCount = counter;
+            int counter = status.notDrivingCount;
+            counter = counter + 1;
+            if (counter < 5) {
+                status.notDrivingCount = counter;
+            }
+
+            if (counter > 2 && !status.stopRecorded && !status.stopRecording) {//Trip segment not recorded, the class GetCurrentLocation will set this flag to true
+                status.stopRecording = true;
+                startLocationHandler();
+            }
+
+            status.save();
         }
-
-        if (counter > 2 && !status.stopRecorded && !status.stopRecording) {//Trip segment not recorded, the class GetCurrentLocation will set this flag to true
-            status.stopRecording = true;
-            startLocationHandler();
-        }
-
-        status.save();
     }
 
 
@@ -155,6 +165,7 @@ public class ActivityRecognitionIntentService extends IntentService {
         Status status = loadStatus();
         status.driving = false;
         int counter = status.notDrivingCount;
+        Log.v("DEBUG: ", "Still Count=" + Integer.toString(status.notDrivingCount));
         counter = counter + 1;
         status.notDrivingCount = counter;
         if (counter >= 4 && !status.stopRecorded && !status.stopRecording) {
@@ -191,6 +202,7 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private Status loadStatus() {
         Status status = Status.listAll(Status.class).get(0);
+        Log.v("DEBUG: ", "STATUS LOADED");
         return status;
     }
 }

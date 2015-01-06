@@ -67,7 +67,12 @@ public class LogLocation extends IntentService implements
          }
      }
 
-     @Override
+    @Override
+    public void locationClientConnected() {
+
+    }
+
+    @Override
      public void locationConnectionFailed() {
 
      }
