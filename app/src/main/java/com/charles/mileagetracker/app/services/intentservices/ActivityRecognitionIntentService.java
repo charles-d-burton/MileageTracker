@@ -126,6 +126,7 @@ public class ActivityRecognitionIntentService extends IntentService {
         if (!status.driving) {
             status.driving = true;
             status.lastStopTime = new Date();
+            status.notDrivingCount = 0;
             status.save();
         }
     }
