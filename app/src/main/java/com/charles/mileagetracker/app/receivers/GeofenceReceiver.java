@@ -11,7 +11,6 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.activities.MainActivity;
 import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.Status;
@@ -20,7 +19,6 @@ import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.charles.mileagetracker.app.services.intentservices.CalcMileageService;
-import com.charles.mileagetracker.app.services.intentservices.LogLocation;
 import com.charles.mileagetracker.app.services.intentservices.SaveBusinessRelated;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
@@ -100,7 +98,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
         stopActivityService.putExtra("lon", lon);
 
         this.context.startService(stopActivityService);
-        this.context.stopService(new Intent(this.context,LogLocation.class));
+        //this.context.stopService(new Intent(this.context,LogLocation.class));
 
 
         List<Status> statuses = Status.listAll(Status.class);

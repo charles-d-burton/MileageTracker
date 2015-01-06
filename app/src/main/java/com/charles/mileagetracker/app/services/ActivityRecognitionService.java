@@ -11,7 +11,6 @@ import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
-import com.charles.mileagetracker.app.services.intentservices.LogLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -83,9 +82,9 @@ public class ActivityRecognitionService extends Service implements
 
         if (intent.getBooleanExtra("stop", false)) {
 
-            Intent getLocationIntent = new Intent(getApplicationContext(), LogLocation.class);
+            /*Intent getLocationIntent = new Intent(getApplicationContext(), LogLocation.class);
             getLocationIntent.putExtra("stop", true);
-            startService(getLocationIntent);
+            startService(getLocationIntent);*/
             stopUpdates();
             return 0;
         } else {

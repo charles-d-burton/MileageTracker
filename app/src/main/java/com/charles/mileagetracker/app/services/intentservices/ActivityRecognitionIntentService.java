@@ -4,15 +4,23 @@ import android.app.ActivityManager;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.Status;
+import com.charles.mileagetracker.app.database.orm.TripRow;
+import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
+import com.charles.mileagetracker.app.locationservices.GetCurrentLocation;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
+import com.google.android.gms.maps.model.LatLng;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -21,7 +29,8 @@ import java.util.List;
 
 
 //TRY TO MAKE THIS A BROADCAST RECEIVER IN THE MORNING
-public class ActivityRecognitionIntentService extends IntentService {
+public class ActivityRecognitionIntentService extends IntentService implements
+        GetCurrentLocation.GetLocationCallback{
 
 
     public ActivityRecognitionIntentService() {
@@ -30,15 +39,16 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     public static final String ACTIVITY_BROADCAST = "com.charles.mileagetracker.app.ACTIVITY_BROADCAST";
 
-
     public enum ACTIVITY_TYPE {DRIVING, WALKING, BIKING, STILL, TILTING, UNKNOWN}
 
     private ACTIVITY_TYPE mActivityType;
 
-    private LogLocation mService = null;
+    //private LogLocation mService = null;
     private boolean mBound = false;
 
     private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
+
+    private GetCurrentLocation getLocation = null;
 
     @Override
     public void onCreate() {
@@ -127,6 +137,8 @@ public class ActivityRecognitionIntentService extends IntentService {
             status.driving = true;
             status.lastStopTime = new Date();
             status.notDrivingCount = 0;
+            status.stopRecorded = false;
+            status.stopRecording = false;
             status.save();
         }
     }
@@ -178,20 +190,15 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     //Kills the GetCurrentLocation class.  Uses start service but sets a boolean to tell it to unregister and stop cleanly
     private void killGetLocation() {
-        if (isLocationServiceRunning()) {
+        /*if (isLocationServiceRunning()) {
             Intent intent = new Intent(getApplicationContext(), LogLocation.class);
             intent.putExtra("stop", true);
             startService(intent);
-        }
+        }*/
     }
 
-    private void startLocationHandler() {
 
-        Intent startLocationIntent = new Intent(getApplicationContext(), LogLocation.class);
-        startService(startLocationIntent);
-    }
-
-    private boolean isLocationServiceRunning() {
+    /*private boolean isLocationServiceRunning() {
         ActivityManager activityManager = (ActivityManager)getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
             if (LogLocation.class.getName().equals(service.service.getClassName())) {
@@ -199,11 +206,156 @@ public class ActivityRecognitionIntentService extends IntentService {
             }
         }
         return false;
-    }
+    }*/
 
     private Status loadStatus() {
         Status status = Status.listAll(Status.class).get(0);
         Log.v("DEBUG: ", "STATUS LOADED");
         return status;
+    }
+
+
+    /*
+    Start listening for location updates.
+     */
+    private void startLocationHandler() {
+
+        //Intent startLocationIntent = new Intent(getApplicationContext(), LogLocation.class);
+        //startService(startLocationIntent);
+        getLocation = new GetCurrentLocation(getApplicationContext(), 10, GetCurrentLocation.PRECISION.HIGH);
+        getLocation.updateLocation(this, false);
+    }
+
+
+    //Called when the GetCurrentLocation class defined in @startLocationHandler returns a valid location
+    @Override
+    public void retrievedLocation(double resolution, Location location) {
+        if (!tooCloseToStartPoint(location)) {
+            try {
+                logLocation(location);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        if (getLocation != null) {
+            getLocation.forceDisconnect();
+        }
+    }
+
+    @Override
+    public void locationClientConnected() {
+
+    }
+
+    @Override
+    public void locationConnectionFailed() {
+
+    }
+
+    private void logLocation(Location location) throws IOException, ClassNotFoundException {
+        Status status = loadStatus();
+        double lat = location.getLatitude();
+        double lon = location.getLongitude();
+
+        LatLng oldLocation = new LatLng(status.lastLat, status.lastLon);
+        double distance = getDistance(oldLocation, new LatLng(lat, lon));
+
+        if (distance > 1000) {//Larger than the geofence, gives me a margin of error
+            TripRow row = new TripRow(status.lastStopTime, new Date(), lat, lon, null, 0, status.trip_group);
+            row.save();
+
+            new AddressDistanceServices(this.getApplicationContext()).setAddress(row);
+
+            Executors.newSingleThreadExecutor().execute(new LookupDistance(row, lat, lon, status.lastLat, status.lastLon));
+
+            //Update Status to reflect that a row has been recorded, where it was last recorded, and we're no longer processing
+            status.stopRecorded = true;
+            status.lastLat = lat;
+            status.lastLon = lon;
+            status.stopRecording = false;
+            status.lastStopTime = new Date();
+            status.save();
+        }
+
+    }
+
+    /*
+    Check if the stop distance is too close to a defined starting point
+     */
+    private boolean tooCloseToStartPoint(Location currentLocation) {
+        boolean tooClose = false;
+
+        LatLng currentPoint = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+
+        List<HomePoints> homePointsList = HomePoints.listAll(HomePoints.class);
+        if (homePointsList.isEmpty()) return false;
+
+        for (HomePoints home : homePointsList) {
+            double lat = home.lat;
+            double lon = home.lon;
+            LatLng startPoint = new LatLng(lat, lon);
+            double distance = getDistance(currentPoint, startPoint);
+            if (distance < 1000) {
+                tooClose = true;
+            }
+        }
+
+        return tooClose;
+    }
+
+    //Find straight line distance between two points
+    private double getDistance(LatLng pointA, LatLng pointB) {
+        double distance = 0f;
+
+        Location a = new Location("pointA");
+        a.setLatitude(pointA.latitude);
+        a.setLongitude(pointA.longitude);
+
+        Location b = new Location("pointB");
+        b.setLatitude(pointB.latitude);
+        b.setLongitude(pointB.longitude);
+
+        distance = a.distanceTo(b);
+
+        return distance;
+    }
+
+    /*
+    This work happens on a background thread.  It takes the two points and then calculates the ROAD
+    distance between them.  It then updates the database with the distance value for the stop that
+    was just created.  Doing this on a background thread is much saner and more efficient, allows the
+    program to continue running without waiting for network IO to fulfill this request.
+     */
+    private class LookupDistance implements Runnable {
+
+        private double startLat = Double.MAX_VALUE;
+        private double startLon = Double.MAX_VALUE;
+        private double endLat = Double.MAX_VALUE;
+        private double endLon = Double.MAX_VALUE;
+        private TripRow row = null;
+
+        public LookupDistance(TripRow row , double startLat, double startLon, double endLat, double endLon) {
+            this.startLat = startLat;
+            this.startLon = startLon;
+            this.endLat = endLat;
+            this.endLon = endLon;
+            this.row = row;
+        }
+
+
+        @Override
+        public void run() {
+            if (row == null) {
+                return;
+            }
+            AddressDistanceServices distanceServices = new AddressDistanceServices(getApplicationContext());
+            double distance = distanceServices.getDistance(startLat,startLon,endLat,endLon);
+            if (distance != -1) {
+                row.distance = distance;
+                row.save();
+            }
+        }
     }
 }
