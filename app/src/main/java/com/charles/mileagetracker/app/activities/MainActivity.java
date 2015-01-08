@@ -226,7 +226,7 @@ public class MainActivity extends ActionBarActivity implements
     public void expandListItemTouch(TripRow child) {
         if (child != null && showTripFragment != null) {
             if (CURRENT_MAP != MAP_SHOW_TRIPS) switchMap(MAP_SHOW_TRIPS);
-            showTripFragment.redrawLines(child.trip_group);//Redraw to update colors
+            showTripFragment.redrawLines(child.tgroup);//Redraw to update colors
             new CalculateMileage().execute();
         }
     }

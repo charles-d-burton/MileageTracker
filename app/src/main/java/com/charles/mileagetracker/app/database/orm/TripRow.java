@@ -20,7 +20,7 @@ public class TripRow extends SugarRecord<TripRow> {
 
     //Relationship to a trip_group.  Meaning a collection of trips that are logically grouped together.
     //I may add additional columns for groups later.
-    public TripGroup trip_group;
+    public TripGroup tgroup;
 
     public TripRow(Date timeStart, Date timeEnd, double lat, double lon, String address, double distance, TripGroup trip_group) {
         this.timeStart = timeStart;
@@ -29,7 +29,7 @@ public class TripRow extends SugarRecord<TripRow> {
         this.lon = lon;
         this.address = address;
         this.distance = distance;
-        this.trip_group = trip_group;
+        this.tgroup = trip_group;
     }
 
     public TripRow() {

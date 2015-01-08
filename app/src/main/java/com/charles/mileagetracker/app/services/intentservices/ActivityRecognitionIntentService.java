@@ -1,8 +1,6 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
-import android.app.ActivityManager;
 import android.app.IntentService;
-import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.util.Log;
@@ -32,20 +30,12 @@ import java.util.concurrent.Executors;
 public class ActivityRecognitionIntentService extends IntentService implements
         GetCurrentLocation.GetLocationCallback{
 
-
+    private final String CLASS = ((Object)this).getClass().getName();
     public ActivityRecognitionIntentService() {
         super("ActivityRecognitionIntentService");
     }
 
     public static final String ACTIVITY_BROADCAST = "com.charles.mileagetracker.app.ACTIVITY_BROADCAST";
-
-    public enum ACTIVITY_TYPE {DRIVING, WALKING, BIKING, STILL, TILTING, UNKNOWN}
-
-    private ACTIVITY_TYPE mActivityType;
-
-    //private LogLocation mService = null;
-    private boolean mBound = false;
-
     private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
 
     private GetCurrentLocation getLocation = null;
@@ -98,11 +88,11 @@ public class ActivityRecognitionIntentService extends IntentService implements
         }*/
         switch (activityType) {
             case DetectedActivity.IN_VEHICLE:
-                Log.v("DEBUG: " , "Driving");
+                Log.v(CLASS, " Driving");
                 handleDriving();
                 break;
             case DetectedActivity.ON_FOOT:
-                Log.v("DEBUG: ", "WALKING");
+                Log.v(CLASS, " WALKING");
                 handleWalking(confidence);
                 //notDriving(confidence, "walking");
                 break;
@@ -113,7 +103,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
                 //Log.v("DEBUG:", "Bike");
                 break;
             case DetectedActivity.STILL:
-                Log.v("DEBUG: ", "Still");
+                Log.v(CLASS, " Still");
                 handleStill(confidence);
                 break;
             case DetectedActivity.TILTING:
@@ -131,8 +121,9 @@ public class ActivityRecognitionIntentService extends IntentService implements
 
     private void handleDriving() {
         Status status = loadStatus();
-        Log.v("DEBUG: ", "Driving=" + Boolean.toString(status.driving));
-        Log.v("DEBUG: ", "LastStopTime=" + format.format(status.lastStopTime));
+        Log.v(CLASS , " Driving=" + Boolean.toString(status.driving));
+        Log.v(CLASS, " LastStopTime=" + format.format(status.lastStopTime));
+        Log.v(CLASS, " Count=" + Integer.toString(status.notDrivingCount));
         if (!status.driving) {
             status.driving = true;
             status.lastStopTime = new Date();
@@ -154,7 +145,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
     private void handleWalking(int confidence) {
         if (confidence > 75) {
             Status status = loadStatus();
-            Log.v("DEBUG: ", "Walking Count=" + Integer.toString(status.notDrivingCount));
+            Log.v(CLASS, " Walking Count=" + Integer.toString(status.notDrivingCount));
             status.driving = false;
 
             int counter = status.notDrivingCount;
@@ -178,7 +169,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
         Status status = loadStatus();
         status.driving = false;
         int counter = status.notDrivingCount;
-        Log.v("DEBUG: ", "Still Count=" + Integer.toString(status.notDrivingCount));
+        Log.v(CLASS, " Still Count=" + Integer.toString(status.notDrivingCount));
         counter = counter + 1;
         status.notDrivingCount = counter;
         if (counter >= 4 && !status.stopRecorded && !status.stopRecording) {
@@ -210,7 +201,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
 
     private Status loadStatus() {
         Status status = Status.listAll(Status.class).get(0);
-        Log.v("DEBUG: ", "STATUS LOADED");
+        Log.v(CLASS, " STATUS LOADED");
         return status;
     }
 

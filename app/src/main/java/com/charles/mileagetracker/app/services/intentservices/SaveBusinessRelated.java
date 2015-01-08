@@ -26,7 +26,7 @@ public class SaveBusinessRelated extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final Bundle bundle = intent.getExtras();
-            int groupId = bundle.getInt("group");
+            int groupId = bundle.getInt("tgroup");
             if (groupId != -1) {
                 markAllAsBusiness(groupId);
             }

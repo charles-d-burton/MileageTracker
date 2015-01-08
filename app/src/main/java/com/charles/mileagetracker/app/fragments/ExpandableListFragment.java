@@ -121,7 +121,7 @@ public class ExpandableListFragment extends Fragment {
             }
         });
 
-        //Long click events for group headers and children
+        //Long click events for tgroup headers and children
         expListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
@@ -161,8 +161,8 @@ public class ExpandableListFragment extends Fragment {
                     expListView.expandGroup(groupPosition, true);
                 }
 
-                ExpandListGroup group = (ExpandListGroup) parent.getAdapter().getItem(groupPosition);
-                mListener.expandListGroupTouch(group);
+                ExpandListGroup tgroup = (ExpandListGroup) parent.getAdapter().getItem(groupPosition);
+                mListener.expandListGroupTouch(tgroup);
                 return false;
             }
         });*/
@@ -207,7 +207,7 @@ public class ExpandableListFragment extends Fragment {
         double lat = child.lat;
         double lon = child.lon;
         int id = child.getId().intValue();
-        mListener.expandListItemLongTouch(child.trip_group);
+        mListener.expandListItemLongTouch(child.tgroup);
 
     }
 
@@ -278,7 +278,7 @@ public class ExpandableListFragment extends Fragment {
         @Override
         protected TripGroup doInBackground(Integer... params) {
 
-            //TripGroup group = null;
+            //TripGroup tgroup = null;
             List<TripGroup> tripGroups = TripGroup.find(TripGroup.class, null, null, null, " id DESC ", null);
             for (TripGroup group : tripGroups) {
                 String entries[] = {Long.toString(group.getId())};

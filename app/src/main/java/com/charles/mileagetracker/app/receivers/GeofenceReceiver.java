@@ -184,7 +184,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
         //Intent to record all trip segments
         Intent saveTripService = new Intent(context, SaveBusinessRelated.class);
-        saveTripService.putExtra("group", groupId);
+        saveTripService.putExtra("tgroup", groupId);
         PendingIntent saveTrip = PendingIntent.getService(context, 0, saveTripService,PendingIntent.FLAG_ONE_SHOT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)

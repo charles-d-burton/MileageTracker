@@ -47,13 +47,13 @@ public class CalcMileageService extends IntentService {
         }
     }
 
-    //Process a group, find rows based on their relationship with the TripGroup.  Then iterate through the
+    //Process a tgroup, find rows based on their relationship with the TripGroup.  Then iterate through the
     //trips.
     private void processGroup(TripGroup group) {
         AddressDistanceServices addressDistanceServices = new AddressDistanceServices(getApplicationContext());
 
         String params[] = {Long.toString(group.getId())};
-        List<TripRow> stops = TripRow.find(TripRow.class, " trip_group = ? ", params ,null , " ORDER BY id ASC",null);
+        List<TripRow> stops = TripRow.find(TripRow.class, " tgroup = ? ", params ,null , " ORDER BY id ASC",null);
 
         double totalMileage = 0;
         double billableMileage = 0;

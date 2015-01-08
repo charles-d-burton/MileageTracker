@@ -11,15 +11,18 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -31,6 +34,8 @@ import java.util.List;
  * create an instance of this fragment.
  */
 public class TripFragment extends Fragment {
+
+    private ListView tripList = null;
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -76,8 +81,13 @@ public class TripFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        View view = null;
+        if (container == null) {
+            view = inflater.inflate(R.layout.fragment_trip, container, false);
+        }
+        tripList = (ListView)view.findViewById(R.id.trip_list);
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_trip, container, false);
+        return view;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -133,21 +143,37 @@ public class TripFragment extends Fragment {
         protected Void doInBackground(Void... params) {
             List<TripGroup> groupsList = TripGroup.listAll(TripGroup.class);
             for (TripGroup group :groupsList) {
-                //Log.v("GROUP: ", Long.toString(group.getId()));
+                //Temporary until I can resolve the issue with the ORM
+                ArrayList<TripRow> rowList = new ArrayList();
+                //Log.v("GROUP: ", Long.toString(tgroup.getId()));
                 String entries[] = {Long.toString(group.getId())};
-                List<TripRow> rows = TripRow.listAll(TripRow.class);
+                //List<TripRow> rows = TripRow.listAll(TripRow.class);
+                List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+                //List<TripRow> rows = TripRow.find(TripRow.class, "trip_group = ? ORDER BY id DESC", entries);
                 for (TripRow row: rows) {
-                    Log.v("GROUP ID: ", Long.toString(row.trip_group.getId()));
-                    if (row.address == null) {
-                        row = getAddress(row);
+                    if (row.tgroup.getId() == group.getId()) {
+                        rowList.add(row);
+                        if (row.address == null){
+                            row = getAddress(row);
+                        }
                     }
-                    Log.v("ADDRESS: ", row.address);
-
                 }
-                /*List<TripRow> rows = TripRow.find(TripRow.class, "trip_group = ? ", entries, null, " id ASC", null);
+                //Also temporary while I figure out the ORM problem
+                Collections.sort(rows, new Comparator<TripRow>() {
+
+                    @Override
+                    public int compare(TripRow lhs, TripRow rhs) {
+                        if (lhs.getId() == rhs.getId()) {
+                            return 0;
+                        }
+                        return lhs.getId() < rhs.getId() ? -1 :1;
+
+                    }
+                });
+
                 for (TripRow row : rows){
                     Log.v("Address: ", row.address);
-                };*/
+                };
             }
             return null;
         }

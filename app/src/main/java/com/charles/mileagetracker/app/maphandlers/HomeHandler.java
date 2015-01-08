@@ -399,6 +399,7 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
     public void connect(GoogleMap map, Context context) {
         this.map = map;
         this.context = context;
+        Log.v(CLASS_NAME, "Setting Map Long Click Listener");
         map.setOnMapLongClickListener(this);
         map.setOnMapClickListener(this);
         map.setOnMarkerClickListener(this);

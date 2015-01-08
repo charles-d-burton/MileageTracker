@@ -58,7 +58,7 @@ public class ShowTripsFragment extends SupportMapFragment implements
     private OnShowTripsInteractionListener mListener;
     private GoogleMap gmap = null;
 
-    private static final String param1 = "group";
+    private static final String param1 = "tgroup";
     private static final String param2 = "id";
 
     private TripGroup group = null;
@@ -79,7 +79,7 @@ public class ShowTripsFragment extends SupportMapFragment implements
     public static ShowTripsFragment newInstance(TripGroup group) {
         ShowTripsFragment fragment = new ShowTripsFragment();
         Bundle bundle = new Bundle();
-        //bundle.putSerializable(param1, group);
+        //bundle.putSerializable(param1, tgroup);
         return fragment;
     }
 
@@ -100,7 +100,7 @@ public class ShowTripsFragment extends SupportMapFragment implements
         super.onCreate(savedInstanceState);
         /*if (getArguments() != null) {
             if (getArguments().containsKey(param1)) {
-                group = (ExpandListGroup)getArguments().getSerializable(param1);
+                tgroup = (ExpandListGroup)getArguments().getSerializable(param1);
             }
         }*/
     }
@@ -286,7 +286,7 @@ public class ShowTripsFragment extends SupportMapFragment implements
 
 
         /*
-        Take the group, pull out all of the children and then process all of the points that they posses
+        Take the tgroup, pull out all of the children and then process all of the points that they posses
         and draw them as a polyline on the screen.
          */
         @Override
