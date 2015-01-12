@@ -18,6 +18,7 @@ public class Status extends SugarRecord<Status> {
     public int notDrivingCount;
     public boolean stopRecorded = false;
     public boolean stopRecording = false;
+
     public TripGroup trip_group;
 
 

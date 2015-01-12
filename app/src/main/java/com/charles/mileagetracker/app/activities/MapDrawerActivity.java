@@ -1,30 +1,43 @@
 package com.charles.mileagetracker.app.activities;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.app.DatePickerDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.fragments.ExpandableListFragment;
 import com.charles.mileagetracker.app.fragments.TripFragment;
+import com.charles.mileagetracker.app.fragments.TripStopsFragment;
 import com.charles.mileagetracker.app.maphandlers.HomeHandler;
+import com.charles.mileagetracker.app.maphandlers.TripHandler;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -32,10 +45,24 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import au.com.bytecode.opencsv.CSVReader;
+import au.com.bytecode.opencsv.CSVWriter;
 
 public class MapDrawerActivity extends ActionBarActivity
-    implements TripFragment.OnTripFragmentInteraction {
+    implements TripFragment.OnTripFragmentInteraction,
+        TripStopsFragment.OnStopInteractionListener{
 
     static final int REQUEST_CODE_RECOVER_PLAY_SERVICES = 1001;
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -46,10 +73,12 @@ public class MapDrawerActivity extends ActionBarActivity
     public static final int MAP_SHOW_HOMES = 1;
     private int CURRENT_MAP = MAP_SHOW_TRIPS;
 
+    private static Context context = null;
     private Toolbar toolbar;
     private Button addStartPointButton;
     private DrawerLayout drawerLayout;
     private ProgressDialog loadingDialog;
+    private static ProgressDialog csvDialog = null;
 
     private ActionBarDrawerToggle drawerToggle = null;
 
@@ -61,6 +90,7 @@ public class MapDrawerActivity extends ActionBarActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.context = this;
         setContentView(R.layout.activity_map_drawer);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -198,6 +228,41 @@ public class MapDrawerActivity extends ActionBarActivity
         loadingDialog.dismiss();
     }
 
+    @Override
+    public void onItemTouched(TripRow row) {
+        googleMap.clear();
+        if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
+            drawerLayout.closeDrawers();
+        }
+        TripHandler tripHandler = new TripHandler();
+        mapHandlerInterface = tripHandler;
+        mapHandlerInterface.connect(googleMap, this);
+    }
+
+    @Override
+    public void onItemLongPressed(TripGroup group) {
+        googleMap.clear();
+        if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
+            drawerLayout.closeDrawers();
+        }
+        TripHandler tripHandler = new TripHandler();
+        mapHandlerInterface = tripHandler;
+        mapHandlerInterface.connect(googleMap, this);
+
+
+
+    }
+
+    @Override
+    public void onStopInteraction(TripRow row) {
+
+    }
+
+    public void showDatePickerDialog() {
+        DialogFragment newFragment = new DatePicker();
+        newFragment.show(getFragmentManager(), "startDatePicker");
+    }
+
     private class StartButtonClickListener implements Button.OnClickListener {
 
         @Override
@@ -247,6 +312,245 @@ public class MapDrawerActivity extends ActionBarActivity
                 return;
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    //This adds up all the mileage so far marked as business related and then sets the TextVIew
+    //to reflect that.
+    private class CalculateMileage extends AsyncTask<Void, Void, Void> {
+        private double totalDistance = 0.0;
+        @Override
+        protected Void doInBackground(Void... params) {
+            List<TripGroup> tripGroups = TripGroup.listAll(TripGroup.class);
+            for (TripGroup group : tripGroups) {
+                totalDistance = totalDistance + group.billableMileage;
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void param) {
+            ((TextView)findViewById(R.id.total_miles)).setText(Integer.toString(new Double(totalDistance).intValue()) + " Miles");
+        }
+    }
+
+    public static class DatePicker extends DialogFragment implements DatePickerDialog.OnDateSetListener {
+        private static long start = 0l;
+        private static long end = 0l;
+
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            final Calendar c = Calendar.getInstance();
+            int year = c.get(Calendar.YEAR);
+            int month = c.get(Calendar.MONTH);
+            int day = c.get(Calendar.DAY_OF_MONTH);
+            DatePickerDialog dpd = new DatePickerDialog(getActivity(), this, year, month, day);
+            if (start == 0) {
+                dpd.setTitle("Start Date:");
+            } else {
+                dpd.setTitle("End Date:");
+            }
+            return dpd;
+        }
+
+        @Override
+        public void onDateSet(android.widget.DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+            Calendar c = Calendar.getInstance();
+            c.set(year, monthOfYear, dayOfMonth);
+            if (start == 0) {
+
+                start = c.getTimeInMillis();
+                Log.v("Start Date Set: ", sdf.format(c.getTime()));
+
+                DialogFragment newFragment = new DatePicker();
+                newFragment.show(getFragmentManager(), "endDatePicker");
+            } else {
+
+                end = c.getTimeInMillis();
+                Log.v("End Date Set: ", sdf.format(c.getTime()));
+                new GenerateCSV().execute(start, end);
+                start = 0;
+                end = 0;
+            }
+
+        }
+
+
+        //This queries the database to retrieve the business related trips for a given date range.  It
+        //will then start a process to email the results as a CSV
+
+        private class GenerateCSV extends AsyncTask<Long, Void, String> {
+
+            private final String firstLine = "Date,Address,Distance(mi),Latitude,Longitude\n";
+
+            //Create a dialog telling the user that the app is doing something
+            @Override
+            protected void onPreExecute() {
+                csvDialog = new ProgressDialog(context);
+                csvDialog.setMessage("Generating CSV....");
+                csvDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                csvDialog.setIndeterminate(true);
+                csvDialog.show();
+            }
+
+
+
+            /*
+            NEED TO FIX TO SEARCH BETWEEN DATES
+            Construct a query to pull the data out of the database between two dates.  Because of the way
+            it works I have to write the generated CSV to a file.  I then pass the URL of this file to the
+            email that is generated.
+             */
+            @Override
+            protected String doInBackground(Long... params) {
+                long start = params[0];
+                long end = params[1];
+                List<TripGroup> groups = TripGroup.listAll(TripGroup.class);
+                List<String[]> lines = new ArrayList<String[]>();
+                lines.add(new String[]{"Date", "Address", "Distance Traveled(miles)", "Latitude", "Longitude"});
+                if (groups != null && !groups.isEmpty()) {
+                    for (TripGroup group : groups) {
+                        String entries[] = {Long.toString(group.getId())};
+                        List rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+
+                    }
+                }
+                /*Cursor c = resolver.query(TrackerContentProvider.TRIP_URI, projection, TripTable.TIME + " BETWEEN " + start + " AND " + end, null, null);
+                List<String[]> lines = new ArrayList<String[]>();
+                if (c != null) {
+                    c.moveToPosition(-1);
+                    lines.add(new String[]{"Date", "Address", "Distance Traveled(miles)", "Latitude", "Longitude"});
+                    while (c.moveToNext()) {
+                        if (c.getInt(c.getColumnIndexOrThrow(TripTable.BUSINESS_RELATED)) == 1) {
+                            long date = c.getLong(c.getColumnIndexOrThrow(TripTable.TIME));
+                            String address = c.getString(c.getColumnIndexOrThrow(TripTable.ADDRESS));
+                            int distance = new Double(c.getInt(c.getColumnIndexOrThrow(TripTable.DISTANCE)) * 0.621).intValue();
+                            double lat = c.getDouble(c.getColumnIndexOrThrow(TripTable.LAT));
+                            double lon = c.getDouble(c.getColumnIndexOrThrow(TripTable.LON));
+                            String line[] = getLine(date, address, distance, lat, lon);
+                            lines.add(line);
+                        }
+                    }
+                }
+                writeToFile(lines);
+                String mailAddress = getEmail();
+                emailFile(mailAddress);*/
+                //readFromFile();
+
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(String csv) {
+                super.onPostExecute(csv);
+                csvDialog.dismiss();
+            }
+
+            //Create a CSV line
+            private String[] getLine(long date, String address, int distance, double lat, double lon) {
+
+
+                String array[] = new String[5];
+
+
+                array[0] = sdf2.format(new Date(date));
+                array[1] = "\"" + address + "\"";
+                array[2] = Integer.toString(distance);
+                array[3] = Double.toString(lat);
+                array[4] = Double.toString(lon);
+                return array;
+            }
+
+            //Save the CSV array to a file.
+            private boolean writeToFile(List<String[]> lines) {
+                if (isExternalStorageWritable()) {
+                    File dir = new File(Environment.getExternalStorageDirectory(), MapDrawerActivity.dir);
+                    if (!dir.exists()) dir.mkdir();
+                }
+
+
+                File file = new File(Environment.getExternalStorageDirectory(), dir + File.separator + fileName);
+                try {
+                    CSVWriter writer = new CSVWriter(new FileWriter(file));
+                    writer.writeAll(lines);
+                    writer.close();
+                    return true;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+
+            //Create the intent to email the file.  It gets the default emaila address from the Android
+            //system, then attaches the file to that email.
+            private void emailFile(String mailAddress) {
+                File file = new File(Environment.getExternalStorageDirectory(), dir + File.separator + fileName);
+                //File file = new File(context.getFilesDir(), "email.csv");
+                if (file.exists()) {
+                    Log.v("File URI: ", Uri.fromFile(file).toString());
+                    Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
+                    emailIntent.setType("message/rfc822");
+                    emailIntent.putExtra(Intent.EXTRA_EMAIL, mailAddress);
+                    emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Your Trip Report");
+                    emailIntent.putExtra(Intent.EXTRA_TEXT, "Your Trip Report");
+                    emailIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+                    emailIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(emailIntent);
+
+                }
+            }
+
+            private void readFromFile() {
+                File file = new File(context.getApplicationContext().getFilesDir(), "email.csv");
+
+                try {
+                    CSVReader reader = new CSVReader(new FileReader(file));
+                    String[] line = null;
+                    while ((line = reader.readNext()) != null) {
+                        Log.v("CSV: ", Arrays.toString(line));
+                    }
+                } catch (Exception e) {
+                    Log.v("CSV: ", "FILE NOT FOUND");
+                    e.printStackTrace();
+                }
+
+            }
+
+            private String getEmail() {
+                Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
+                Account[] accounts = AccountManager.get(context).getAccounts();
+                for (Account account : accounts) {
+                    if (emailPattern.matcher(account.name).matches()) {
+                        String possibleEmail = account.name;
+                        if (possibleEmail.contains("gmail")) {
+                            return possibleEmail;
+                        }
+                        Log.v("Email Address: ", possibleEmail);
+                    }
+                }
+                return null;
+            }
+
+
+            /* Checks if external storage is available for read and write */
+            public boolean isExternalStorageWritable() {
+                String state = Environment.getExternalStorageState();
+                if (Environment.MEDIA_MOUNTED.equals(state)) {
+                    return true;
+                }
+                return false;
+            }
+
+            /* Checks if external storage is available to at least read */
+            public boolean isExternalStorageReadable() {
+                String state = Environment.getExternalStorageState();
+                if (Environment.MEDIA_MOUNTED.equals(state) ||
+                        Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+                    return true;
+                }
+                return false;
+            }
+        }
     }
 
     public interface MapHandlerInterface {

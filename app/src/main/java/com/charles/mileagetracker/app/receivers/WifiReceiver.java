@@ -63,7 +63,7 @@ public class WifiReceiver extends BroadcastReceiver {
     }
 
     private void calculateDistanceInBackground() {
-        boolean alreadyRunning = false;
+        /*boolean alreadyRunning = false;
         ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
 
         //Iterate through all the running services to try and find the CalcMileageService
@@ -78,6 +78,6 @@ public class WifiReceiver extends BroadcastReceiver {
         if (!alreadyRunning) {
             Intent connectedIntent = new Intent(context, CalcMileageService.class);
             context.startService(connectedIntent);
-        }
+        }*/
     }
 }

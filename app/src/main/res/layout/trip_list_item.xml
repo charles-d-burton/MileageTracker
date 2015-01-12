@@ -32,20 +32,4 @@
 
         android:paddingLeft="2dp" />
 
-    <!--<ImageButton
-        android:layout_width="64dp"
-        android:layout_height="wrap_content"
-        android:id="@+id/map_button"
-        android:layout_weight="0.11"
-        android:layout_gravity="right"
-        android:src="@android:drawable/ic_menu_mapmode"
-        android:padding="3dp"
-        android:clickable="false"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignBottom="@+id/end_trip_date_time"
-        android:focusable="false"
-        />-->
-
 </GridLayout>

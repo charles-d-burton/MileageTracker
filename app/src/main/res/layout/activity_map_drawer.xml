@@ -3,6 +3,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fitsSystemWindows="true"
+    android:id="@+id/main_screen"
     tools:context="com.charles.mileagetracker.app.activities.MapDrawerActivity">
     <include layout="@layout/toolbar"/>
 
@@ -11,13 +12,39 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Main layout -->
-        <fragment
-            android:id="@+id/activity_map"
+
+
+
+        <com.sothree.slidinguppanel.SlidingUpPanelLayout
+            xmlns:sothree="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/stops_slide_up_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            class="com.google.android.gms.maps.SupportMapFragment" />
+            android:gravity="bottom"
+            sothree:shadowHeight="4dp">
+            <!-- Main layout -->
+            <fragment
+                android:id="@+id/activity_map"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                class="com.google.android.gms.maps.SupportMapFragment" />
 
+            <!--<TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center|top"
+                android:text="The Awesome Sliding Up Panel"
+                android:textSize="16sp"
+                android:background="@android:color/background_light"/>-->
+            <fragment
+                android:id="@+id/stops_panel"
+                android:name="com.charles.mileagetracker.app.fragments.TripStopsFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center|top"
+                android:background="@android:color/background_light"/>
+
+        </com.sothree.slidinguppanel.SlidingUpPanelLayout>
         <!-- Nav drawer -->
         <fragment
             android:id="@+id/fragment_drawer"
@@ -29,7 +56,4 @@
             android:dividerHeight="0dp"
             android:layout_gravity="left|start" />
     </android.support.v4.widget.DrawerLayout>
-
-
-
 </LinearLayout>

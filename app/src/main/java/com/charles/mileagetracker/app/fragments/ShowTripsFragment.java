@@ -338,7 +338,7 @@ public class ShowTripsFragment extends SupportMapFragment implements
         public void onShowTripInteraction();
         public void markerAdded();
 
-        //public void onFragmentInteraction(Uri uri);
+        //public void onStopInteraction(Uri uri);
     }
 
 }

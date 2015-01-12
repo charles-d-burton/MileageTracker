@@ -11,9 +11,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.adapter.TripListAdapter;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
@@ -46,6 +48,7 @@ public class TripFragment extends Fragment {
     private String mParam2;
 
     private OnTripFragmentInteraction mListener;
+    private TripListAdapter adapter = null;
 
     /**
      * Use this factory method to create a new instance of
@@ -85,9 +88,20 @@ public class TripFragment extends Fragment {
         if (container == null) {
             view = inflater.inflate(R.layout.fragment_trip, container, false);
         }
+        adapter = new TripListAdapter(this.getActivity(), R.layout.trip_list_item);
         tripList = (ListView)view.findViewById(R.id.trip_list);
+        tripList.setAdapter(adapter);
+        tripList.setOnItemClickListener(new OnListItemClickedListener());
+        tripList.setOnItemLongClickListener(new OnListItemLongPressListener());
         // Inflate the layout for this fragment
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        new LoadTripData(getActivity()).execute(null, null, null);
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -106,7 +120,6 @@ public class TripFragment extends Fragment {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
-        new LoadTripData(getActivity()).execute(null, null, null);
     }
 
     @Override
@@ -115,65 +128,62 @@ public class TripFragment extends Fragment {
         mListener = null;
     }
 
+    private class OnListItemClickedListener implements AdapterView.OnItemClickListener {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            TripRow row = adapter.getItem(position);
+            mListener.onItemTouched(row);
+            Log.v("Adapter Click Address:", row.address);
+
+        }
+    }
+
+    private class OnListItemLongPressListener implements AdapterView.OnItemLongClickListener{
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            TripGroup group = adapter.getItem(position).tgroup;
+            mListener.onItemLongPressed(group);
+            return false;
+        }
+    }
+
     private class LoadTripData extends AsyncTask<Void, Void, Void> {
         private ProgressDialog loadingDialog;
         private Context context;
+        private ArrayList<TripRow> listRows = new ArrayList();
 
         public LoadTripData(Context context) {
             this.context = context;
         }
+
+        //Start a Loading dialog
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             mListener.onTripFragmentStartLoad();
-            /*Log.v("Loading Data: ", "Started");
-            if (loadingDialog != null) {
-                loadingDialog.dismiss();
-                loadingDialog.cancel();
-                loadingDialog = null;
-            }
-            loadingDialog = new ProgressDialog(context);
-            loadingDialog.setMessage("Loading Trips....");
-            loadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            loadingDialog.setIndeterminate(true);
-            loadingDialog.show();*/
         }
 
+        /*
+        Load up the list of groups, then select the data from the ORM that is related to each group.
+        Take that data and load the first row into a storage object then send that to the Adapter and
+        notify that the data set has been changed.
+         */
         @Override
         protected Void doInBackground(Void... params) {
-            List<TripGroup> groupsList = TripGroup.listAll(TripGroup.class);
-            for (TripGroup group :groupsList) {
-                //Temporary until I can resolve the issue with the ORM
-                ArrayList<TripRow> rowList = new ArrayList();
-                //Log.v("GROUP: ", Long.toString(tgroup.getId()));
+            //List<TripGroup> groupsList = TripGroup.listAll(TripGroup.class);
+            List<TripGroup> groupsList = TripGroup.find(TripGroup.class, null, null, null, "id DESC", null);
+            Log.v("Address: ", "Trip Group Size=" + Integer.toString(groupsList.size()));
+            for (TripGroup group : groupsList) {
                 String entries[] = {Long.toString(group.getId())};
-                //List<TripRow> rows = TripRow.listAll(TripRow.class);
-                List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
-                //List<TripRow> rows = TripRow.find(TripRow.class, "trip_group = ? ORDER BY id DESC", entries);
-                for (TripRow row: rows) {
-                    if (row.tgroup.getId() == group.getId()) {
-                        rowList.add(row);
-                        if (row.address == null){
-                            row = getAddress(row);
-                        }
-                    }
+
+                TripRow row = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC LIMIT 1", null).get(0);
+                String address = row.address;
+                if (address == null) {
+                    address = getAddress(row).address;
                 }
-                //Also temporary while I figure out the ORM problem
-                Collections.sort(rows, new Comparator<TripRow>() {
+                listRows.add(row);
 
-                    @Override
-                    public int compare(TripRow lhs, TripRow rhs) {
-                        if (lhs.getId() == rhs.getId()) {
-                            return 0;
-                        }
-                        return lhs.getId() < rhs.getId() ? -1 :1;
-
-                    }
-                });
-
-                for (TripRow row : rows){
-                    Log.v("Address: ", row.address);
-                };
             }
             return null;
         }
@@ -182,7 +192,11 @@ public class TripFragment extends Fragment {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             //loadingDialog.dismiss();
+            Log.v("Address Post Execute List Size: ", Integer.toString(listRows.size()));
+            adapter.setData(listRows);
+            adapter.notifyDataSetChanged();
             mListener.onTripFragmentFinishLoad();
+
         }
 
         private TripRow getAddress(TripRow row) {
@@ -214,6 +228,8 @@ public class TripFragment extends Fragment {
         public void onFragmentInteraction();
         public void onTripFragmentStartLoad();
         public void onTripFragmentFinishLoad();
+        public void onItemTouched(TripRow row);
+        public void onItemLongPressed(TripGroup group);
     }
 
 }

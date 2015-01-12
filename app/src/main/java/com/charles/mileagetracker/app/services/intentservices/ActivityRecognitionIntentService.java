@@ -39,6 +39,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
     private final SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm a yyyy");
 
     private GetCurrentLocation getLocation = null;
+    private long lastUpdateTime = 0l;
 
     @Override
     public void onCreate() {
@@ -56,21 +57,36 @@ public class ActivityRecognitionIntentService extends IntentService implements
         if (statuses.isEmpty()) return;
 
         if (intent != null) {
+            long now = System.currentTimeMillis();
+            if (lastUpdateTime == 0l) {
+                lastUpdateTime = System.currentTimeMillis();
+                processIntent(intent);
+            }
 
-            if (ActivityRecognitionResult.hasResult(intent)) {
 
-                ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
-                DetectedActivity mostProbableActivity = result.getMostProbableActivity();
-
-                int confidence = mostProbableActivity.getConfidence();
-
-                activityUpdate(mostProbableActivity.getType(), confidence);
-
-            } else {
-                Log.v("DEBUG: ", "Where is the Result Intent WTH?");
+            //Timer check to make sure we're not updating more than every minute
+            //saves battery and minimizes wake time
+            if ((now - lastUpdateTime) > 60000) {
+                processIntent(intent);
             }
         }
     }
+
+    private void processIntent(Intent intent) {
+        if (ActivityRecognitionResult.hasResult(intent)) {
+
+            ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
+            DetectedActivity mostProbableActivity = result.getMostProbableActivity();
+
+            int confidence = mostProbableActivity.getConfidence();
+
+            activityUpdate(mostProbableActivity.getType(), confidence);
+
+        } else {
+            Log.v("DEBUG: ", "Where is the Result Intent WTH?");
+        }
+    }
+
 
     /**
      * Map detected activity types to strings
