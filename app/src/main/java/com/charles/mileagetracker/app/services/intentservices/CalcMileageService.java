@@ -7,6 +7,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
+import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
@@ -122,14 +123,10 @@ public class CalcMileageService extends IntentService {
         double billableMileage = 0;
 
         //Empty or unresolved Trip Set, remove it.
-        if (stops.isEmpty() || stops.size() == 1) {
+        if (group.group_closed && (stops.isEmpty() || stops.size() == 1)) {
 
             Log.v(CLASS_NAME, "Empty Trip Set");
-            return;
-            /*for (TripRow stop: stops) {
-                stop.delete();
-            }
-            group.delete();*/
+            group.delete();
 
         } else {
             Iterator<TripRow> it = stops.iterator();
@@ -171,13 +168,16 @@ public class CalcMileageService extends IntentService {
         }
     }
 
-    /*
-    I need to think about this.  It lets me update the addresses in a background thread, but there's no
-    control for it.  I need to create a bounded queue if I want to use this.
+    private double distanceBetweenStops(TripRow stop1, TripRow stop2) {
+        double distance = 0;
 
-    private void updateAddress(TripRow row) {
-        if (row.address == null || row.address.equals("") || row.address.equalsIgnoreCase("NULL")) {
-            new AddressDistanceServices(getApplicationContext()).setAddress(row);
-        }
-    }*/
+        return distance;
+    }
+
+    private boolean tooCloseToHome(TripRow row, List<HomePoints> homes) {
+        boolean tooClose = true;
+
+        return tooClose;
+    }
+
 }

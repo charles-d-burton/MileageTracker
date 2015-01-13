@@ -1,8 +1,11 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.database.orm.HomePoints;
@@ -15,6 +18,8 @@ import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -195,26 +200,6 @@ public class ActivityRecognitionIntentService extends IntentService implements
         status.save();
     }
 
-    //Kills the GetCurrentLocation class.  Uses start service but sets a boolean to tell it to unregister and stop cleanly
-    private void killGetLocation() {
-        /*if (isLocationServiceRunning()) {
-            Intent intent = new Intent(getApplicationContext(), LogLocation.class);
-            intent.putExtra("stop", true);
-            startService(intent);
-        }*/
-    }
-
-
-    /*private boolean isLocationServiceRunning() {
-        ActivityManager activityManager = (ActivityManager)getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
-            if (LogLocation.class.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }*/
-
     private Status loadStatus() {
         Status status = Status.listAll(Status.class).get(0);
         Log.v(CLASS, " STATUS LOADED");
@@ -273,8 +258,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
             TripRow row = new TripRow(status.lastStopTime, new Date(), lat, lon, null, 0, status.trip_group);
             row.save();
 
-            new AddressDistanceServices(this.getApplicationContext()).setAddress(row);
-
+            //Run all the data checking and background processing on another process thread
             Executors.newSingleThreadExecutor().execute(new LookupDistance(row, lat, lon, status.lastLat, status.lastLon));
 
             //Update Status to reflect that a row has been recorded, where it was last recorded, and we're no longer processing
@@ -357,12 +341,51 @@ public class ActivityRecognitionIntentService extends IntentService implements
             if (row == null) {
                 return;
             }
-            AddressDistanceServices distanceServices = new AddressDistanceServices(getApplicationContext());
-            double distance = distanceServices.getDistance(startLat,startLon,endLat,endLon);
-            if (distance != -1) {
-                row.distance = distance;
-                row.save();
+            if (haveNetworkConnection() && hasInternetAccess()) {
+                AddressDistanceServices distanceServices = new AddressDistanceServices(getApplicationContext());
+                distanceServices.setAddress(row);
+                double distance = distanceServices.getDistance(startLat, startLon, endLat, endLon);
+                if (distance != -1) {
+                    row.distance = distance;
+                    row.save();
+                }
             }
+        }
+
+        //Check that we have a good connection
+        private boolean haveNetworkConnection() {
+            boolean haveConnectedWifi = false;
+            boolean haveConnectedMobile = false;
+
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo[] netInfo = cm.getAllNetworkInfo();
+            for (NetworkInfo ni : netInfo) {
+                if (ni.getTypeName().equalsIgnoreCase("WIFI"))
+                    if (ni.isConnected())
+                        haveConnectedWifi = true;
+            if (ni.getTypeName().equalsIgnoreCase("MOBILE"))
+                if (ni.isConnected())
+                    haveConnectedMobile = true;
+            }
+            return haveConnectedWifi || haveConnectedMobile;
+        }
+
+        //Check that a server is reachable and responding
+        public boolean hasInternetAccess() {
+            try {
+                HttpURLConnection urlc = (HttpURLConnection)
+                        (new URL("http://clients3.google.com/generate_204")
+                                .openConnection());
+                urlc.setRequestProperty("User-Agent", "Android");
+                urlc.setRequestProperty("Connection", "close");
+                urlc.setConnectTimeout(1500);
+                urlc.connect();
+                return (urlc.getResponseCode() == 204 &&
+                        urlc.getContentLength() == 0);
+            } catch (IOException e) {
+                Log.e("Error", "Error checking internet connection", e);
+            }
+            return false;
         }
     }
 }
