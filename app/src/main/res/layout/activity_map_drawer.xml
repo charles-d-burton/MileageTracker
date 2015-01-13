@@ -21,7 +21,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="bottom"
-            sothree:shadowHeight="4dp">
+            sothree:shadowHeight="4dp"
+            sothree:panelHeight="40dp">
             <!-- Main layout -->
             <fragment
                 android:id="@+id/activity_map"
