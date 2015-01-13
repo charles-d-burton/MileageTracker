@@ -5,6 +5,8 @@ import android.accounts.AccountManager;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -25,8 +27,6 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -85,6 +85,7 @@ public class MapDrawerActivity extends ActionBarActivity
     private GoogleMap googleMap = null;
     private Location location = null;
     private MapHandlerInterface mapHandlerInterface = null;
+    private TripStopsFragment tripStopsFragment = null;
 
 
     @Override
@@ -130,6 +131,9 @@ public class MapDrawerActivity extends ActionBarActivity
         googleMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.activity_map)).getMap();
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 16));
         googleMap.setMyLocationEnabled(true);
+
+        FragmentManager fragmentManager = getFragmentManager();
+        tripStopsFragment = (TripStopsFragment)fragmentManager.findFragmentById(R.id.stops_panel);
 
     }
 
@@ -228,7 +232,6 @@ public class MapDrawerActivity extends ActionBarActivity
         loadingDialog.dismiss();
     }
 
-    @Override
     public void onItemTouched(TripRow row) {
         googleMap.clear();
         if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
@@ -237,6 +240,7 @@ public class MapDrawerActivity extends ActionBarActivity
         TripHandler tripHandler = new TripHandler();
         mapHandlerInterface = tripHandler;
         mapHandlerInterface.connect(googleMap, this);
+        tripStopsFragment.setData(row);
     }
 
     @Override

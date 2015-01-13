@@ -7,9 +7,17 @@ import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckedTextView;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.adapter.TripListAdapter;
+import com.charles.mileagetracker.app.adapter.TripStopListAdapter;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
+
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -24,6 +32,11 @@ public class TripStopsFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+
+    private ListView list = null;
+    private TripStopListAdapter adapter = null;
+    private TextView numStopView = null;
+    private TextView mileageView = null;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -65,8 +78,21 @@ public class TripStopsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        View view = null;
+        if (container == null) {
+            view = inflater.inflate(R.layout.fragment_trip_stops, container, false);
+        }
+        numStopView = (TextView)view.findViewById(R.id.num_stops);
+        mileageView = (TextView)view.findViewById(R.id.num_miles);
+
+        adapter = new TripStopListAdapter(this.getActivity(), R.layout.trip_stop_list_item);
+        list = (ListView)view.findViewById(R.id.trip_stop_list);
+        list.setAdapter(adapter);
+
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_trip_stops, container, false);
+        return view;
     }
 
 
@@ -86,6 +112,25 @@ public class TripStopsFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    public void setData(TripRow row) {
+        TripGroup group = row.tgroup;
+        setData(group);
+    }
+
+    public void setData(TripGroup group) {
+        String entries[] = {Long.toString(group.getId())};
+        List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, null, null);
+        numStopView.setText("Stops: " + Integer.toString(rows.size()));
+        double miles = 0;
+        for (TripRow row : rows) {
+            if (row.businessRelated) {
+                miles = miles + row.distance;
+            }
+        }
+        mileageView.setText("Miles: " + Double.toString((miles)));
+        adapter.reloadRows(rows);
     }
 
     /**
