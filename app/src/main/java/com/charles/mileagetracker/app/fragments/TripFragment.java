@@ -195,8 +195,9 @@ public class TripFragment extends Fragment {
             Log.v("Address Post Execute List Size: ", Integer.toString(listRows.size()));
             adapter.setData(listRows);
             adapter.notifyDataSetChanged();
-            mListener.onTripFragmentFinishLoad();
-
+            if (mListener != null) {
+                mListener.onTripFragmentFinishLoad();
+            }
         }
 
         private TripRow getAddress(TripRow row) {

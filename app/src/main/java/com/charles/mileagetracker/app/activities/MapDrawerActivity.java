@@ -44,6 +44,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.io.File;
 import java.io.FileReader;
@@ -79,6 +80,7 @@ public class MapDrawerActivity extends ActionBarActivity
     private DrawerLayout drawerLayout;
     private ProgressDialog loadingDialog;
     private static ProgressDialog csvDialog = null;
+    private SlidingUpPanelLayout slideUpLayout = null;
 
     private ActionBarDrawerToggle drawerToggle = null;
 
@@ -108,10 +110,14 @@ public class MapDrawerActivity extends ActionBarActivity
             @Override
             public void onDrawerOpened(View drawerView) {
                 Log.v("Drawer", "Open");
+                if (slideUpLayout.isPanelExpanded()) {
+                    slideUpLayout.collapsePanel();
+                }
                 //getActionBar().setTitle("Title");
 
             }
         };
+        slideUpLayout = (SlidingUpPanelLayout)findViewById(R.id.stops_slide_up_layout);
         drawerLayout.setDrawerListener(drawerToggle);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
@@ -236,6 +242,7 @@ public class MapDrawerActivity extends ActionBarActivity
         googleMap.clear();
         if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
             drawerLayout.closeDrawers();
+            slideUpLayout.expandPanel();
         }
         TripHandler tripHandler = new TripHandler();
         mapHandlerInterface = tripHandler;
@@ -259,6 +266,11 @@ public class MapDrawerActivity extends ActionBarActivity
 
     @Override
     public void onStopInteraction(TripRow row) {
+
+    }
+
+    @Override
+    public void stopItemLongPress(TripRow row) {
 
     }
 

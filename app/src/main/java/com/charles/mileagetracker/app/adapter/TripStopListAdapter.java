@@ -2,6 +2,7 @@ package com.charles.mileagetracker.app.adapter;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,6 +59,8 @@ public class TripStopListAdapter extends BaseAdapter {
         CheckedTextView checkedTextView = (CheckedTextView)convertView.findViewById(R.id.checkedTextView);
         if (row.businessRelated) {
             checkedTextView.setChecked(true);
+        } else {
+            checkedTextView.setChecked(false);
         }
         String text = format.format(row.timeStart) + "\n" + row.address;
         checkedTextView.setText(text);
@@ -67,8 +70,7 @@ public class TripStopListAdapter extends BaseAdapter {
 
     public void reloadRows(List<TripRow> tripRows){
         this.tripRows.clear();
-        this.tripRows = tripRows;
-        this.notifyDataSetChanged();
+        this.tripRows.addAll(tripRows);
     }
 
     private class OnListItemClickedListener implements CheckedTextView.OnClickListener{
@@ -82,14 +84,18 @@ public class TripStopListAdapter extends BaseAdapter {
 
         @Override
         public void onClick(View v) {
+
+
             if (cvt.isChecked()) {
                 cvt.setChecked(false);
                 row.businessRelated = false;
                 row.save();
+                Log.v("Item Clicked: ", row.address + "\n" + Boolean.toString(row.businessRelated));
             } else {
                 cvt.setChecked(true);
                 row.businessRelated = true;
                 row.save();
+                Log.v("Item Clicked: ", row.address + "\n" + Boolean.toString(row.businessRelated));
             }
 
         }

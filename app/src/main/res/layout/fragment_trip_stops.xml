@@ -55,4 +55,13 @@
         android:layout_columnSpan="1"
         />
 
+    <ProgressBar
+        android:indeterminate="true"
+        android:id="@+id/marker_progress"
+        style="?android:attr/progressBarStyle"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="invisible"/>
+
 </GridLayout>

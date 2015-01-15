@@ -2,13 +2,16 @@ package com.charles.mileagetracker.app.fragments;
 
 import android.app.Activity;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
@@ -37,6 +40,7 @@ public class TripStopsFragment extends Fragment {
     private TripStopListAdapter adapter = null;
     private TextView numStopView = null;
     private TextView mileageView = null;
+    private ProgressBar loadingBar;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -89,6 +93,7 @@ public class TripStopsFragment extends Fragment {
         adapter = new TripStopListAdapter(this.getActivity(), R.layout.trip_stop_list_item);
         list = (ListView)view.findViewById(R.id.trip_stop_list);
         list.setAdapter(adapter);
+        loadingBar = (ProgressBar)view.findViewById(R.id.marker_progress);
 
 
         // Inflate the layout for this fragment
@@ -120,17 +125,50 @@ public class TripStopsFragment extends Fragment {
     }
 
     public void setData(TripGroup group) {
-        String entries[] = {Long.toString(group.getId())};
-        List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, null, null);
-        numStopView.setText("Stops: " + Integer.toString(rows.size()));
-        double miles = 0;
-        for (TripRow row : rows) {
-            if (row.businessRelated) {
-                miles = miles + row.distance;
-            }
+
+        new LoadData().execute(group);
+
+
+    }
+
+    private class LoadData extends AsyncTask<TripGroup, Void, List<TripRow>> {
+
+        private double miles =0;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            loadingBar.setVisibility(ProgressBar.VISIBLE);
         }
-        mileageView.setText("Miles: " + Double.toString((miles)));
-        adapter.reloadRows(rows);
+
+        @Override
+        protected List doInBackground(TripGroup... params) {
+            TripGroup group = params[0];
+
+            String entries[] = {Long.toString(group.getId())};
+            List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+            miles = group.billableMileage;
+            return rows;
+        }
+
+        @Override
+        protected void onPostExecute(List<TripRow> tripRows) {
+            super.onPostExecute(tripRows);
+
+            numStopView.setText("Stops: " + Integer.toString(tripRows.size()));
+            mileageView.setText("Miles: " + Double.toString((miles)));
+            adapter.reloadRows(tripRows);
+            adapter.notifyDataSetInvalidated();
+            adapter.notifyDataSetChanged();
+            loadingBar.setVisibility(ProgressBar.INVISIBLE);
+
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+        }
+
     }
 
     /**
@@ -146,6 +184,7 @@ public class TripStopsFragment extends Fragment {
     public interface OnStopInteractionListener {
         // TODO: Update argument type and name
         public void onStopInteraction(TripRow row);
+        public void stopItemLongPress(TripRow row);
     }
 
 }

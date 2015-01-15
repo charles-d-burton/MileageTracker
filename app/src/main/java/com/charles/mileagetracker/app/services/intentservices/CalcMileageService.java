@@ -3,6 +3,7 @@ package com.charles.mileagetracker.app.services.intentservices;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
@@ -30,6 +31,8 @@ public class CalcMileageService extends IntentService {
 
     private final String CLASS_NAME = ((Object)this).getClass().getName();
     private AddressDistanceServices locationServices = null;
+    private List<HomePoints> homes = null;
+    private AddressDistanceServices addressDistanceServices;
 
     public CalcMileageService() {
         super("CalcMileageService");
@@ -40,6 +43,8 @@ public class CalcMileageService extends IntentService {
         if (intent != null) {
             if (haveNetworkConnection()) {
                 if (hasInternetAccess()) {
+                    homes =HomePoints.listAll(HomePoints.class);
+                    addressDistanceServices = new AddressDistanceServices(getApplicationContext());
                     Context context = getApplicationContext();
                     locationServices = new AddressDistanceServices(context);
                     iterateGroups();
@@ -114,7 +119,7 @@ public class CalcMileageService extends IntentService {
     //Process a tgroup, find rows based on their relationship with the TripGroup.  Then iterate through the
     //trips.
     private void processGroup(TripGroup group) {
-        AddressDistanceServices addressDistanceServices = new AddressDistanceServices(getApplicationContext());
+
 
         String params[] = {Long.toString(group.getId())};
         List<TripRow> stops = TripRow.find(TripRow.class, " tgroup = ? ", params ,null , " ORDER BY id ASC",null);
@@ -133,7 +138,13 @@ public class CalcMileageService extends IntentService {
             TripRow stop = it.next();
             while (it.hasNext()) {
                 TripRow nextStop = it.next();
-                if (nextStop.distance != 0) { //Skip Rows that have been computed
+                if (stops.indexOf(nextStop) != 0 && stops.indexOf(nextStop) != (stops.size() - 1)) {//Not first or last
+                    if (tooCloseToHome(nextStop)) {
+                        nextStop.delete();
+                        continue;
+                    }
+                }
+                if (nextStop.distance > 0) { //Skip Rows that have been computed
                     totalMileage = totalMileage + nextStop.distance;
                     if (nextStop.businessRelated) {
                         billableMileage = billableMileage + nextStop.distance;
@@ -174,9 +185,23 @@ public class CalcMileageService extends IntentService {
         return distance;
     }
 
-    private boolean tooCloseToHome(TripRow row, List<HomePoints> homes) {
-        boolean tooClose = true;
-
+    //Find out if the straight line distance of a stop is too close to a HomePoint to be useful.
+    private boolean tooCloseToHome(TripRow row) {
+        boolean tooClose = false;
+        if (homes.isEmpty()) tooClose = false;
+        Location a = new Location("point A");
+        a.setLatitude(row.lat);
+        a.setLongitude(row.lon);
+        double distance = 0;
+        for (HomePoints home: homes) {
+            Location b = new Location("point B");
+            b.setLatitude(home.lat);
+            b.setLongitude(home.lon);
+            double newDistance = a.distanceTo(b);
+            if (newDistance < 1000) {
+                tooClose = true;
+            }
+        }
         return tooClose;
     }
 
