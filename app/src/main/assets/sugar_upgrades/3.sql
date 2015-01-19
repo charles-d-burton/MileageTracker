@@ -1,0 +1,1 @@
+alter table Trip_Group add column points TEXT;

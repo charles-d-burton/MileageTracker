@@ -11,8 +11,8 @@ import android.util.Log;
 import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
-import com.charles.mileagetracker.app.locationservices.GetCurrentLocation;
+import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
+import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.maps.model.LatLng;
@@ -343,7 +343,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
             }
             if (haveNetworkConnection() && hasInternetAccess()) {
                 AddressDistanceServices distanceServices = new AddressDistanceServices(getApplicationContext());
-                distanceServices.setAddress(row);
+                distanceServices.setAddressBackground(row);
                 double distance = distanceServices.getDistance(startLat, startLon, endLat, endLon);
                 if (distance != -1) {
                     row.distance = distance;

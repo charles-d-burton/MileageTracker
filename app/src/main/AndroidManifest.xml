@@ -31,7 +31,7 @@
             android:value="sugar_trip.db" />
         <meta-data
             android:name="VERSION"
-            android:value="2" />
+            android:value="5" />
         <meta-data
             android:name="QUERY_LOG"
             android:value="true" />
@@ -43,7 +43,7 @@
             android:value="AIzaSyCWLe7RmQQR4AJaMx8xPIZcjSg2FnQ5if4" />
 
         <receiver
-            android:name="com.charles.mileagetracker.app.receivers.GeofenceReceiver"
+            android:name=".receivers.GeofenceReceiver"
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
@@ -51,7 +51,7 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name="com.charles.mileagetracker.app.receivers.BootReceiver"
+            android:name=".receivers.BootReceiver"
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
@@ -62,15 +62,15 @@
         </receiver>
 
         <service
-            android:name="com.charles.mileagetracker.app.services.intentservices.PostBootGeofenceService"
+            android:name=".services.intentservices.PostBootGeofenceService"
             android:exported="false" >
         </service>
         <service
-            android:name="com.charles.mileagetracker.app.services.ActivityRecognitionService"
+            android:name=".services.ActivityRecognitionService"
             android:exported="false" >
         </service>
         <service
-            android:name="com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService"
+            android:name=".services.intentservices.ActivityRecognitionIntentService"
             android:exported="false" >
         </service>
 
@@ -79,17 +79,17 @@
             android:value="@integer/google_play_services_version" />
 
         <service
-            android:name="com.charles.mileagetracker.app.services.intentservices.SaveBusinessRelated"
+            android:name=".services.intentservices.SaveBusinessRelated"
             android:exported="false" >
         </service>
 
         <activity
-            android:name="com.charles.mileagetracker.app.activities.ReportGenerateActivity"
+            android:name=".activities.ReportGenerateActivity"
             android:label="@string/title_activity_report_generate" >
         </activity>
 
         <receiver
-            android:name="com.charles.mileagetracker.app.receivers.WifiReceiver"
+            android:name=".receivers.WifiReceiver"
             android:enabled="true"
             android:exported="true" >
             <intent-filter android:priority="100" >
@@ -98,16 +98,12 @@
         </receiver>
 
         <service
-            android:name="com.charles.mileagetracker.app.services.intentservices.CalcMileageService"
+            android:name=".services.intentservices.CalcMileageService"
             android:exported="false" >
         </service>
 
         <activity
-            android:name="com.charles.mileagetracker.app.activities.MainActivity"
-            android:label="@string/title_activity_show_location" >
-        </activity>
-        <activity
-            android:name="com.charles.mileagetracker.app.activities.MapDrawerActivity"
+            android:name=".activities.MapDrawerActivity"
             android:label="@string/title_activity_map_drawer" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -115,6 +111,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".services.intentservices.TripPostProcess"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>

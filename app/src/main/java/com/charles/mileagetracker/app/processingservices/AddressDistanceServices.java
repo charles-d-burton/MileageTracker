@@ -1,12 +1,14 @@
-package com.charles.mileagetracker.app.locationservices;
+package com.charles.mileagetracker.app.processingservices;
 
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -83,6 +85,31 @@ public class AddressDistanceServices {
         return name;
     }
 
+    public JSONObject getTripJson(LatLng pointA, LatLng pointB) throws JSONException {
+        String url = "https://maps.google.com/maps/api/directions/json?origin="
+                + pointA.latitude +"," + pointA.longitude + "&destination="
+                + pointB.latitude + "," + pointB.longitude + "&mode=driving&sensor=false&units=metric";
+        String result = getStringFromUrl(url);
+        if (result != null && result.trim().length() > 0) {
+            return new JSONObject(result);
+        }
+        return null;
+    }
+
+    public String getEncodedPoly(JSONObject json) throws JSONException {
+        JSONArray routeArray = json.getJSONArray("routes");
+        for (int i = 0; i < routeArray.length(); i++) {
+            //Log.v("OVERVIEW: ", "SEARCHING");
+            JSONObject route = routeArray.getJSONObject(i);
+            JSONObject overviewPolylines = route.getJSONObject("overview_polyline");
+            if (!overviewPolylines.toString().isEmpty()) {
+                Log.v("OVERVIEW: ", "FOUND! " + overviewPolylines.toString());
+                return overviewPolylines.getString("points");
+            }
+        }
+        return null;
+    }
+
     public double getDistance(double lat1, double lon1, double lat2, double lon2) {
 
         String url = "https://maps.google.com/maps/api/directions/json?origin=" + lat1 +"," + lon1 + "&destination=" + lat2 + "," + lon2 + "&mode=driving&sensor=false&units=metric";
@@ -93,7 +120,19 @@ public class AddressDistanceServices {
         JSONObject jObject = null;
         try {
             jObject = new JSONObject(result);
-            JSONArray array = jObject.getJSONArray("routes");
+            Double distance = getDistance(jObject);
+            Log.v("DISTANCE: ", distance.toString());
+            return (distance / 1000);
+            //return getDoubleFromString(distance.toString()) / 1000;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public double getDistance(JSONObject json) {
+        try {
+            JSONArray array = json.getJSONArray("routes");
 
             JSONObject routes = array.getJSONObject(0);
 
@@ -104,12 +143,27 @@ public class AddressDistanceServices {
             Integer distance = (Integer)steps.getJSONObject("distance").get("value");
             Log.v("DISTANCE: ", distance.toString());
             return (distance / 1000);
-            //return getDoubleFromString(distance.toString()) / 1000;
-        } catch (JSONException e) {
-            e.printStackTrace();
+        } catch (JSONException je) {
+
         }
+
         return -1;
     }
+
+    public double getStraigtLineDistance(double lat1, double lon1, double lat2, double lon2) {
+        double distance = 0;
+
+        Location locA = new Location("LocA");
+        Location locB = new Location("LocB");
+        locA.setLatitude(lat1);
+        locA.setLongitude(lon1);
+        locB.setLatitude(lat2);
+        locB.setLongitude(lon2);
+        distance = locA.distanceTo(locB);
+
+        return distance;
+    }
+
 
     public String getDirectionsURL (double sourcelat, double sourcelog, double destlat, double destlog ){
         StringBuilder urlString = new StringBuilder();
@@ -211,8 +265,28 @@ public class AddressDistanceServices {
         return address + "\n" + city + "\n" + country;
     }
 
-    public void setAddress(TripRow row) {
+    public String getEndAddressFromJson(JSONObject json) throws JSONException{
+        JSONObject route = json.getJSONArray("routes").getJSONObject(0);
+        String address = route.getJSONArray("legs").getJSONObject(0).getString("end_address");
+        Log.v("ROUTE ADDRESS: ", address);
+        return address;
+    }
+
+    public void setAddressBackground(TripRow row) {
         Executors.newSingleThreadExecutor().execute(new GetAddressInBackground(row));
+    }
+
+    public void setAddress(TripRow row) {
+        if (row == null) {
+            return;
+        }
+        try {
+            String address = getAddressFromLatLng(new LatLng(row.lat, row.lon));
+            row.address = address;
+            row.save();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /*
@@ -230,16 +304,7 @@ public class AddressDistanceServices {
 
         @Override
         public void run() {
-            if (row == null) {
-                return;
-            }
-            try {
-                String address = getAddressFromLatLng(new LatLng(row.lat, row.lon));
-                row.address = address;
-                row.save();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            setAddress(row);
         }
     }
 }

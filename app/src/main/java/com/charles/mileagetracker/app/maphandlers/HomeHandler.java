@@ -16,8 +16,9 @@ import android.widget.Toast;
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.HomePoints;
-import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
-import com.charles.mileagetracker.app.locationservices.GetCurrentLocation;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
+import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationStatusCodes;
@@ -58,20 +59,6 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
     private AlertDialog runningDialog = null;
 
     public HomeHandler() {
-
-        /*this.map = map;
-        this.context = context;
-        map.setOnMapLongClickListener(this);
-        map.setOnMapClickListener(this);
-        map.setOnMarkerClickListener(this);
-        map.setOnMarkerDragListener(this);
-
-
-        getCurrentLocation = new GetCurrentLocation(context);
-        getCurrentLocation.updateLocation(this, true);
-
-        homePoints = HomePoints.listAll(HomePoints.class);
-        addStartPoints(homePoints);*/
     }
 
     public void addMarker(Location location) {
@@ -411,6 +398,16 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
 
         homePoints = HomePoints.listAll(HomePoints.class);
         addStartPoints(homePoints);
+    }
+
+    @Override
+    public void setTripData(TripGroup group) {
+
+    }
+
+    @Override
+    public void setHomeData(List<HomePoints> homes) {
+
     }
 
     //Helper Class that retrieves an address from Google in the background

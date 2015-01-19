@@ -14,6 +14,7 @@ public class TripGroup extends SugarRecord<TripGroup> {
     public boolean group_closed = false;
     public double totalMileage = 0;
     public double billableMileage = 0;
+    public boolean processed = false;
 
     @Ignore
     private ArrayList<TripRow> children;
@@ -32,6 +33,11 @@ public class TripGroup extends SugarRecord<TripGroup> {
     }
 
     public boolean setChildren(List<TripRow> children) {
+        if (children == null) {
+            children = new ArrayList<TripRow>();
+        } else {
+            children.clear();
+        }
         return this.children.addAll(children);
     }
 }

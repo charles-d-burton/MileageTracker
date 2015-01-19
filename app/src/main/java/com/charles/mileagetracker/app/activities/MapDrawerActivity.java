@@ -32,6 +32,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.fragments.TripFragment;
@@ -97,6 +98,7 @@ public class MapDrawerActivity extends ActionBarActivity
         setContentView(R.layout.activity_map_drawer);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        toolbar.setTitle("Mileage Tracker");
 
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -150,6 +152,9 @@ public class MapDrawerActivity extends ActionBarActivity
             Log.v("Services Check: ", "Good!");
         }
         if (mapHandlerInterface != null) {
+            mapHandlerInterface.connect(googleMap, this);
+        } else {
+            mapHandlerInterface = new TripHandler();
             mapHandlerInterface.connect(googleMap, this);
         }
     }
@@ -226,10 +231,15 @@ public class MapDrawerActivity extends ActionBarActivity
             loadingDialog = null;
         }
         loadingDialog = new ProgressDialog(this);
-        loadingDialog.setMessage("Loading Trips....");
+        //loadingDialog.setMessage("Loading Trips....");
         loadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         loadingDialog.setIndeterminate(true);
         loadingDialog.show();
+    }
+
+    @Override
+    public void onTripFragmentProgressUpdate(Integer tripNum) {
+        loadingDialog.setMessage("Processing Trip: " + tripNum.toString());
     }
 
     @Override
@@ -248,6 +258,8 @@ public class MapDrawerActivity extends ActionBarActivity
         mapHandlerInterface = tripHandler;
         mapHandlerInterface.connect(googleMap, this);
         tripStopsFragment.setData(row);
+        mapHandlerInterface.setTripData(row.tgroup);
+
     }
 
     @Override
@@ -572,5 +584,7 @@ public class MapDrawerActivity extends ActionBarActivity
     public interface MapHandlerInterface {
         public void disconnect();
         public void connect(GoogleMap map, Context context);
+        public void setTripData(TripGroup group);
+        public void setHomeData(List<HomePoints> homes);
     }
 }

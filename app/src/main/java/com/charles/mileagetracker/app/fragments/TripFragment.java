@@ -2,7 +2,6 @@ package com.charles.mileagetracker.app.fragments;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -18,13 +17,12 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.adapter.TripListAdapter;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
+import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
+import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -100,7 +98,7 @@ public class TripFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        new LoadTripData(getActivity()).execute(null, null, null);
+        new LoadTripData().execute();
 
     }
 
@@ -148,14 +146,10 @@ public class TripFragment extends Fragment {
         }
     }
 
-    private class LoadTripData extends AsyncTask<Void, Void, Void> {
+    private class LoadTripData extends AsyncTask<Void, Integer, Void>{
         private ProgressDialog loadingDialog;
-        private Context context;
         private ArrayList<TripRow> listRows = new ArrayList();
-
-        public LoadTripData(Context context) {
-            this.context = context;
-        }
+        private AddressDistanceServices addressDistanceServices = null;
 
         //Start a Loading dialog
         @Override
@@ -171,21 +165,35 @@ public class TripFragment extends Fragment {
          */
         @Override
         protected Void doInBackground(Void... params) {
+            addressDistanceServices = new AddressDistanceServices(TripFragment.this.getActivity().getApplicationContext());
             //List<TripGroup> groupsList = TripGroup.listAll(TripGroup.class);
             List<TripGroup> groupsList = TripGroup.find(TripGroup.class, null, null, null, "id DESC", null);
             Log.v("Address: ", "Trip Group Size=" + Integer.toString(groupsList.size()));
             for (TripGroup group : groupsList) {
+                Integer rowProgress = groupsList.indexOf(group);
+                onProgressUpdate(rowProgress);
                 String entries[] = {Long.toString(group.getId())};
 
                 TripRow row = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC LIMIT 1", null).get(0);
                 String address = row.address;
                 if (address == null) {
-                    address = getAddress(row).address;
+                    try {
+                        address = addressDistanceServices.getAddressFromLatLng(new LatLng(row.lat, row.lon));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
                 listRows.add(row);
 
             }
             return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            Integer update = values[0];
+            mListener.onTripFragmentProgressUpdate(update);
         }
 
         @Override
@@ -199,19 +207,6 @@ public class TripFragment extends Fragment {
                 mListener.onTripFragmentFinishLoad();
             }
         }
-
-        private TripRow getAddress(TripRow row) {
-            AddressDistanceServices addressDistanceServices = new AddressDistanceServices(TripFragment.this.getActivity());
-            try {
-                String address = addressDistanceServices.getAddressFromLatLng(new LatLng(row.lat, row.lon));
-                row.address = address;
-                row.save();
-            } catch (IOException ioe) {
-
-            }
-            return row;
-        }
-
     }
 
     /**
@@ -228,6 +223,7 @@ public class TripFragment extends Fragment {
         // TODO: Update argument type and name
         public void onFragmentInteraction();
         public void onTripFragmentStartLoad();
+        public void onTripFragmentProgressUpdate(Integer tripNum);
         public void onTripFragmentFinishLoad();
         public void onItemTouched(TripRow row);
         public void onItemLongPressed(TripGroup group);

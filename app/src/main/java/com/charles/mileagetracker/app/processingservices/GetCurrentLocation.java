@@ -1,4 +1,4 @@
-package com.charles.mileagetracker.app.locationservices;
+package com.charles.mileagetracker.app.processingservices;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -12,7 +12,6 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 

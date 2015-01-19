@@ -17,6 +17,7 @@ public class TripRow extends SugarRecord<TripRow> {
     public double distance = 0;
     public String units = "km";
     public boolean businessRelated = false;
+    public String points;
 
     //Relationship to a trip_group.  Meaning a collection of trips that are logically grouped together.
     //I may add additional columns for groups later.

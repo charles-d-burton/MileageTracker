@@ -16,10 +16,11 @@ import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.locationservices.AddressDistanceServices;
+import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.charles.mileagetracker.app.services.intentservices.CalcMileageService;
 import com.charles.mileagetracker.app.services.intentservices.SaveBusinessRelated;
+import com.charles.mileagetracker.app.services.intentservices.TripPostProcess;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.model.LatLng;
@@ -112,14 +113,12 @@ public class GeofenceReceiver extends BroadcastReceiver {
         TripRow row = new TripRow(status.lastStopTime, new Date(), lat, lon, null, 0, group);
         row.save();
 
+        TripPostProcess postProcess = new TripPostProcess();
+        postProcess.processGroup(context, group.getId().intValue());
+
         //Set the address in the background
-        new AddressDistanceServices(context).setAddress(row);
-
-
-
+        //new AddressDistanceServices(context).setAddressBackground(row);
         Status.deleteAll(Status.class);
-
-        generateNotification("Trip Complete","Were all stops business related?", group.getId().intValue());
     }
 
     private void transitionExit(int id, LatLng center) {
@@ -170,32 +169,5 @@ public class GeofenceReceiver extends BroadcastReceiver {
         }
 
         return center;
-    }
-
-
-    private void generateNotification(String title, String message, int groupId) {
-
-        Intent pathIntent = new Intent(context, MapDrawerActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(MapDrawerActivity.class);
-        stackBuilder.addNextIntent(pathIntent);
-
-        PendingIntent selectPathSegments = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        //Intent to record all trip segments
-        Intent saveTripService = new Intent(context, SaveBusinessRelated.class);
-        saveTripService.putExtra("tgroup", groupId);
-        PendingIntent saveTrip = PendingIntent.getService(context, 0, saveTripService,PendingIntent.FLAG_ONE_SHOT);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentTitle(title)
-                .setContentText(message)
-                .setContentIntent(selectPathSegments)
-                .addAction(android.R.drawable.btn_plus, "Yes", saveTrip)
-                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "No", selectPathSegments);
-
-        NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(0, builder.build());
     }
 }
