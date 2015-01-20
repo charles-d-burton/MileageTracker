@@ -8,8 +8,8 @@ import android.location.Location;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.database.orm.HomePoints;
-import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.google.android.gms.location.Geofence;
@@ -84,7 +84,7 @@ public class PostBootGeofenceService extends IntentService implements
                 .setCircularRegion(latLng.latitude, latLng.longitude, 500)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build();
-        List fencesList = new ArrayList();
+        java.util.List fencesList = new ArrayList();
         fencesList.add(fence);
         getCurrentLocation.addGeoFence(fencesList, pendingIntent, this);
         Log.d("DEBUG: ", "Adding proximity alert");

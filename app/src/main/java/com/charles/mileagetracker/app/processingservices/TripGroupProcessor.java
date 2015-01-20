@@ -42,6 +42,7 @@ public class TripGroupProcessor {
     }
 
     public void processTripGroup(TripGroup group) {
+        Log.v("PROCESSING GROUP: ", "Processing TripGroup" + Integer.toString(group.getId().intValue()));
         this.group = group;
         if (!group.processed && context != null  && callback != null  && hasInternetAccess() && checkDataStatus() ) {
             addressDistanceServices = new AddressDistanceServices(context);
@@ -70,19 +71,11 @@ public class TripGroupProcessor {
                 updateData(rowsList);
             }
         } else if (group.processed){
-            String entries[] = {Long.toString(group.getId())};
-            //Get the full list, check each stop to make sure it's not too close to a HomePoint
-            List<TripRow> rowsList = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
-            callback.finishedGroupProcessing(rowsList);
-
+            callback.finishedGroupProcessing(null);
         } else if (context !=null && !hasInternetAccess() || !checkDataStatus()) {
-            if (callback != null) {
-                callback.unableToProcessGroup(CONNECT_FAILED);
-            }
+            callback.unableToProcessGroup(CONNECT_FAILED);
         } else {
-            if (callback != null){
-                callback.unableToProcessGroup(UNKOWN_FAILURE);
-            }
+            callback.unableToProcessGroup(UNKOWN_FAILURE);
         }
     }
 
@@ -122,8 +115,8 @@ public class TripGroupProcessor {
     }
 
     //Work through the trip stops, if any of them are too close to HomePoints we want to remove it.
-    private List<TripRow> processHomePoints(List<TripRow> rows) {
-        List<HomePoints> homes = HomePoints.listAll(HomePoints.class);
+    private java.util.List processHomePoints(java.util.List rows) {
+        java.util.List homes = HomePoints.listAll(HomePoints.class);
         if (rows != null) {
             LinkedList<TripRow> linkedRows = new LinkedList<TripRow>();
             linkedRows.addAll(rows);
@@ -143,7 +136,7 @@ public class TripGroupProcessor {
         return rows;
     }
 
-    private boolean tooCloseToHome(TripRow row, List<HomePoints> homes) {
+    private boolean tooCloseToHome(TripRow row, java.util.List homes) {
         Iterator<HomePoints> it = homes.iterator();
         while (it.hasNext()) {
             HomePoints home = it.next();
@@ -166,7 +159,7 @@ public class TripGroupProcessor {
     /*
     Process the TripRows we're.  It'll update the address as well as write in the encoded polyline.
      */
-    private void updateData(List<TripRow> rows) {
+    private void updateData(java.util.List rows) {
         try {
             Iterator<TripRow> rowsIterator = rows.iterator();
             TripRow lastRow = rowsIterator.next();//Skip the first, it's a start point and doesn't have distance data

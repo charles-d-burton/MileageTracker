@@ -16,7 +16,7 @@ import android.widget.Toast;
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.HomePoints;
-import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
 import com.google.android.gms.location.Geofence;
@@ -401,12 +401,12 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
     }
 
     @Override
-    public void setTripData(TripGroup group) {
+    public void setTripData(List rows) {
 
     }
 
     @Override
-    public void setHomeData(List<HomePoints> homes) {
+    public void setHomeData(List homes) {
 
     }
 

@@ -4,7 +4,6 @@ import com.orm.SugarRecord;
 import com.orm.dsl.Ignore;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by charles on 10/27/14.
@@ -32,7 +31,7 @@ public class TripGroup extends SugarRecord<TripGroup> {
         return children;
     }
 
-    public boolean setChildren(List<TripRow> children) {
+    public boolean setChildren(java.util.List children) {
         if (children == null) {
             children = new ArrayList<TripRow>();
         } else {

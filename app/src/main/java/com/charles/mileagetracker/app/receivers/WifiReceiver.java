@@ -30,8 +30,8 @@ public class WifiReceiver extends BroadcastReceiver {
         Log.v("WIFI: ", "Wifi connection changed");
         if(info!=null){
             if(info.isConnected()){
-                //Intent connectedIntent = new Intent(context, CalcMileageService.class);
-                //context.startService(connectedIntent);
+                Intent connectedIntent = new Intent(context, CalcMileageService.class);
+                context.startService(connectedIntent);
             }
         }
     }

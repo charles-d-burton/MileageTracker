@@ -7,22 +7,14 @@ import android.content.Intent;
 import android.content.Context;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
-import android.util.Log;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MapDrawerActivity;
-import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -87,8 +79,11 @@ public class TripPostProcess extends IntentService implements TripGroupProcessor
 
     @Override
     public void finishedGroupProcessing(List<TripRow> rows) {
-        TripGroup group = rows.get(0).tgroup;
-        generateNotification("Trip Complete","Were all stops business related?", group.getId().intValue());
+        if (rows != null) {
+            TripGroup group = rows.get(0).tgroup;
+            generateNotification("Trip Complete","Were all stops business related?", group.getId().intValue());
+        }
+
     }
 
     @Override

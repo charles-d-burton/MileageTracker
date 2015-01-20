@@ -140,7 +140,7 @@ public class AddressDistanceServices {
 
             JSONObject steps = legs.getJSONObject(0);
 
-            Integer distance = (Integer)steps.getJSONObject("distance").get("value");
+            Double distance = Double.parseDouble(steps.getJSONObject("distance").get("value").toString());
             Log.v("DISTANCE: ", distance.toString());
             return (distance / 1000);
         } catch (JSONException je) {

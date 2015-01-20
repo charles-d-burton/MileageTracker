@@ -1,11 +1,11 @@
 package com.charles.mileagetracker.app.fragments;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,7 +18,6 @@ import com.charles.mileagetracker.app.adapter.TripListAdapter;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
-import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
@@ -146,10 +145,11 @@ public class TripFragment extends Fragment {
         }
     }
 
-    private class LoadTripData extends AsyncTask<Void, Integer, Void>{
+    private class LoadTripData extends AsyncTask<Void, Float, Void>{
         private ProgressDialog loadingDialog;
         private ArrayList<TripRow> listRows = new ArrayList();
         private AddressDistanceServices addressDistanceServices = null;
+        private Integer maxValue = 0;
 
         //Start a Loading dialog
         @Override
@@ -168,10 +168,12 @@ public class TripFragment extends Fragment {
             addressDistanceServices = new AddressDistanceServices(TripFragment.this.getActivity().getApplicationContext());
             //List<TripGroup> groupsList = TripGroup.listAll(TripGroup.class);
             List<TripGroup> groupsList = TripGroup.find(TripGroup.class, null, null, null, "id DESC", null);
+            maxValue = groupsList.size();
             Log.v("Address: ", "Trip Group Size=" + Integer.toString(groupsList.size()));
+            float counter = 1f;
             for (TripGroup group : groupsList) {
-                Integer rowProgress = groupsList.indexOf(group);
-                onProgressUpdate(rowProgress);
+                onProgressUpdate(counter);
+                counter = counter + 1;
                 String entries[] = {Long.toString(group.getId())};
 
                 TripRow row = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC LIMIT 1", null).get(0);
@@ -190,10 +192,12 @@ public class TripFragment extends Fragment {
         }
 
         @Override
-        protected void onProgressUpdate(Integer... values) {
+        protected void onProgressUpdate(Float... values) {
             super.onProgressUpdate(values);
-            Integer update = values[0];
-            mListener.onTripFragmentProgressUpdate(update);
+            Float update = values[0];
+            Log.v("Update %: ", update.toString());
+            Integer percent = (int)((update/maxValue)*100);
+            mListener.onTripFragmentProgressUpdate(percent);
         }
 
         @Override
@@ -220,7 +224,6 @@ public class TripFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnTripFragmentInteraction {
-        // TODO: Update argument type and name
         public void onFragmentInteraction();
         public void onTripFragmentStartLoad();
         public void onTripFragmentProgressUpdate(Integer tripNum);

@@ -1,25 +1,17 @@
 package com.charles.mileagetracker.app.receivers;
 
 import android.app.ActivityManager;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.HomePoints;
-import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.charles.mileagetracker.app.services.intentservices.CalcMileageService;
-import com.charles.mileagetracker.app.services.intentservices.SaveBusinessRelated;
 import com.charles.mileagetracker.app.services.intentservices.TripPostProcess;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
@@ -42,7 +34,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
         this.context = context.getApplicationContext();
         if (intent != null) {
             int transitionType = LocationClient.getGeofenceTransition(intent);
-            List geoFences = LocationClient.getTriggeringGeofences(intent);
+            java.util.List geoFences = LocationClient.getTriggeringGeofences(intent);
             if (geoFences == null) return;//Fixes bug when geofence turned off
             Geofence fence = (Geofence)geoFences.get(0);
             int id = Integer.parseInt(fence.getRequestId());
@@ -140,7 +132,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
 
 
     private void initTables(double lat, double lon) {
-        List<Status>  statuses = Status.listAll(Status.class);
+        List<Status> statuses = Status.listAll(Status.class);
         if (!statuses.isEmpty()) {
             for (Status status : statuses) {
                 status.delete();
@@ -158,7 +150,7 @@ public class GeofenceReceiver extends BroadcastReceiver {
     private LatLng getCenter(int id) {
         LatLng center = null;
 
-        List<HomePoints> homePoints = HomePoints.listAll(HomePoints.class);
+        java.util.List homePoints = HomePoints.listAll(HomePoints.class);
         Iterator<HomePoints> it = homePoints.iterator();
         while (it.hasNext()) {
             HomePoints homePoint = it.next();

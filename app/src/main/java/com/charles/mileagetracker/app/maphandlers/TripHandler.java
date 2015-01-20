@@ -4,15 +4,11 @@ import android.content.Context;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.charles.mileagetracker.app.activities.MapDrawerActivity;
-import com.charles.mileagetracker.app.database.orm.HomePoints;
-import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
-import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -20,13 +16,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -42,9 +33,10 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
     private GoogleMap map = null;
     private Context context = null;
 
+    private java.util.List rows = null;
     private HashMap<Marker, TripRow> markerTracker = new HashMap<Marker,TripRow>();
-    private HashMap<TripRow, List<LatLng>> polyLineTracker = new HashMap<TripRow, List<LatLng>>();
-    private TripGroup group;
+    private HashMap<TripRow, java.util.List> polyLineTracker = new HashMap<TripRow, java.util.List>();
+
 
     public TripHandler(){
 
@@ -111,13 +103,13 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
     }
 
     @Override
-    public void setTripData(TripGroup group) {
-        this.group = group;
-        new DrawLines().execute(group);
+    public void setTripData(java.util.List rows) {
+        this.rows = rows;
+        new DrawLines().execute(rows);
     }
 
     @Override
-    public void setHomeData(List<HomePoints> homes) {
+    public void setHomeData(java.util.List homes) {
 
     }
 
@@ -125,8 +117,7 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
     This class takes a TripGroup and generates the PolyLine points in a background thread.  It then
     puts them on the map after it generates them.
      */
-    private class DrawLines extends AsyncTask<TripGroup, Integer, LinkedList<TripRow>> implements
-            TripGroupProcessor.GroupProcessorInterface {
+    private class DrawLines extends AsyncTask<List<TripRow>, Integer, List<TripRow>> {
 
         private AddressDistanceServices distanceServices;
 
@@ -137,13 +128,18 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
         }
 
         @Override
-        protected LinkedList<TripRow> doInBackground(TripGroup... params) {
+        protected List<TripRow> doInBackground(List... params) {
 
-            TripGroup tripGroup = params[0];
-            String entries[] = {Long.toString(group.getId())};
-            //Get the full list, check each stop to make sure it's not too close to a HomePoint
-            List<TripRow> rowsList = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
-            return null;
+            List rows = params[0];
+            Iterator<TripRow> it = rows.iterator();
+            while (it.hasNext()) {
+                TripRow row = it.next();
+                if (row.points != null) {
+                    row.polyPoints = distanceServices.decodePoly(row.points);
+                }
+            }
+
+            return rows;
         }
 
         @Override
@@ -157,11 +153,9 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
         and draw them as a polyline on the screen.
          */
         @Override
-        protected void onPostExecute(LinkedList<TripRow> rows) {
+        protected void onPostExecute(List<TripRow> rows) {
             if (rows == null) return;
             super.onPostExecute(rows);
-            //SetHomeDrawerAdapter drawerAdapter = new SetHomeDrawerAdapter(ShowTripsFragment.this.getActivity(), children);
-            //drawerView.setAdapter(drawerAdapter);
             for (int i = 0; i < rows.size(); i++) {
                 TripRow row = rows.get(i);
 
@@ -171,28 +165,16 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
                             .title(row.address)
                             .flat(true)
                 );
-                markerTracker.put(marker, row);
+                row.marker = marker;
                 //We need to skip the first row
-                if (!rows.getFirst().equals(row)) {
-                    List<LatLng> points = polyLineTracker.get(row);
-                    if (points != null && points.size() > 0) {
-                        Polyline polyline = map.addPolyline(new PolylineOptions().addAll(points).width(5).color(Color.RED).geodesic(true));
-                        if (row.businessRelated) {
-                            polyline.setColor(Color.GREEN);
-                        }
+                if (row.points != null) {
+                    int color = Color.RED;
+                    if (row.businessRelated) {
+                        color = Color.GREEN;
                     }
+                    Polyline polyline = map.addPolyline(new PolylineOptions().addAll(row.polyPoints).width(5).color(color).geodesic(true));
                 }
             }
-        }
-
-        @Override
-        public void finishedGroupProcessing(List<TripRow> rows) {
-
-        }
-
-        @Override
-        public void unableToProcessGroup(int failCode) {
-
         }
     }
 }

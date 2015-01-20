@@ -5,7 +5,6 @@ import android.accounts.AccountManager;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -231,15 +230,17 @@ public class MapDrawerActivity extends ActionBarActivity
             loadingDialog = null;
         }
         loadingDialog = new ProgressDialog(this);
-        //loadingDialog.setMessage("Loading Trips....");
-        loadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        loadingDialog.setIndeterminate(true);
+        loadingDialog.setMessage("Loading Trips....");
+        loadingDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        loadingDialog.setIndeterminate(false);
+        loadingDialog.setMax(100);
         loadingDialog.show();
     }
 
     @Override
     public void onTripFragmentProgressUpdate(Integer tripNum) {
-        loadingDialog.setMessage("Processing Trip: " + tripNum.toString());
+        Log.v("Loaded %: ", tripNum.toString());
+        loadingDialog.setProgress(tripNum);
     }
 
     @Override
@@ -258,7 +259,7 @@ public class MapDrawerActivity extends ActionBarActivity
         mapHandlerInterface = tripHandler;
         mapHandlerInterface.connect(googleMap, this);
         tripStopsFragment.setData(row);
-        mapHandlerInterface.setTripData(row.tgroup);
+
 
     }
 
@@ -284,6 +285,11 @@ public class MapDrawerActivity extends ActionBarActivity
     @Override
     public void stopItemLongPress(TripRow row) {
 
+    }
+
+    @Override
+    public void tripStopsDataLoaded(java.util.List rows) {
+        mapHandlerInterface.setTripData(rows);
     }
 
     public void showDatePickerDialog() {
@@ -434,12 +440,12 @@ public class MapDrawerActivity extends ActionBarActivity
                 long start = params[0];
                 long end = params[1];
                 List<TripGroup> groups = TripGroup.listAll(TripGroup.class);
-                List<String[]> lines = new ArrayList<String[]>();
+                List lines = new ArrayList<String[]>();
                 lines.add(new String[]{"Date", "Address", "Distance Traveled(miles)", "Latitude", "Longitude"});
                 if (groups != null && !groups.isEmpty()) {
                     for (TripGroup group : groups) {
                         String entries[] = {Long.toString(group.getId())};
-                        List rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+                        java.util.List rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
 
                     }
                 }
@@ -490,7 +496,7 @@ public class MapDrawerActivity extends ActionBarActivity
             }
 
             //Save the CSV array to a file.
-            private boolean writeToFile(List<String[]> lines) {
+            private boolean writeToFile(java.util.List lines) {
                 if (isExternalStorageWritable()) {
                     File dir = new File(Environment.getExternalStorageDirectory(), MapDrawerActivity.dir);
                     if (!dir.exists()) dir.mkdir();
@@ -584,7 +590,7 @@ public class MapDrawerActivity extends ActionBarActivity
     public interface MapHandlerInterface {
         public void disconnect();
         public void connect(GoogleMap map, Context context);
-        public void setTripData(TripGroup group);
+        public void setTripData(List<TripRow> rows);
         public void setHomeData(List<HomePoints> homes);
     }
 }

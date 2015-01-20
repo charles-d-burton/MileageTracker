@@ -1,26 +1,21 @@
 package com.charles.mileagetracker.app.fragments;
 
 import android.app.Activity;
-import android.net.Uri;
+import android.app.Fragment;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckedTextView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.adapter.TripListAdapter;
 import com.charles.mileagetracker.app.adapter.TripStopListAdapter;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-
-import java.util.List;
+import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -131,7 +126,8 @@ public class TripStopsFragment extends Fragment {
 
     }
 
-    private class LoadData extends AsyncTask<TripGroup, Void, List<TripRow>> {
+    private class LoadData extends AsyncTask<TripGroup, Void, java.util.List> implements
+            TripGroupProcessor.GroupProcessorInterface {
 
         private double miles =0;
 
@@ -142,25 +138,28 @@ public class TripStopsFragment extends Fragment {
         }
 
         @Override
-        protected List doInBackground(TripGroup... params) {
+        protected java.util.List doInBackground(TripGroup... params) {
             TripGroup group = params[0];
 
+            TripGroupProcessor processor = new TripGroupProcessor(TripStopsFragment.this.getActivity().getApplicationContext(), this);
+            processor.processTripGroup(group);
+
             String entries[] = {Long.toString(group.getId())};
-            List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+            java.util.List rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
             miles = group.billableMileage;
             return rows;
         }
 
         @Override
-        protected void onPostExecute(List<TripRow> tripRows) {
+        protected void onPostExecute(java.util.List tripRows) {
             super.onPostExecute(tripRows);
-
             numStopView.setText("Stops: " + Integer.toString(tripRows.size()));
             mileageView.setText("Miles: " + Double.toString((miles)));
             adapter.reloadRows(tripRows);
             adapter.notifyDataSetInvalidated();
             adapter.notifyDataSetChanged();
             loadingBar.setVisibility(ProgressBar.INVISIBLE);
+            mListener.tripStopsDataLoaded(tripRows);
 
         }
 
@@ -169,6 +168,15 @@ public class TripStopsFragment extends Fragment {
             super.onCancelled();
         }
 
+        @Override
+        public void finishedGroupProcessing(java.util.List rows) {
+
+        }
+
+        @Override
+        public void unableToProcessGroup(int failCode) {
+
+        }
     }
 
     /**
@@ -185,6 +193,7 @@ public class TripStopsFragment extends Fragment {
         // TODO: Update argument type and name
         public void onStopInteraction(TripRow row);
         public void stopItemLongPress(TripRow row);
+        public void tripStopsDataLoaded(java.util.List rows);
     }
 
 }

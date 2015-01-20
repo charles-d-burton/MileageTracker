@@ -3,23 +3,11 @@ package com.charles.mileagetracker.app.services.intentservices;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
-import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
-import com.google.android.gms.maps.model.LatLng;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -49,7 +37,7 @@ public class CalcMileageService extends IntentService implements TripGroupProces
     }
 
     @Override
-    public void finishedGroupProcessing(List<TripRow> rows) {
+    public void finishedGroupProcessing(java.util.List rows) {
         Log.v(CLASS_NAME, "Finished Processing Group");
     }
 
