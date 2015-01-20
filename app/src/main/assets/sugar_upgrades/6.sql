@@ -1,1 +1,0 @@
-alter table Trip_Group add column PROCESSED INTEGER DEFAULT 0;

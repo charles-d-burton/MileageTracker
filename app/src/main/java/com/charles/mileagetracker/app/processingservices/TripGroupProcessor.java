@@ -71,6 +71,11 @@ public class TripGroupProcessor {
                 updateData(rowsList);
             }
         } else if (group.processed){
+            addressDistanceServices = new AddressDistanceServices(context);
+            String entries[] = {Long.toString(group.getId())};
+            //Get the full list, check each stop to make sure it's not too close to a HomePoint
+            List<TripRow> rowsList = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+            updateData(rowsList);
             callback.finishedGroupProcessing(null);
         } else if (context !=null && !hasInternetAccess() || !checkDataStatus()) {
             callback.unableToProcessGroup(CONNECT_FAILED);
@@ -159,7 +164,7 @@ public class TripGroupProcessor {
     /*
     Process the TripRows we're.  It'll update the address as well as write in the encoded polyline.
      */
-    private void updateData(java.util.List rows) {
+    private void updateData(List<TripRow> rows) {
         try {
             Iterator<TripRow> rowsIterator = rows.iterator();
             TripRow lastRow = rowsIterator.next();//Skip the first, it's a start point and doesn't have distance data
@@ -170,6 +175,7 @@ public class TripGroupProcessor {
                 JSONObject json = addressDistanceServices.getTripJson(new LatLng(lastRow.lat, lastRow.lon), new LatLng(nextRow.lat, nextRow.lon));
                 nextRow.distance = addressDistanceServices.getDistance(json);
                 nextRow.points = addressDistanceServices.getEncodedPoly(json);
+                Log.v("TRIPGROUPPROCESSOR: ", "POINTS: " + nextRow.points);
                 nextRow.address = addressDistanceServices.getEndAddressFromJson(json);
                 nextRow.save();
                 lastRow = nextRow;

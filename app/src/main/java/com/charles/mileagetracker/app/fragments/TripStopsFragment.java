@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,8 @@ import com.charles.mileagetracker.app.adapter.TripStopListAdapter;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
+
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -126,7 +129,7 @@ public class TripStopsFragment extends Fragment {
 
     }
 
-    private class LoadData extends AsyncTask<TripGroup, Void, java.util.List> implements
+    private class LoadData extends AsyncTask<TripGroup, Void, List<TripRow>> implements
             TripGroupProcessor.GroupProcessorInterface {
 
         private double miles =0;
@@ -138,20 +141,28 @@ public class TripStopsFragment extends Fragment {
         }
 
         @Override
-        protected java.util.List doInBackground(TripGroup... params) {
+        protected List<TripRow> doInBackground(TripGroup... params) {
             TripGroup group = params[0];
 
             TripGroupProcessor processor = new TripGroupProcessor(TripStopsFragment.this.getActivity().getApplicationContext(), this);
             processor.processTripGroup(group);
 
             String entries[] = {Long.toString(group.getId())};
-            java.util.List rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+            List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+            for (TripRow row : rows ) {
+                Log.v("ROW DISTANCE: ", Double.toString(row.distance));
+                if (row.points != null) {
+                    Log.v("ROW POINTS: ", row.points);
+                }
+
+                Log.v("ROW ADDRES: ", row.address);
+            }
             miles = group.billableMileage;
             return rows;
         }
 
         @Override
-        protected void onPostExecute(java.util.List tripRows) {
+        protected void onPostExecute(List<TripRow> tripRows) {
             super.onPostExecute(tripRows);
             numStopView.setText("Stops: " + Integer.toString(tripRows.size()));
             mileageView.setText("Miles: " + Double.toString((miles)));

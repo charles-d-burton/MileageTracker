@@ -1,1 +1,0 @@
-alter table Trip_Row add column processed INTEGER DEFAULT 0;

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.TripRow;
@@ -135,6 +136,7 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
             while (it.hasNext()) {
                 TripRow row = it.next();
                 if (row.points != null) {
+                    Log.v("POINTS FOUND: ", row.points);
                     row.polyPoints = distanceServices.decodePoly(row.points);
                 }
             }
