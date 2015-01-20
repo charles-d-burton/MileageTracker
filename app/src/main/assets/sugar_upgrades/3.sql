@@ -1,1 +1,1 @@
-alter table Trip_Group add column points TEXT;
+alter table Trip_Row add column points TEXT;
