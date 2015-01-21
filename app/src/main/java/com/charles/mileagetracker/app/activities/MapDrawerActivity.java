@@ -278,12 +278,14 @@ public class MapDrawerActivity extends ActionBarActivity
     }
 
     @Override
-    public void onStopInteraction(TripRow row) {
-
+    public void onStopClicked(List<TripRow> rows) {
+        if (mapHandlerInterface != null && rows != null) {
+            mapHandlerInterface.setTripData(rows);
+        }
     }
 
     @Override
-    public void stopItemLongPress(TripRow row) {
+    public void onStopLongPress(TripRow row) {
 
     }
 
@@ -445,7 +447,7 @@ public class MapDrawerActivity extends ActionBarActivity
                 if (groups != null && !groups.isEmpty()) {
                     for (TripGroup group : groups) {
                         String entries[] = {Long.toString(group.getId())};
-                        java.util.List rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+                        List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
 
                     }
                 }

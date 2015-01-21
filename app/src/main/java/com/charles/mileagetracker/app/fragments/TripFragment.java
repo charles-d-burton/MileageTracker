@@ -131,7 +131,7 @@ public class TripFragment extends Fragment {
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             TripRow row = adapter.getItem(position);
             mListener.onItemTouched(row);
-            Log.v("Adapter Click Address:", row.address);
+            //Log.v("Adapter Click Address:", row.address);
 
         }
     }
@@ -178,9 +178,11 @@ public class TripFragment extends Fragment {
 
                 TripRow row = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC LIMIT 1", null).get(0);
                 String address = row.address;
-                if (address == null) {
+                if (address == null || address.trim().length() == 0) {
                     try {
                         address = addressDistanceServices.getAddressFromLatLng(new LatLng(row.lat, row.lon));
+                        row.address = address;
+                        row.save();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

@@ -13,6 +13,7 @@ import com.charles.mileagetracker.app.database.orm.TripRow;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by charles on 1/6/15.
@@ -60,5 +61,8 @@ public class TripListAdapter extends BaseAdapter {
 
     public void setData(ArrayList<TripRow> tripRows) {
         this.tripRows = tripRows;
+    }
+    public List<TripRow> getAllRows() {
+        return tripRows;
     }
 }

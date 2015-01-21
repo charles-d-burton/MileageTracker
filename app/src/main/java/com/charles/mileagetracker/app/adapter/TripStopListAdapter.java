@@ -49,6 +49,10 @@ public class TripStopListAdapter extends BaseAdapter {
         return position;
     }
 
+    public List<TripRow> getTripRows() {
+        return this.tripRows;
+    }
+
     @Override
     public View getView(int position,View convertView, ViewGroup parent) {
         if (convertView == null) {
@@ -64,7 +68,7 @@ public class TripStopListAdapter extends BaseAdapter {
         }
         String text = format.format(row.timeStart) + "\n" + row.address;
         checkedTextView.setText(text);
-        checkedTextView.setOnClickListener(new OnListItemClickedListener(checkedTextView, row));
+        //checkedTextView.setOnClickListener(new OnListItemClickedListener(checkedTextView, row));
         return convertView;
     }
 

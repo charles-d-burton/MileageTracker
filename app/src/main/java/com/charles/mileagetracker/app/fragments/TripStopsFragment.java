@@ -8,6 +8,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.CheckedTextView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -18,6 +20,7 @@ import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -91,6 +94,8 @@ public class TripStopsFragment extends Fragment {
         adapter = new TripStopListAdapter(this.getActivity(), R.layout.trip_stop_list_item);
         list = (ListView)view.findViewById(R.id.trip_stop_list);
         list.setAdapter(adapter);
+        list.setOnItemClickListener(new OnListItemClickListener());
+        list.setOnItemLongClickListener(new OnItemLongPressListener());
         loadingBar = (ProgressBar)view.findViewById(R.id.marker_progress);
 
 
@@ -129,6 +134,41 @@ public class TripStopsFragment extends Fragment {
 
     }
 
+    //Manage the check box and refresh the data
+    private class OnListItemClickListener implements AdapterView.OnItemClickListener {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            CheckedTextView cvt = (CheckedTextView)view.findViewById(R.id.checkedTextView);
+            TripRow row = adapter.getItem(position);
+            TripGroup group = row.tgroup;
+            if (cvt.isChecked()) {
+                cvt.setChecked(false);
+                row.businessRelated = false;
+                row.save();
+                //Log.v("Item Clicked: ", row.address + "\n" + Boolean.toString(row.businessRelated));
+            } else {
+                cvt.setChecked(true);
+                row.businessRelated = true;
+                row.save();
+                //Log.v("Item Clicked: ", row.address + "\n" + Boolean.toString(row.businessRelated));
+            }
+
+            mListener.onStopClicked(adapter.getTripRows());
+            Log.v("Item Clicked", "CLICK");
+        }
+    }
+
+    private class OnItemLongPressListener implements AdapterView.OnItemLongClickListener {
+        //TODO: Add code to delete item here with a Dialog
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+
+            Log.v("Item Long Press: ",  "PRESS");
+            return false;
+        }
+    }
+
     private class LoadData extends AsyncTask<TripGroup, Void, List<TripRow>> implements
             TripGroupProcessor.GroupProcessorInterface {
 
@@ -145,18 +185,12 @@ public class TripStopsFragment extends Fragment {
             TripGroup group = params[0];
 
             TripGroupProcessor processor = new TripGroupProcessor(TripStopsFragment.this.getActivity().getApplicationContext(), this);
-            processor.processTripGroup(group);
+            //processor.processTripGroup(group);
 
             String entries[] = {Long.toString(group.getId())};
             List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
-            for (TripRow row : rows ) {
-                Log.v("ROW DISTANCE: ", Double.toString(row.distance));
-                if (row.points != null) {
-                    Log.v("ROW POINTS: ", row.points);
-                }
+            processor.processTripGroup(rows);
 
-                Log.v("ROW ADDRES: ", row.address);
-            }
             miles = group.billableMileage;
             return rows;
         }
@@ -180,7 +214,7 @@ public class TripStopsFragment extends Fragment {
         }
 
         @Override
-        public void finishedGroupProcessing(java.util.List rows) {
+        public void finishedGroupProcessing(List<TripRow> rows) {
 
         }
 
@@ -202,9 +236,9 @@ public class TripStopsFragment extends Fragment {
      */
     public interface OnStopInteractionListener {
         // TODO: Update argument type and name
-        public void onStopInteraction(TripRow row);
-        public void stopItemLongPress(TripRow row);
-        public void tripStopsDataLoaded(java.util.List rows);
+        public void onStopClicked(List<TripRow> rows);
+        public void onStopLongPress(TripRow row);
+        public void tripStopsDataLoaded(List<TripRow> rows);
     }
 
 }

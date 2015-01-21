@@ -49,27 +49,7 @@ public class TripGroupProcessor {
             String entries[] = {Long.toString(group.getId())};
             //Get the full list, check each stop to make sure it's not too close to a HomePoint
             List<TripRow> rowsList = processHomePoints(TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null));
-            if (rowsList == null || rowsList.size() == 0) { //Null list of rows something went weird
-                callback.unableToProcessGroup(INVALID_GROUP);
-            } else if (rowsList.size() == 1 ) {//Only one or no stops, remove it all as invalid data
-                for(TripRow row: rowsList) {
-                    row.delete();
-                }
-                group.delete();
-                callback.unableToProcessGroup(INVALID_GROUP);
-            } else if (rowsList.size() == 2) {//Check if the start and and end are the same with no stops between
-                boolean isSameStop = sameStop(rowsList.get(0), rowsList.get(1));
-                if (isSameStop) {
-                    rowsList.get(0).delete();
-                    rowsList.get(1).delete();
-                    group.delete();
-                    callback.unableToProcessGroup(INVALID_GROUP);
-                } else {
-                    updateData(rowsList);
-                }
-            } else {
-                updateData(rowsList);
-            }
+            processTripGroup(rowsList);
         } else if (group.processed){
             addressDistanceServices = new AddressDistanceServices(context);
             String entries[] = {Long.toString(group.getId())};
@@ -83,6 +63,43 @@ public class TripGroupProcessor {
             callback.unableToProcessGroup(UNKOWN_FAILURE);
         }
     }
+
+    public void processTripGroup(List<TripRow> rowsList) {
+        TripGroup group = null;
+        addressDistanceServices = new AddressDistanceServices(context);
+        if (rowsList == null || rowsList.size() == 0) { //Null list of rows something went weird
+            callback.unableToProcessGroup(INVALID_GROUP);
+        } else if (rowsList.size() == 1) {//Only one or no stops, remove it all as invalid data
+            group = rowsList.get(0).tgroup;
+            if (group.group_closed) {
+                for (TripRow row : rowsList) {
+                    row.delete();
+                }
+                group.delete();
+                callback.unableToProcessGroup(INVALID_GROUP);
+            }
+
+        } else if (rowsList.size() == 2) {//Check if the start and and end are the same with no stops between
+            group = rowsList.get(0).tgroup;
+            if (group.group_closed) {
+                boolean isSameStop = sameStop(rowsList.get(0), rowsList.get(1));
+                if (isSameStop) {
+                    rowsList.get(0).delete();
+                    rowsList.get(1).delete();
+                    group.delete();
+                    callback.unableToProcessGroup(INVALID_GROUP);
+                } else {
+                    updateData(rowsList);
+                }
+            } else {
+                updateData(rowsList);
+            }
+
+        } else {
+            updateData(rowsList);
+        }
+    }
+
 
     private boolean hasInternetAccess() {
         try {
@@ -120,7 +137,7 @@ public class TripGroupProcessor {
     }
 
     //Work through the trip stops, if any of them are too close to HomePoints we want to remove it.
-    private java.util.List processHomePoints(java.util.List rows) {
+    private List<TripRow> processHomePoints(List<TripRow> rows) {
         java.util.List homes = HomePoints.listAll(HomePoints.class);
         if (rows != null) {
             LinkedList<TripRow> linkedRows = new LinkedList<TripRow>();
@@ -141,7 +158,7 @@ public class TripGroupProcessor {
         return rows;
     }
 
-    private boolean tooCloseToHome(TripRow row, java.util.List homes) {
+    private boolean tooCloseToHome(TripRow row, List<HomePoints> homes) {
         Iterator<HomePoints> it = homes.iterator();
         while (it.hasNext()) {
             HomePoints home = it.next();
@@ -175,12 +192,15 @@ public class TripGroupProcessor {
                 JSONObject json = addressDistanceServices.getTripJson(new LatLng(lastRow.lat, lastRow.lon), new LatLng(nextRow.lat, nextRow.lon));
                 nextRow.distance = addressDistanceServices.getDistance(json);
                 nextRow.points = addressDistanceServices.getEncodedPoly(json);
-                Log.v("TRIPGROUPPROCESSOR: ", "POINTS: " + nextRow.points);
+                //Log.v("TRIPGROUPPROCESSOR: ", "POINTS: " + nextRow.points);
                 nextRow.address = addressDistanceServices.getEndAddressFromJson(json);
                 nextRow.save();
                 lastRow = nextRow;
             }
-            lastRow.tgroup.processed = true;
+            if (lastRow.tgroup.group_closed) {
+                lastRow.tgroup.processed = true;
+            }
+
             lastRow.tgroup.save();
         } catch (JSONException je) {
             callback.unableToProcessGroup(UNKOWN_FAILURE);

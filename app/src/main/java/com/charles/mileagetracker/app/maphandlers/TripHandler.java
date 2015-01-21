@@ -10,6 +10,7 @@ import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
+import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -104,7 +105,7 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
     }
 
     @Override
-    public void setTripData(java.util.List rows) {
+    public void setTripData(List<TripRow> rows) {
         this.rows = rows;
         new DrawLines().execute(rows);
     }
@@ -118,7 +119,8 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
     This class takes a TripGroup and generates the PolyLine points in a background thread.  It then
     puts them on the map after it generates them.
      */
-    private class DrawLines extends AsyncTask<List<TripRow>, Integer, List<TripRow>> {
+    private class DrawLines extends AsyncTask<List<TripRow>, Integer, List<TripRow>> implements
+        TripGroupProcessor.GroupProcessorInterface{
 
         private AddressDistanceServices distanceServices;
 
@@ -126,12 +128,19 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
         protected void onPreExecute() {
             super.onPreExecute();
             distanceServices = new AddressDistanceServices(context);
+            map.clear();
         }
 
         @Override
         protected List<TripRow> doInBackground(List... params) {
 
-            List rows = params[0];
+            List<TripRow> rows = params[0];
+
+            if (!rows.get(0).tgroup.processed) {
+                TripGroupProcessor processor = new TripGroupProcessor(context, this);
+                processor.processTripGroup(rows);
+            }
+
             Iterator<TripRow> it = rows.iterator();
             while (it.hasNext()) {
                 TripRow row = it.next();
@@ -168,6 +177,7 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
                             .flat(true)
                 );
                 row.marker = marker;
+                marker.setTitle(row.address);
                 //We need to skip the first row
                 if (row.points != null) {
                     int color = Color.RED;
@@ -178,5 +188,19 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
                 }
             }
         }
+
+        @Override
+        public void finishedGroupProcessing(List<TripRow> rows) {
+
+        }
+
+        @Override
+        public void unableToProcessGroup(int failCode) {
+
+        }
+    }
+
+    public interface TripMapCallbacks {
+        public void onTripMapMarkerChanged(TripRow row);
     }
 }
