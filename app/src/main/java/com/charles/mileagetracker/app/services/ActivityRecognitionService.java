@@ -7,19 +7,22 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.database.TripRowCreator;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
+import com.charles.mileagetracker.app.database.orm.Status;
+import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.services.intentservices.ActivityRecognitionIntentService;
-import com.charles.mileagetracker.app.services.intentservices.GetCurrentLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+
+import java.util.Date;
 
 /**
  *A long-running service that starts when you leave a fenced in area.  This registers an IntentService
  * ActivityRecognitionIntentService to process your current activity.
  */
 
-//TODO: I need to rework this class so that it initialized the variables as well as handles creating the db start entry
+//TODO: I need to rework this class so that it initializes the variables as well as handles creating the db start entry
 public class ActivityRecognitionService extends Service implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener {
@@ -79,9 +82,9 @@ public class ActivityRecognitionService extends Service implements
 
         if (intent.getBooleanExtra("stop", false)) {
 
-            Intent getLocationIntent = new Intent(getApplicationContext(), GetCurrentLocation.class);
+            /*Intent getLocationIntent = new Intent(getApplicationContext(), LogLocation.class);
             getLocationIntent.putExtra("stop", true);
-            startService(getLocationIntent);
+            startService(getLocationIntent);*/
             stopUpdates();
             return 0;
         } else {
@@ -90,9 +93,11 @@ public class ActivityRecognitionService extends Service implements
             lon = intent.getDoubleExtra("lon", -1);
             Log.v("DEBUG: ", "Lat/Lng from ActivityService: "+ "Lat: " + Double.toString(lat) + " Lon: " + Double.toString(lon));
 
-            TripRowCreator rowCreator = new TripRowCreator(getApplicationContext());//Record our starting path location
-            rowCreator.recordSegment(id, lat, lon);
+            Status status = Status.listAll(Status.class).get(0);
+            TripGroup group = status.trip_group;
 
+            TripRow row = new TripRow(new Date(), new Date(), lat, lon, null, 0, group);
+            row.save();
 
             Log.v("DEBUG: ", "ActivityRecognitionSerivce, starting from id: " + Integer.toString(id));
             mInProgress = false;
@@ -204,5 +209,4 @@ public class ActivityRecognitionService extends Service implements
             mActivityRecognitionClient.connect();
         }
     }
-
 }

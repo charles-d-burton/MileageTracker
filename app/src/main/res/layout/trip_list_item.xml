@@ -7,6 +7,17 @@
     >
 
 
+    <TextView android:id="@+id/end_trip_date_time"
+        android:layout_width="230dp"
+        android:layout_height="wrap_content"
+        android:text="Sample Data 2"
+        android:textSize="15sp"
+        android:paddingBottom="4dp"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/end_trip_item_address"
+        android:layout_alignParentLeft="true"
+
+        android:paddingLeft="2dp" />
     <TextView android:id="@+id/end_trip_item_address"
         android:layout_width="230dp"
         android:layout_height="wrap_content"
@@ -19,33 +30,5 @@
         android:paddingTop="3dp"
         android:paddingLeft="2dp"
         />
-
-    <TextView android:id="@+id/end_trip_date_time"
-        android:layout_width="230dp"
-        android:layout_height="wrap_content"
-        android:text="Sample Data 2"
-        android:textSize="15sp"
-        android:paddingBottom="4dp"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/end_trip_item_address"
-        android:layout_alignParentLeft="true"
-
-        android:paddingLeft="2dp" />
-
-    <!--<ImageButton
-        android:layout_width="64dp"
-        android:layout_height="wrap_content"
-        android:id="@+id/map_button"
-        android:layout_weight="0.11"
-        android:layout_gravity="right"
-        android:src="@android:drawable/ic_menu_mapmode"
-        android:padding="3dp"
-        android:clickable="false"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignBottom="@+id/end_trip_date_time"
-        android:focusable="false"
-        />-->
 
 </GridLayout>

@@ -2,24 +2,42 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.charles.mileagetracker.app" >
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+
     <application
+        android:name="com.orm.SugarApp"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme"
-        android:name="com.orm.SugarApp">
-
-        <meta-data android:name="DATABASE" android:value="sugar_trip.db" />
-        <meta-data android:name="VERSION" android:value="2" />
-        <meta-data android:name="QUERY_LOG" android:value="true" />
-        <meta-data android:name="DOMAIN_PACKAGE_NAME" android:value="com.charles.mileagetracker.app.database.orm" />
-
-        <provider
-            android:name=".database.TrackerContentProvider"
-            android:authorities="com.charles.mileagetracker.app.database.TrackerContentProvider"
-            android:exported="true" >
-        </provider>
-
+        android:theme="@style/AppTheme" >
+        <meta-data
+            android:name="DATABASE"
+            android:value="sugar_trip.db" />
+        <meta-data
+            android:name="VERSION"
+            android:value="2" />
+        <meta-data
+            android:name="QUERY_LOG"
+            android:value="true" />
+        <meta-data
+            android:name="DOMAIN_PACKAGE_NAME"
+            android:value="com.charles.mileagetracker.app.database.orm" />
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyCWLe7RmQQR4AJaMx8xPIZcjSg2FnQ5if4" />
@@ -32,13 +50,6 @@
                 <action android:name="com.charles.mileagetracker.app.ACTION_RECEIVE_GEOFENCE" />
             </intent-filter>
         </receiver>
-
-        <service
-            android:name=".services.RecordTrackService"
-            android:enabled="true"
-            android:exported="true" >
-        </service>
-
         <receiver
             android:name=".receivers.BootReceiver"
             android:enabled="true"
@@ -62,22 +73,10 @@
             android:name=".services.intentservices.ActivityRecognitionIntentService"
             android:exported="false" >
         </service>
-        <service
-            android:name=".services.intentservices.GetCurrentLocation"
-            android:exported="false" >
-        </service>
 
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
-
-        <activity
-            android:name=".activities.ExpandingTripList"
-            android:label="@string/title_activity_expanding_trip_list" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".activities.MainActivity" />
-        </activity>
 
         <service
             android:name=".services.intentservices.SaveBusinessRelated"
@@ -104,32 +103,19 @@
         </service>
 
         <activity
-            android:name=".activities.MainActivity"
-            android:label="@string/title_activity_show_location" >
+            android:name=".activities.MapDrawerActivity"
+            android:label="@string/title_activity_map_drawer" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".services.intentservices.TripPostProcess"
+            android:exported="false" >
+        </service>
     </application>
-
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-
-    <uses-feature
-        android:glEsVersion="0x00020000"
-        android:required="true" />
 
 </manifest>

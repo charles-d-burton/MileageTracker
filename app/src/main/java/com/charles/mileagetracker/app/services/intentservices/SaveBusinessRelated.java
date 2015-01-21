@@ -1,19 +1,18 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.charles.mileagetracker.app.database.TrackerContentProvider;
-import com.charles.mileagetracker.app.database.TripTable;
+import com.charles.mileagetracker.app.database.orm.TripRow;
+
+import java.util.List;
 
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
  * <p>
- * TODO: Customize class - update intent actions and extra parameters.
  */
 public class SaveBusinessRelated extends IntentService {
 
@@ -26,7 +25,7 @@ public class SaveBusinessRelated extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final Bundle bundle = intent.getExtras();
-            int groupId = bundle.getInt("group");
+            int groupId = bundle.getInt("tgroup");
             if (groupId != -1) {
                 markAllAsBusiness(groupId);
             }
@@ -35,9 +34,11 @@ public class SaveBusinessRelated extends IntentService {
     }
 
     private void markAllAsBusiness(int group) {
-        ContentValues values = new ContentValues();
-        values.put(TripTable.BUSINESS_RELATED, 1);
-        getContentResolver().update(TrackerContentProvider.TRIP_URI, values, TripTable.TRIP_KEY + "=" + group, null);
+        List<TripRow>  tripRows = TripRow.find(TripRow.class, " tgroup = ? ", Integer.toString(group));
+        for (TripRow tripRow : tripRows) {
+            tripRow.businessRelated = true;
+            tripRow.save();
+        }
     }
 
 }
