@@ -31,6 +31,10 @@ public class TripPostProcess extends IntentService implements TripGroupProcessor
     private AddressDistanceServices addressDistanceServices = null;
     private Context context;
 
+    private TripGroup group = null;
+    private final String question = "Were all stops business related?";
+    private final String complete = "Trip Complete";
+
 
     /**
      * Starts this service to perform action Baz with the given parameters. If
@@ -69,7 +73,7 @@ public class TripPostProcess extends IntentService implements TripGroupProcessor
     private void handleActionProcessGroup(Integer group_id) {
         //Verify that we have a validate group and access to the internet with data
         if (group_id != -1) {
-            TripGroup group = TripGroup.findById(TripGroup.class, new Long(group_id));
+            group = TripGroup.findById(TripGroup.class, new Long(group_id));
             if (group != null) {
                 TripGroupProcessor processor = new TripGroupProcessor(getApplicationContext(), this);
                 processor.processTripGroup(group);
@@ -80,14 +84,27 @@ public class TripPostProcess extends IntentService implements TripGroupProcessor
     @Override
     public void finishedGroupProcessing(List<TripRow> rows) {
         if (rows != null) {
-            TripGroup group = rows.get(0).tgroup;
-            generateNotification("Trip Complete","Were all stops business related?", group.getId().intValue());
+            //group = rows.get(0).tgroup;
+            generateNotification(complete, question, group.getId().intValue());
         }
 
     }
 
     @Override
     public void unableToProcessGroup(int failCode) {
+        switch (failCode) {
+            case TripGroupProcessor.CONNECT_FAILED:
+                generateNotification(complete, question, group.getId().intValue());
+                break;
+            case TripGroupProcessor.INVALID_GROUP:
+                break;
+            case TripGroupProcessor.UNKOWN_FAILURE:
+                generateNotification(complete, question, group.getId().intValue());
+                break;
+            default:
+                generateNotification(complete, question, group.getId().intValue());
+                break;
+        }
 
     }
 
@@ -110,8 +127,8 @@ public class TripPostProcess extends IntentService implements TripGroupProcessor
                 .setContentTitle(title)
                 .setContentText(message)
                 .setContentIntent(selectPathSegments)
-                .addAction(android.R.drawable.btn_plus, "Yes", saveTrip)
-                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "No", selectPathSegments);
+                .addAction(R.drawable.ic_action_accept, "Yes", saveTrip)
+                .addAction(R.drawable.ic_action_cancel, "No", selectPathSegments);
 
         NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(0, builder.build());

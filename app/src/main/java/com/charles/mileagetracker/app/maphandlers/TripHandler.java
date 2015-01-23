@@ -35,7 +35,7 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
     private GoogleMap map = null;
     private Context context = null;
 
-    private java.util.List rows = null;
+    private List<TripRow> rows = null;
     private HashMap<Marker, TripRow> markerTracker = new HashMap<Marker,TripRow>();
     private HashMap<TripRow, java.util.List> polyLineTracker = new HashMap<TripRow, java.util.List>();
 
@@ -86,7 +86,11 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
 
     @Override
     public void onMarkerDragEnd(Marker marker) {
+        for (TripRow row: rows) {
+            if (row.marker != null && row.marker.equals(marker)) {
 
+            }
+        }
     }
 
     @Override
