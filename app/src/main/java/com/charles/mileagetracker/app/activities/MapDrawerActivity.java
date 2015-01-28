@@ -89,6 +89,8 @@ public class MapDrawerActivity extends ActionBarActivity
     private MapHandlerInterface mapHandlerInterface = null;
     private TripStopsFragment tripStopsFragment = null;
 
+    private TripGroup currentWorkingGroup = null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -250,7 +252,9 @@ public class MapDrawerActivity extends ActionBarActivity
     }
 
     public void onItemTouched(TripRow row) {
+        currentWorkingGroup = row.tgroup;
         googleMap.clear();
+
         if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
             drawerLayout.closeDrawers();
             slideUpLayout.expandPanel();
@@ -259,12 +263,11 @@ public class MapDrawerActivity extends ActionBarActivity
         mapHandlerInterface = tripHandler;
         mapHandlerInterface.connect(googleMap, this);
         tripStopsFragment.setData(row);
-
-
     }
 
     @Override
     public void onItemLongPressed(TripGroup group) {
+        currentWorkingGroup = group;
         googleMap.clear();
         if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
             drawerLayout.closeDrawers();
@@ -272,8 +275,6 @@ public class MapDrawerActivity extends ActionBarActivity
         TripHandler tripHandler = new TripHandler();
         mapHandlerInterface = tripHandler;
         mapHandlerInterface.connect(googleMap, this);
-
-
 
     }
 
@@ -290,7 +291,7 @@ public class MapDrawerActivity extends ActionBarActivity
     }
 
     @Override
-    public void tripStopsDataLoaded(java.util.List rows) {
+    public void tripStopsDataLoaded(List<TripRow> rows) {
         mapHandlerInterface.setTripData(rows);
     }
 

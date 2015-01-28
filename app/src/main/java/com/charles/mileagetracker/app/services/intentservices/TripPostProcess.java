@@ -122,15 +122,21 @@ public class TripPostProcess extends IntentService implements TripGroupProcessor
         saveTripService.putExtra("tgroup", groupId);
         PendingIntent saveTrip = PendingIntent.getService(context, 0, saveTripService,PendingIntent.FLAG_ONE_SHOT);
 
+        PendingIntent doNothing = PendingIntent.getService(context, 0, new Intent(), PendingIntent.FLAG_ONE_SHOT);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setSmallIcon(R.drawable.ic_launcher)
+                .setAutoCancel(true)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setContentIntent(selectPathSegments)
                 .addAction(R.drawable.ic_action_accept, "Yes", saveTrip)
-                .addAction(R.drawable.ic_action_cancel, "No", selectPathSegments);
+                .addAction(R.drawable.ic_action_accept, "Select", selectPathSegments)
+                .addAction(R.drawable.ic_action_cancel, "No", doNothing );
+
 
         NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(0, builder.build());
+
     }
 }

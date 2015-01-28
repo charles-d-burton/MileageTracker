@@ -2,11 +2,15 @@ package com.charles.mileagetracker.app.maphandlers;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.location.Address;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.provider.Telephony;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.activities.MapDrawerActivity;
+import com.charles.mileagetracker.app.database.orm.HomePoints;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
 import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
@@ -18,9 +22,14 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
  * Created by charles on 12/15/14.
@@ -30,7 +39,8 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMarkerClickListener,
         GoogleMap.OnMarkerDragListener,
-        MapDrawerActivity.MapHandlerInterface{
+        MapDrawerActivity.MapHandlerInterface,
+        TripGroupProcessor.GroupProcessorInterface{
 
     private GoogleMap map = null;
     private Context context = null;
@@ -86,10 +96,27 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
 
     @Override
     public void onMarkerDragEnd(Marker marker) {
+        boolean matchfound = false;
         for (TripRow row: rows) {
             if (row.marker != null && row.marker.equals(marker)) {
+                row.lat = marker.getPosition().latitude;
+                row.lon = marker.getPosition().longitude;
+                row.save();
 
+                //I have to get the first object, they're not reloaded dynamically
+                TripGroup group = rows.get(0).tgroup;
+                group.processed = false;
+                group.save();
+
+                Log.v("Match GROUP id before processing: ", Long.toString(group.getId()));
+
+                new DrawLines().execute(rows);
+
+                matchfound = true;
             }
+        }
+        if (!matchfound) {
+            Log.v("Match FOUND: ", "No Match Found");
         }
     }
 
@@ -111,11 +138,22 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
     @Override
     public void setTripData(List<TripRow> rows) {
         this.rows = rows;
+
         new DrawLines().execute(rows);
     }
 
     @Override
-    public void setHomeData(java.util.List homes) {
+    public void setHomeData(List<HomePoints> homes) {
+
+    }
+
+    @Override
+    public void finishedGroupProcessing(List<TripRow> rows) {
+
+    }
+
+    @Override
+    public void unableToProcessGroup(int failCode) {
 
     }
 
@@ -124,13 +162,14 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
     puts them on the map after it generates them.
      */
     private class DrawLines extends AsyncTask<List<TripRow>, Integer, List<TripRow>> implements
-        TripGroupProcessor.GroupProcessorInterface{
+        TripGroupProcessor.GroupProcessorInterface {
 
         private AddressDistanceServices distanceServices;
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            //Log.v("MATCH FOUND: ", "RUNNING BACKGROUND THREAD");
             distanceServices = new AddressDistanceServices(context);
             map.clear();
         }
@@ -140,9 +179,15 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
 
             List<TripRow> rows = params[0];
 
-            if (!rows.get(0).tgroup.processed) {
+            TripRow topRow = rows.get(0);
+            TripGroup group = topRow.tgroup;
+            Log.v("MATCH GROUP: ", Boolean.toString(group.processed));
+            Log.v("Match GROUP id after processing: ", Long.toString(group.getId()));
+
+            if (!group.processed) {
                 TripGroupProcessor processor = new TripGroupProcessor(context, this);
                 processor.processTripGroup(rows);
+                Log.v("MATCH FOUND: ", "Processing Rows");
             }
 
             Iterator<TripRow> it = rows.iterator();
@@ -170,6 +215,7 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
         @Override
         protected void onPostExecute(List<TripRow> rows) {
             if (rows == null) return;
+
             super.onPostExecute(rows);
             for (int i = 0; i < rows.size(); i++) {
                 TripRow row = rows.get(i);
@@ -188,9 +234,11 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
                     if (row.businessRelated) {
                         color = Color.GREEN;
                     }
-                    Polyline polyline = map.addPolyline(new PolylineOptions().addAll(row.polyPoints).width(5).color(color).geodesic(true));
+                    Polyline polyline = map.addPolyline(new PolylineOptions().addAll(row.polyPoints)
+                            .width(5).color(color).geodesic(true));
                 }
             }
+            TripHandler.this.rows = rows;
         }
 
         @Override
