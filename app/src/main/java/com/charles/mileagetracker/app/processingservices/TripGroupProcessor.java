@@ -187,6 +187,7 @@ public class TripGroupProcessor {
             TripRow lastRow = rowsIterator.next();//Skip the first, it's a start point and doesn't have distance data
             addressDistanceServices.setAddress(lastRow);
             lastRow.save();
+
             while (rowsIterator.hasNext()) {
                 TripRow nextRow = rowsIterator.next();
                 JSONObject json = addressDistanceServices.getTripJson(new LatLng(lastRow.lat, lastRow.lon), new LatLng(nextRow.lat, nextRow.lon));

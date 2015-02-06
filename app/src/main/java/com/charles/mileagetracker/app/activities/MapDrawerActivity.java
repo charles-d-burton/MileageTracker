@@ -121,6 +121,8 @@ public class MapDrawerActivity extends ActionBarActivity
             }
         };
         slideUpLayout = (SlidingUpPanelLayout)findViewById(R.id.stops_slide_up_layout);
+        //slideUpLayout.setPanelHeight(40);
+        //slideUpLayout.setShadowHeight(4);
         drawerLayout.setDrawerListener(drawerToggle);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);

@@ -153,9 +153,25 @@ public class TripStopsFragment extends Fragment {
                 row.save();
                 //Log.v("Item Clicked: ", row.address + "\n" + Boolean.toString(row.businessRelated));
             }
+            updateMileage(row);
 
             mListener.onStopClicked(adapter.getTripRows());
             Log.v("Item Clicked", "CLICK");
+        }
+
+        private void updateMileage(TripRow row) {
+            TripGroup group = row.tgroup;
+            List<TripRow> rows = adapter.getTripRows();
+            double miles = 0.0;
+            for (TripRow stop : rows) {
+                if (stop.businessRelated) {
+                    miles = miles + stop.distance;
+                }
+            }
+            group.billableMileage = miles;
+            group.save();
+            mileageView.setText("Miles: " + Double.toString((group.billableMileage)));
+
         }
     }
 
@@ -198,8 +214,10 @@ public class TripStopsFragment extends Fragment {
         @Override
         protected void onPostExecute(List<TripRow> tripRows) {
             super.onPostExecute(tripRows);
+            float billableMilage = (float)tripRows.get(0).tgroup.billableMileage;
+            Log.v("Mileage: ", Float.toString(billableMilage);
             numStopView.setText("Stops: " + Integer.toString(tripRows.size()));
-            mileageView.setText("Miles: " + Double.toString((miles)));
+            mileageView.setText("Miles: " + Float.toString(billableMilage));
             adapter.reloadRows(tripRows);
             adapter.notifyDataSetInvalidated();
             adapter.notifyDataSetChanged();
