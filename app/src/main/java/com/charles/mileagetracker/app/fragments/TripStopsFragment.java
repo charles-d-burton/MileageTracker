@@ -215,7 +215,7 @@ public class TripStopsFragment extends Fragment {
         protected void onPostExecute(List<TripRow> tripRows) {
             super.onPostExecute(tripRows);
             float billableMilage = (float)tripRows.get(0).tgroup.billableMileage;
-            Log.v("Mileage: ", Float.toString(billableMilage);
+            Log.v("Mileage: ", Float.toString(billableMilage));
             numStopView.setText("Stops: " + Integer.toString(tripRows.size()));
             mileageView.setText("Miles: " + Float.toString(billableMilage));
             adapter.reloadRows(tripRows);
