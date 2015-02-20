@@ -59,6 +59,11 @@ public class GenerateXLS extends AsyncTask<Long, Void, Boolean> {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
+        csvDialog = new ProgressDialog(context);
+        csvDialog.setMessage("Generating Excel File....");
+        csvDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        csvDialog.setIndeterminate(true);
+        csvDialog.show();
     }
 
     @Override

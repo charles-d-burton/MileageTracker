@@ -45,10 +45,10 @@ public class HomeHandler extends MapActivityHandler implements
     public final String HANDLER_TAG = ((Object)this).getClass().getName();
 
 
-    private GoogleMap map;
-    private Location currentLocation;
-    private GetCurrentLocation getCurrentLocation = null;
-    private Context context;
+    //private GoogleMap map;
+    //private Location currentLocation;
+    //private GetCurrentLocation getCurrentLocation = null;
+    //private Context context;
 
     private List<HomePoints> homePoints = null;
 

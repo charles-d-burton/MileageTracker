@@ -27,8 +27,8 @@ import java.util.List;
 public class TripHandler  extends MapActivityHandler implements
         TripGroupProcessor.GroupProcessorInterface{
 
-    private GoogleMap map = null;
-    private Context context = null;
+    //private GoogleMap map = null;
+    //private Context context = null;
 
     private List<TripRow> rows = null;
 
@@ -134,7 +134,9 @@ public class TripHandler  extends MapActivityHandler implements
             super.onPreExecute();
             //Log.v("MATCH FOUND: ", "RUNNING BACKGROUND THREAD");
             distanceServices = new AddressDistanceServices(context);
-            map.clear();
+            if (map != null) {
+                map.clear();
+            }
         }
 
         @Override

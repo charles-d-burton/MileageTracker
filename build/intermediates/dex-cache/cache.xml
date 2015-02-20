@@ -23,6 +23,34 @@
         <dex dex="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/pre-dexed/debug/classes-7deed1172a3c7d1c59906d212bbe531d441de490.jar" />
     </item>
     <item
+        jar="/home/charles/.gradle/caches/modules-2/files-2.1/commons-codec/commons-codec/1.9/9ce04e34240f674bc72680f8b843b1457383161a/commons-codec-1.9.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="9ce04e34240f674bc72680f8b843b1457383161a">
+        <dex dex="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/pre-dexed/debug/commons-codec-1.9-5d4e91cf0acc940b9f5a15e07cd271a6e9ab5e16.jar" />
+    </item>
+    <item
+        jar="/home/charles/.gradle/caches/modules-2/files-2.1/org.apache.poi/poi/3.11/51058d9db469437a5ed0aa508e7de8937019e1d9/poi-3.11.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="51058d9db469437a5ed0aa508e7de8937019e1d9">
+        <dex dex="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/pre-dexed/debug/poi-3.11-d2567ad945c872863263802fbdedfc354e4cccf5.jar" />
+    </item>
+    <item
+        jar="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/exploded-aar/com.android.support/support-v4/21.0.2/libs/internal_impl-21.0.2.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="962e8b12569c56dbdcf8367eb4eac8bb129cd18f">
+        <dex dex="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/pre-dexed/debug/internal_impl-21.0.2-96f44a8bd37e5bcaecf8e356ca75095b8676d707.jar" />
+    </item>
+    <item
+        jar="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/exploded-aar/com.google.android.gms/play-services/6.1.71/classes.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="0f6d5c1ef2e982c3b7858408e3df389cf5d202da">
+        <dex dex="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/pre-dexed/debug/classes-9132046f0ba86482b393dcdeabb083db7b2e17be.jar" />
+    </item>
+    <item
         jar="/home/charles/.gradle/caches/modules-2/files-2.1/net.sf.opencsv/opencsv/2.3/c23708cdb9e80a144db433e23344a788a1fd6599/opencsv-2.3.jar"
         jumboMode="false"
         revision="20.0.0"
@@ -49,20 +77,6 @@
         revision="20.0.0"
         sha1="0e546fc8dc1f68c39d41c544e2155c797b558492">
         <dex dex="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/pre-dexed/debug/classes-4e642c435c44ee93d0fbaa829bfd838b542e471e.jar" />
-    </item>
-    <item
-        jar="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/exploded-aar/com.android.support/support-v4/21.0.2/libs/internal_impl-21.0.2.jar"
-        jumboMode="false"
-        revision="20.0.0"
-        sha1="962e8b12569c56dbdcf8367eb4eac8bb129cd18f">
-        <dex dex="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/pre-dexed/debug/internal_impl-21.0.2-96f44a8bd37e5bcaecf8e356ca75095b8676d707.jar" />
-    </item>
-    <item
-        jar="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/exploded-aar/com.google.android.gms/play-services/6.1.71/classes.jar"
-        jumboMode="false"
-        revision="20.0.0"
-        sha1="0f6d5c1ef2e982c3b7858408e3df389cf5d202da">
-        <dex dex="/home/charles/AndroidStudioProjects/MileageTracker/app/build/intermediates/pre-dexed/debug/classes-9132046f0ba86482b393dcdeabb083db7b2e17be.jar" />
     </item>
 
 </items>
