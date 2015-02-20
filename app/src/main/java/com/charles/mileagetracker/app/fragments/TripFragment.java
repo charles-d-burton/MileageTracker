@@ -91,13 +91,14 @@ public class TripFragment extends Fragment {
         tripList.setOnItemClickListener(new OnListItemClickedListener());
         tripList.setOnItemLongClickListener(new OnListItemLongPressListener());
         // Inflate the layout for this fragment
+        this.setRetainInstance(true);
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        new LoadTripData().execute();
+
 
     }
 
@@ -117,6 +118,7 @@ public class TripFragment extends Fragment {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+        new LoadTripData().execute();
     }
 
     @Override

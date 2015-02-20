@@ -101,10 +101,10 @@ public class AddressDistanceServices {
         for (int i = 0; i < routeArray.length(); i++) {
             //Log.v("OVERVIEW: ", "SEARCHING");
             JSONObject route = routeArray.getJSONObject(i);
-            Log.v("OVERVIEW: ", route.toString());
+            //Log.v("OVERVIEW: ", route.toString());
             JSONObject overviewPolylines = route.getJSONObject("overview_polyline");
             if (!overviewPolylines.toString().isEmpty()) {
-                Log.v("OVERVIEW: ", "FOUND! " + overviewPolylines.toString());
+                //Log.v("OVERVIEW: ", "FOUND! " + overviewPolylines.toString());
                 return overviewPolylines.getString("points");
             }
         }

@@ -37,16 +37,12 @@ import java.util.concurrent.Executors;
 /**
  * Created by charles on 12/15/14.
  */
-public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
-    GoogleMap.OnMapLongClickListener,
-    GoogleMap.OnMapClickListener,
-    GoogleMap.OnMarkerClickListener,
-    GoogleMap.OnMarkerDragListener,
+public class HomeHandler extends MapActivityHandler implements
     LocationClient.OnAddGeofencesResultListener,
-    LocationClient.OnRemoveGeofencesResultListener,
-        MapDrawerActivity.MapHandlerInterface{
+    LocationClient.OnRemoveGeofencesResultListener {
 
     private final String CLASS_NAME = ((Object)this).getClass().getName();
+    public final String HANDLER_TAG = ((Object)this).getClass().getName();
 
 
     private GoogleMap map;
@@ -58,28 +54,11 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
 
     private AlertDialog runningDialog = null;
 
-    public HomeHandler() {
+    public HomeHandler(Context context, GoogleMap map) {
+        super(context, map);
     }
 
     public void addMarker(Location location) {
-
-    }
-
-    @Override
-    public void retrievedLocation(double resolution, Location location) {
-        String locationString = "\n" + Double.toString(location.getLatitude()) + "\n" + Double.toString(location.getLongitude()) + "\n";
-
-        Log.v(CLASS_NAME, locationString);
-        this.currentLocation = location;
-    }
-
-    @Override
-    public void locationClientConnected() {
-
-    }
-
-    @Override
-    public void locationConnectionFailed() {
 
     }
 
@@ -365,50 +344,48 @@ public class HomeHandler implements GetCurrentLocation.GetLocationCallback,
         }
     }
 
-    private void zoomToLocation(LatLng latLng) {
-        if (latLng != null) {
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
-        }
-    }
-
-    //App paused, stop listening for location updates and cleanup.
     @Override
-    public void disconnect() {
-        if (getCurrentLocation != null) {
-            getCurrentLocation.forceDisconnect();
-        }
-        if ( runningDialog != null) {
-            runningDialog.dismiss();
-        }
+    public void setTripData(List<TripRow> rows) {
+        //this.homePoints = (List<HomePoints>)data;
     }
 
     @Override
+    public String getTag() {
+        return HANDLER_TAG;
+    }
+
+    @Override
+    public void connect() {
+        super.connect();
+        homePoints = HomePoints.listAll(HomePoints.class);
+        addStartPoints(homePoints);
+    }
+
+    /*@Override
     public void connect(GoogleMap map, Context context) {
         this.map = map;
         this.context = context;
-        Log.v(CLASS_NAME, "Setting Map Long Click Listener");
         map.setOnMapLongClickListener(this);
         map.setOnMapClickListener(this);
         map.setOnMarkerClickListener(this);
         map.setOnMarkerDragListener(this);
-
 
         getCurrentLocation = new GetCurrentLocation(context);
         getCurrentLocation.updateLocation(this, true);
 
         homePoints = HomePoints.listAll(HomePoints.class);
         addStartPoints(homePoints);
-    }
+    }*/
 
-    @Override
+    /*@Override
     public void setTripData(List rows) {
 
     }
 
     @Override
     public void setHomeData(List homes) {
-
-    }
+        addStartPoints(HomePoints.listAll(HomePoints.class));
+    }*/
 
     //Helper Class that retrieves an address from Google in the background
     private class RetrieveAddress implements Runnable {

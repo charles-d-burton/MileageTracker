@@ -2,18 +2,13 @@ package com.charles.mileagetracker.app.maphandlers;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.location.Address;
 import android.location.Location;
 import android.os.AsyncTask;
-import android.provider.Telephony;
 import android.util.Log;
 
-import com.charles.mileagetracker.app.activities.MapDrawerActivity;
-import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
-import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
 import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
@@ -22,52 +17,27 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 /**
  * Created by charles on 12/15/14.
  */
-public class TripHandler implements GetCurrentLocation.GetLocationCallback,
-        GoogleMap.OnMapClickListener,
-        GoogleMap.OnMapLongClickListener,
-        GoogleMap.OnMarkerClickListener,
-        GoogleMap.OnMarkerDragListener,
-        MapDrawerActivity.MapHandlerInterface,
+public class TripHandler  extends MapActivityHandler implements
         TripGroupProcessor.GroupProcessorInterface{
 
     private GoogleMap map = null;
     private Context context = null;
 
     private List<TripRow> rows = null;
-    private HashMap<Marker, TripRow> markerTracker = new HashMap<Marker,TripRow>();
-    private HashMap<TripRow, java.util.List> polyLineTracker = new HashMap<TripRow, java.util.List>();
 
+    public final String HANDLER_TAG = ((Object)this).getClass().getName();
 
-    public TripHandler(){
-
+    public TripHandler(Context context, GoogleMap map) {
+        super(context, map);
     }
 
-    @Override
-    public void retrievedLocation(double resolution, Location location) {
-
-    }
-
-    @Override
-    public void locationClientConnected() {
-
-    }
-
-    @Override
-    public void locationConnectionFailed() {
-
-    }
 
     @Override
     public void onMapClick(LatLng latLng) {
@@ -108,8 +78,6 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
                 group.processed = false;
                 group.save();
 
-                Log.v("Match GROUP id before processing: ", Long.toString(group.getId()));
-
                 new DrawLines().execute(rows);
 
                 matchfound = true;
@@ -122,29 +90,24 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
 
     @Override
     public void disconnect() {
+        super.disconnect();
 
     }
 
     @Override
-    public void connect(GoogleMap map, Context context) {
-        this.map = map;
-        this.context = context;
-        map.setOnMapLongClickListener(this);
-        map.setOnMapClickListener(this);
-        map.setOnMarkerClickListener(this);
-        map.setOnMarkerDragListener(this);
+    public void connect() {
+        super.connect();
     }
 
     @Override
     public void setTripData(List<TripRow> rows) {
         this.rows = rows;
-
         new DrawLines().execute(rows);
     }
 
     @Override
-    public void setHomeData(List<HomePoints> homes) {
-
+    public String getTag() {
+        return HANDLER_TAG;
     }
 
     @Override
@@ -181,8 +144,6 @@ public class TripHandler implements GetCurrentLocation.GetLocationCallback,
 
             TripRow topRow = rows.get(0);
             TripGroup group = topRow.tgroup;
-            Log.v("MATCH GROUP: ", Boolean.toString(group.processed));
-            Log.v("Match GROUP id after processing: ", Long.toString(group.getId()));
 
             if (!group.processed) {
                 TripGroupProcessor processor = new TripGroupProcessor(context, this);
