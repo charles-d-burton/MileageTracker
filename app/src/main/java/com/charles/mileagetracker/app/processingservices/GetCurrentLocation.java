@@ -121,8 +121,11 @@ public class GetCurrentLocation implements
     //it sets a boolean to be read later to disconnect.
     public void forceDisconnect() {
         disconnect = true;
-        if (locationClient != null) {
+        try {
+            locationClient.unregisterConnectionCallbacks(this);
             locationClient.disconnect();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -156,6 +159,14 @@ public class GetCurrentLocation implements
     public void onConnectionFailed(ConnectionResult connectionResult) {
         if (callback != null) {
             callback.locationConnectionFailed();
+        }
+    }
+
+    public boolean isConnected() {
+        try {
+            return locationClient.isConnected();
+        } catch (Exception e) {
+            return false;
         }
     }
 

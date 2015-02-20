@@ -156,7 +156,7 @@ public class MapDrawerActivity extends ActionBarActivity
     @Override
     protected  void onPause() {
         super.onPause();
-        googleMap.clear();
+        //googleMap.clear();
         if (mapHandlerInterface != null) {
             mapHandlerInterface.disconnect();
         }

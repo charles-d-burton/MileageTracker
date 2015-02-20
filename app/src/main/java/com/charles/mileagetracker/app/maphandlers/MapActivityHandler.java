@@ -37,9 +37,13 @@ public abstract class MapActivityHandler implements
 
     @Override
     public void disconnect() {
-        map.clear();
-        if (getCurrentLocation != null) {
+        if (map != null){
+            map.clear();
+        }
+        try {
             getCurrentLocation.forceDisconnect();
+        } catch (Exception e) {
+
         }
 
     }
@@ -50,9 +54,16 @@ public abstract class MapActivityHandler implements
         map.setOnMapClickListener(this);
         map.setOnMarkerClickListener(this);
         map.setOnMarkerDragListener(this);
+        boolean connected = false;
+        try {
+            connected = getCurrentLocation.isConnected();
+        } catch (Exception e) {
 
-        getCurrentLocation = new GetCurrentLocation(context);
-        getCurrentLocation.updateLocation(this, true);
+        }
+        if (!connected) {
+            getCurrentLocation = new GetCurrentLocation(context);
+            getCurrentLocation.updateLocation(this, true);
+        }
     }
 
     @Override
@@ -78,6 +89,11 @@ public abstract class MapActivityHandler implements
 
     @Override
     public void locationConnectionFailed() {
+        try {
+            getCurrentLocation.forceDisconnect();
+        } catch (Exception e) {
+
+        }
 
     }
 
