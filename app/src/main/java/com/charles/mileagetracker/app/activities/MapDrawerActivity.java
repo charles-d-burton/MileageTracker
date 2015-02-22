@@ -139,6 +139,7 @@ public class MapDrawerActivity extends ActionBarActivity
         if (mapHandlerInterface != null) {
             mapHandlerInterface.connect();
         } else {
+            toolbar.setTitle("Trip Stops");
             mapHandlerInterface = new TripHandler(this, googleMap);
             mapHandlerInterface.connect();
         }
@@ -251,6 +252,7 @@ public class MapDrawerActivity extends ActionBarActivity
     }
 
     public void onItemTouched(TripRow row) {
+        toolbar.setTitle("Trip Stops");
         currentWorkingGroup = row.tgroup;
         googleMap.clear();
 
@@ -267,6 +269,7 @@ public class MapDrawerActivity extends ActionBarActivity
 
     @Override
     public void onItemLongPressed(TripGroup group) {
+
         currentWorkingGroup = group;
         googleMap.clear();
         if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
@@ -305,6 +308,7 @@ public class MapDrawerActivity extends ActionBarActivity
 
         @Override
         public void onClick(View v) {
+            toolbar.setTitle("Home Points");
             googleMap.clear();
 
             if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {

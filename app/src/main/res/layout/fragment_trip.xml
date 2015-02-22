@@ -17,14 +17,25 @@
         android:layout_alignParentStart="true"
         android:background="@android:color/background_light" />
 
-    <Button
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Start/End Point"
+        android:id="@+id/add_start_point_trip"
+        android:layout_below="@+id/total_miles"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:password="false"
+        android:textSize="@dimen/abc_text_size_button_material"
+        android:textColor="@color/black" />
+    <!--<Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Add Start Point"
         android:id="@+id/add_start_point_trip"
         android:layout_below="@+id/total_miles"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true" />-->
 
     <View
         android:layout_width="fill_parent"

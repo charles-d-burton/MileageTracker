@@ -26,7 +26,7 @@ public abstract class MapActivityHandler implements
 
     protected static GoogleMap map;
     protected static Context context;
-    protected Location currentLocation;
+    protected static Location currentLocation;
     protected static GetCurrentLocation getCurrentLocation = null;
 
     public MapActivityHandler(Context context, GoogleMap map) {
