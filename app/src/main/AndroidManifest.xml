@@ -116,6 +116,10 @@
             android:name=".services.intentservices.TripPostProcess"
             android:exported="false" >
         </service>
+        <service
+            android:name=".services.intentservices.CalculateTotalMileage"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>

@@ -42,13 +42,13 @@
         <!-- Nav drawer -->
         <fragment
             android:id="@+id/fragment_drawer"
-            android:name="com.charles.mileagetracker.app.fragments.TripFragment"
+            android:name="com.charles.mileagetracker.app.fragments.TripDrawerFragment"
             android:layout_width="fill_parent"
             android:layout_weight="75"
             android:layout_height="match_parent"
             android:divider="@android:color/transparent"
             android:dividerHeight="0dp"
             android:layout_gravity="left|start"
-            tools:layout="@layout/fragment_trip" />
+            tools:layout="@layout/trip_drawer_fragment" />
     </android.support.v4.widget.DrawerLayout>
 </LinearLayout>

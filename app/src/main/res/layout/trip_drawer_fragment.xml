@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.charles.mileagetracker.app.fragments.TripFragment"
+    tools:context="com.charles.mileagetracker.app.fragments.TripDrawerFragment"
     android:orientation="vertical"
     android:background="@color/background_material_light">
 
@@ -50,8 +50,4 @@
         android:dividerHeight="1dp"
         android:drawSelectorOnTop="false"
         android:headerDividersEnabled="false"/>
-
-
-
-
 </LinearLayout>

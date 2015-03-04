@@ -27,12 +27,12 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link com.charles.mileagetracker.app.fragments.TripFragment.OnTripFragmentInteraction} interface
+ * {@link TripDrawerFragment.OnTripFragmentInteraction} interface
  * to handle interaction events.
- * Use the {@link TripFragment#newInstance} factory method to
+ * Use the {@link TripDrawerFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class TripFragment extends Fragment {
+public class TripDrawerFragment extends Fragment {
 
     private ListView tripList = null;
     // TODO: Rename parameter arguments, choose names that match
@@ -56,8 +56,8 @@ public class TripFragment extends Fragment {
      * @return A new instance of fragment TripFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static TripFragment newInstance(String param1, String param2) {
-        TripFragment fragment = new TripFragment();
+    public static TripDrawerFragment newInstance(String param1, String param2) {
+        TripDrawerFragment fragment = new TripDrawerFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -65,7 +65,7 @@ public class TripFragment extends Fragment {
         return fragment;
     }
 
-    public TripFragment() {
+    public TripDrawerFragment() {
         // Required empty public constructor
     }
 
@@ -83,7 +83,7 @@ public class TripFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = null;
         if (container == null) {
-            view = inflater.inflate(R.layout.fragment_trip, container, false);
+            view = inflater.inflate(R.layout.trip_drawer_fragment, container, false);
         }
         adapter = new TripListAdapter(this.getActivity(), R.layout.trip_list_item);
         tripList = (ListView)view.findViewById(R.id.trip_list);
@@ -167,7 +167,7 @@ public class TripFragment extends Fragment {
          */
         @Override
         protected Void doInBackground(Void... params) {
-            addressDistanceServices = new AddressDistanceServices(TripFragment.this.getActivity().getApplicationContext());
+            addressDistanceServices = new AddressDistanceServices(TripDrawerFragment.this.getActivity().getApplicationContext());
             //List<TripGroup> groupsList = TripGroup.listAll(TripGroup.class);
             List<TripGroup> groupsList = TripGroup.find(TripGroup.class, null, null, null, "id DESC", null);
             maxValue = groupsList.size();
@@ -210,7 +210,7 @@ public class TripFragment extends Fragment {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             //loadingDialog.dismiss();
-            Log.v("Address Post Execute List Size: ", Integer.toString(listRows.size()));
+            //Log.v("Address Post Execute List Size: ", Integer.toString(listRows.size()));
             adapter.setData(listRows);
             adapter.notifyDataSetChanged();
             if (mListener != null) {

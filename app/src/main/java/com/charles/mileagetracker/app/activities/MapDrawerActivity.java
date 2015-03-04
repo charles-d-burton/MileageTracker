@@ -21,18 +21,17 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.fragments.TripFragment;
+import com.charles.mileagetracker.app.fragments.TripDrawerFragment;
 import com.charles.mileagetracker.app.fragments.TripStopsFragment;
 import com.charles.mileagetracker.app.maphandlers.HomeHandler;
 import com.charles.mileagetracker.app.maphandlers.TripHandler;
-import com.charles.mileagetracker.app.processingservices.GenerateCSV;
+import com.charles.mileagetracker.app.processingservices.CalculateTotalMileage;
 import com.charles.mileagetracker.app.processingservices.GenerateXLS;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -47,8 +46,9 @@ import java.util.Calendar;
 import java.util.List;
 
 public class MapDrawerActivity extends ActionBarActivity
-    implements TripFragment.OnTripFragmentInteraction,
-        TripStopsFragment.OnStopInteractionListener{
+    implements TripDrawerFragment.OnTripFragmentInteraction,
+        TripStopsFragment.OnStopInteractionListener,
+        CalculateTotalMileage.CalcTotalMileageCallback{
 
     static final int REQUEST_CODE_RECOVER_PLAY_SERVICES = 1001;
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -311,6 +311,12 @@ public class MapDrawerActivity extends ActionBarActivity
         DialogFragment newFragment = new DatePicker();
 
         //newFragment.show(getFragmentManager(), "startDatePicker");
+    }
+
+    //TODO:  I need to take this value and set the thing to it.
+    @Override
+    public void receiveMileageString(String mileageString) {
+
     }
 
     private class StartButtonClickListener implements TextView.OnClickListener {
