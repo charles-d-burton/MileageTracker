@@ -58,7 +58,8 @@ public class MapDrawerActivity extends ActionBarActivity
 
     private static Context context = null;
     private Toolbar toolbar;
-    private Button addStartPointButton;
+    //private Button addStartPointButton;
+    private TextView addStartView;
     private DrawerLayout drawerLayout;
     private ProgressDialog loadingDialog;
     private static ProgressDialog csvDialog = null;
@@ -83,6 +84,7 @@ public class MapDrawerActivity extends ActionBarActivity
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle("Mileage Tracker");
+        //toolbar.setBackgroundColor(getResources().getColor(R.color.primary));
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.drawer_open, R.string.drawer_closed) {
@@ -109,8 +111,10 @@ public class MapDrawerActivity extends ActionBarActivity
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        addStartPointButton = (Button)findViewById(R.id.add_start_point_trip);
-        addStartPointButton.setOnClickListener(new StartButtonClickListener());
+        addStartView = (TextView)findViewById(R.id.add_start_point_trip);
+        addStartView.setOnClickListener(new StartButtonClickListener());
+        //addStartPointButton = (Button)findViewById(R.id.add_start_point_trip);
+        //addStartPointButton.setOnClickListener(new StartButtonClickListener());
 
         LocationManager lm = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
         location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -147,9 +151,14 @@ public class MapDrawerActivity extends ActionBarActivity
         if (currentWorkingGroup != null) {
             tripStopsFragment.setData(currentWorkingGroup);
         } else {
-            TripGroup row = TripGroup.find(TripGroup.class, null, null, null, " id DESC LIMIT 1", null).get(0);
-            currentWorkingGroup = TripGroup.listAll(TripGroup.class).get(0);
-            tripStopsFragment.setData(currentWorkingGroup);
+            try {
+                TripGroup row = TripGroup.find(TripGroup.class, null, null, null, " id DESC LIMIT 1", null).get(0);
+                currentWorkingGroup = TripGroup.listAll(TripGroup.class).get(0);
+                tripStopsFragment.setData(currentWorkingGroup);
+            } catch (Exception aiobe) {
+
+            }
+
         }
     }
 
@@ -304,7 +313,7 @@ public class MapDrawerActivity extends ActionBarActivity
         //newFragment.show(getFragmentManager(), "startDatePicker");
     }
 
-    private class StartButtonClickListener implements Button.OnClickListener {
+    private class StartButtonClickListener implements TextView.OnClickListener {
 
         @Override
         public void onClick(View v) {

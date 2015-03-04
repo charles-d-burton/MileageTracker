@@ -8,5 +8,8 @@
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
+        <!--<item name="android:background">@color/background_material_light</item>-->
+        <item name="android:windowBackground">@color/background_material_light</item>
+        <item name="android:colorBackground">@color/background_material_light</item>
     </style>
 </resources>

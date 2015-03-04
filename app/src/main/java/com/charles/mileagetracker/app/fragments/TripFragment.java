@@ -178,19 +178,21 @@ public class TripFragment extends Fragment {
                 counter = counter + 1;
                 String entries[] = {Long.toString(group.getId())};
 
-                TripRow row = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC LIMIT 1", null).get(0);
-                String address = row.address;
-                if (address == null || address.trim().length() == 0) {
-                    try {
-                        address = addressDistanceServices.getAddressFromLatLng(new LatLng(row.lat, row.lon));
-                        row.address = address;
-                        row.save();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC LIMIT 1", null);
+                if (rows != null && rows.size() ==1) {
+                    TripRow row = rows.get(0);
+                    String address = row.address;
+                    if (address == null || address.trim().length() == 0) {
+                        try {
+                            address = addressDistanceServices.getAddressFromLatLng(new LatLng(row.lat, row.lon));
+                            row.address = address;
+                            row.save();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
+                    listRows.add(row);
                 }
-                listRows.add(row);
-
             }
             return null;
         }

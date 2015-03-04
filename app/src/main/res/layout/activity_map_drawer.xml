@@ -30,20 +30,13 @@
                 android:layout_height="match_parent"
                 class="com.google.android.gms.maps.SupportMapFragment" />
 
-            <!--<TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center|top"
-                android:text="The Awesome Sliding Up Panel"
-                android:textSize="16sp"
-                android:background="@android:color/background_light"/>-->
             <fragment
                 android:id="@+id/stops_panel"
                 android:name="com.charles.mileagetracker.app.fragments.TripStopsFragment"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center|top"
-                android:background="@android:color/background_light"/>
+                tools:layout="@layout/fragment_trip_stops" />
 
         </com.sothree.slidinguppanel.SlidingUpPanelLayout>
         <!-- Nav drawer -->
@@ -55,6 +48,7 @@
             android:layout_height="match_parent"
             android:divider="@android:color/transparent"
             android:dividerHeight="0dp"
-            android:layout_gravity="left|start" />
+            android:layout_gravity="left|start"
+            tools:layout="@layout/fragment_trip" />
     </android.support.v4.widget.DrawerLayout>
 </LinearLayout>
