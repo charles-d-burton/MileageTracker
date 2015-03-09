@@ -214,16 +214,17 @@ public class TripStopsFragment extends Fragment {
         @Override
         protected void onPostExecute(List<TripRow> tripRows) {
             super.onPostExecute(tripRows);
-            float billableMilage = (float)(tripRows.get(0).tgroup.billableMileage * .621);
-            Log.v("Mileage: ", Float.toString(billableMilage));
-            numStopView.setText("Stops: " + Integer.toString(tripRows.size()));
-            mileageView.setText("Miles: " + Float.toString(billableMilage));
-            adapter.reloadRows(tripRows);
-            adapter.notifyDataSetInvalidated();
-            adapter.notifyDataSetChanged();
-            loadingBar.setVisibility(ProgressBar.INVISIBLE);
-            mListener.tripStopsDataLoaded(tripRows);
-
+            if (tripRows != null && tripRows.size() > 0) {
+                float billableMilage = (float)(tripRows.get(0).tgroup.billableMileage * .621);
+                Log.v("Mileage: ", Float.toString(billableMilage));
+                numStopView.setText("Stops: " + Integer.toString(tripRows.size()));
+                mileageView.setText("Miles: " + Float.toString(billableMilage));
+                adapter.reloadRows(tripRows);
+                adapter.notifyDataSetInvalidated();
+                adapter.notifyDataSetChanged();
+                loadingBar.setVisibility(ProgressBar.INVISIBLE);
+                mListener.tripStopsDataLoaded(tripRows);
+            }
         }
 
         @Override
