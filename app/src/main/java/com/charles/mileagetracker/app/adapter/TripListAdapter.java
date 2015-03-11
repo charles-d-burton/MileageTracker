@@ -9,6 +9,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 
 import java.text.SimpleDateFormat;

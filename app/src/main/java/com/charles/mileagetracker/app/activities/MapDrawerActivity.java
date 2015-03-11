@@ -58,12 +58,12 @@ public class MapDrawerActivity extends ActionBarActivity
 
     private static Context context = null;
     private Toolbar toolbar;
-    //private Button addStartPointButton;
     private TextView addStartView;
     private DrawerLayout drawerLayout;
     private ProgressDialog loadingDialog;
     private static ProgressDialog csvDialog = null;
     private SlidingUpPanelLayout slideUpLayout = null;
+    private TextView totalMileageView = null;
 
     private ActionBarDrawerToggle drawerToggle = null;
 
@@ -84,14 +84,12 @@ public class MapDrawerActivity extends ActionBarActivity
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle("Mileage Tracker");
-        //toolbar.setBackgroundColor(getResources().getColor(R.color.primary));
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.drawer_open, R.string.drawer_closed) {
             @Override
             public void onDrawerClosed(View drawerView) {
                 Log.v("Drawer", "Closed");
-                //getActionBar().setTitle("Title");
             }
 
             @Override
@@ -100,21 +98,17 @@ public class MapDrawerActivity extends ActionBarActivity
                 if (slideUpLayout.isPanelExpanded()) {
                     slideUpLayout.collapsePanel();
                 }
-                //getActionBar().setTitle("Title");
+                //new CalculateTotalMileage(context, MapDrawerActivity.this).execute();
 
             }
         };
         slideUpLayout = (SlidingUpPanelLayout)findViewById(R.id.stops_slide_up_layout);
-        //slideUpLayout.setPanelHeight(40);
-        //slideUpLayout.setShadowHeight(4);
         drawerLayout.setDrawerListener(drawerToggle);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
 
         addStartView = (TextView)findViewById(R.id.add_start_point_trip);
         addStartView.setOnClickListener(new StartButtonClickListener());
-        //addStartPointButton = (Button)findViewById(R.id.add_start_point_trip);
-        //addStartPointButton.setOnClickListener(new StartButtonClickListener());
 
         LocationManager lm = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
         location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -132,6 +126,7 @@ public class MapDrawerActivity extends ActionBarActivity
         FragmentManager fragmentManager = getFragmentManager();
         tripStopsFragment = (TripStopsFragment)fragmentManager.findFragmentById(R.id.stops_panel);
 
+        totalMileageView = (TextView)findViewById(R.id.total_miles);
     }
 
     @Override
@@ -294,6 +289,7 @@ public class MapDrawerActivity extends ActionBarActivity
     public void onStopClicked(List<TripRow> rows) {
         if (mapHandlerInterface != null && rows != null) {
             mapHandlerInterface.setTripData(rows);
+            new CalculateTotalMileage(this, this).execute();
         }
     }
 
@@ -313,10 +309,9 @@ public class MapDrawerActivity extends ActionBarActivity
         //newFragment.show(getFragmentManager(), "startDatePicker");
     }
 
-    //TODO:  I need to take this value and set the thing to it.
     @Override
     public void receiveMileageString(String mileageString) {
-
+        totalMileageView.setText(mileageString);
     }
 
     private class StartButtonClickListener implements TextView.OnClickListener {
@@ -331,8 +326,6 @@ public class MapDrawerActivity extends ActionBarActivity
             }
             mapHandlerInterface = new HomeHandler(MapDrawerActivity.this, googleMap);
             mapHandlerInterface.connect();
-            //mapHandlerInterface.addMarker(location);
-            Log.v("Start Button Clicked: ", "CLICK");
 
         }
     }
@@ -369,25 +362,6 @@ public class MapDrawerActivity extends ActionBarActivity
                 return;
         }
         super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    //This adds up all the mileage so far marked as business related and then sets the TextVIew
-    //to reflect that.
-    private class CalculateMileage extends AsyncTask<Void, Void, Void> {
-        private double totalDistance = 0.0;
-        @Override
-        protected Void doInBackground(Void... params) {
-            List<TripGroup> tripGroups = TripGroup.listAll(TripGroup.class);
-            for (TripGroup group : tripGroups) {
-                totalDistance = totalDistance + group.billableMileage;
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void param) {
-            ((TextView)findViewById(R.id.total_miles)).setText(Integer.toString(new Double(totalDistance).intValue()) + " Miles");
-        }
     }
 
     public static class DatePicker extends DialogFragment implements DatePickerDialog.OnDateSetListener {

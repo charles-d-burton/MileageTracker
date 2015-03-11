@@ -6,10 +6,11 @@ import android.os.AsyncTask;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by charles on 3/3/15.
+ * This class goes through all of the current trip groups and calculates the total mileage that is
+ * business related so far.  It then updates a callback with the new information.
  */
 public class CalculateTotalMileage extends AsyncTask<Void, Void, String> {
 
