@@ -8,7 +8,13 @@ import android.util.Log;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -27,11 +33,24 @@ public class CalcMileageService extends IntentService implements TripGroupProces
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
-            Context context = getApplicationContext();
-            TripGroupProcessor processor = new TripGroupProcessor(context, this);
-            List<TripGroup> groups = TripGroup.listAll(TripGroup.class);
-            for (TripGroup group: groups) {
-                processor.processTripGroup(group);
+            //Process the Trip Data in the background
+            Executors.newSingleThreadExecutor().execute(new ProcessTripData());
+        }
+    }
+
+    private class ProcessTripData implements Runnable {
+
+        @Override
+        public void run() {
+            if (hasInternetAccess() && checkDataStatus()){
+                Context context = getApplicationContext();
+                TripGroupProcessor processor = new TripGroupProcessor(context, CalcMileageService.this);
+                List<TripGroup> groups = TripGroup.listAll(TripGroup.class);
+                for (TripGroup group: groups) {
+                    if (!group.processed) {
+                        processor.processTripGroup(group);
+                    }
+                }
             }
         }
     }
@@ -56,5 +75,40 @@ public class CalcMileageService extends IntentService implements TripGroupProces
                 break;
         }
         Log.v(CLASS_NAME, message);
+    }
+
+    private boolean hasInternetAccess() {
+        try {
+            HttpURLConnection urlc = (HttpURLConnection)
+                    (new URL("http://clients3.google.com/generate_204")
+                            .openConnection());
+            urlc.setRequestProperty("User-Agent", "Android");
+            urlc.setRequestProperty("Connection", "close");
+            urlc.setConnectTimeout(3000);
+            urlc.connect();
+            return (urlc.getResponseCode() == 204 &&
+                    urlc.getContentLength() == 0);
+        } catch (IOException e) {
+            Log.e("Error: ", "Error checking internet connection", e);
+        }
+        return false;
+    }
+
+    private boolean checkDataStatus() {
+        boolean isConnected = false;
+        try {
+            URL url = new URL("https://www.google.com");
+            HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+            urlc.setConnectTimeout(3000);
+            urlc.connect();
+            if (urlc.getResponseCode() == 200) {
+                isConnected = true;
+            }
+        } catch (MalformedURLException e1) {
+            e1.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return isConnected;
     }
 }

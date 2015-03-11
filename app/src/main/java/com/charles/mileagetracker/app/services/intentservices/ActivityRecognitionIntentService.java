@@ -65,6 +65,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
             long now = System.currentTimeMillis();
             if (lastUpdateTime == 0l) {
                 lastUpdateTime = System.currentTimeMillis();
+
                 processIntent(intent);
             }
 
@@ -74,6 +75,18 @@ public class ActivityRecognitionIntentService extends IntentService implements
             if ((now - lastUpdateTime) > 60000) {
                 processIntent(intent);
             }
+        }
+    }
+
+    private class IntentProcessor implements Runnable {
+        private Intent intent;
+
+        public IntentProcessor(Intent intent) {
+            this.intent = intent;
+        }
+        @Override
+        public void run() {
+            processIntent(intent);
         }
     }
 

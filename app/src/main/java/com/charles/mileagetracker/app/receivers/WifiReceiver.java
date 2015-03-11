@@ -29,10 +29,45 @@ public class WifiReceiver extends BroadcastReceiver {
         NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
         Log.v("WIFI: ", "Wifi connection changed");
         if(info!=null){
-            if(info.isConnected()){
+            if(info.isConnected() && hasInternetAccess() && checkDataStatus()){
                 Intent connectedIntent = new Intent(context, CalcMileageService.class);
                 context.startService(connectedIntent);
             }
         }
+    }
+
+    private boolean hasInternetAccess() {
+        try {
+            HttpURLConnection urlc = (HttpURLConnection)
+                    (new URL("http://clients3.google.com/generate_204")
+                            .openConnection());
+            urlc.setRequestProperty("User-Agent", "Android");
+            urlc.setRequestProperty("Connection", "close");
+            urlc.setConnectTimeout(3000);
+            urlc.connect();
+            return (urlc.getResponseCode() == 204 &&
+                    urlc.getContentLength() == 0);
+        } catch (IOException e) {
+            Log.e("Error: ", "Error checking internet connection", e);
+        }
+        return false;
+    }
+
+    private boolean checkDataStatus() {
+        boolean isConnected = false;
+        try {
+            URL url = new URL("https://www.google.com");
+            HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+            urlc.setConnectTimeout(3000);
+            urlc.connect();
+            if (urlc.getResponseCode() == 200) {
+                isConnected = true;
+            }
+        } catch (MalformedURLException e1) {
+            e1.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return isConnected;
     }
 }

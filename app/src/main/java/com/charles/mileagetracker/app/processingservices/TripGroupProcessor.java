@@ -42,22 +42,22 @@ public class TripGroupProcessor {
     }
 
     public void processTripGroup(TripGroup group) {
-        Log.v("PROCESSING GROUP: ", "Processing TripGroup" + Integer.toString(group.getId().intValue()));
+
         this.group = group;
-        if (!group.processed && context != null  && callback != null  && hasInternetAccess() && checkDataStatus() ) {
+        if (group != null && !group.processed && context != null  && callback != null) {
             addressDistanceServices = new AddressDistanceServices(context);
             String entries[] = {Long.toString(group.getId())};
             //Get the full list, check each stop to make sure it's not too close to a HomePoint
             List<TripRow> rowsList = processHomePoints(TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null));
             processTripGroup(rowsList);
-        } else if (group.processed){
+        } else if (group != null && group.processed) {
             addressDistanceServices = new AddressDistanceServices(context);
             String entries[] = {Long.toString(group.getId())};
             //Get the full list, check each stop to make sure it's not too close to a HomePoint
             List<TripRow> rowsList = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
             updateData(rowsList);
             callback.finishedGroupProcessing(null);
-        } else if (context !=null && !hasInternetAccess() || !checkDataStatus()) {
+        } else if (context !=null) {
             callback.unableToProcessGroup(CONNECT_FAILED);
         } else {
             callback.unableToProcessGroup(UNKOWN_FAILURE);
@@ -72,9 +72,7 @@ public class TripGroupProcessor {
         } else if (rowsList.size() == 1) {//Only one or no stops, remove it all as invalid data
             group = rowsList.get(0).tgroup;
             if (group.group_closed) {
-                for (TripRow row : rowsList) {
-                    row.delete();
-                }
+                rowsList.get(0).delete();
                 group.delete();
                 callback.unableToProcessGroup(INVALID_GROUP);
             }
@@ -101,44 +99,11 @@ public class TripGroupProcessor {
     }
 
 
-    private boolean hasInternetAccess() {
-        try {
-            HttpURLConnection urlc = (HttpURLConnection)
-                    (new URL("http://clients3.google.com/generate_204")
-                            .openConnection());
-            urlc.setRequestProperty("User-Agent", "Android");
-            urlc.setRequestProperty("Connection", "close");
-            urlc.setConnectTimeout(3000);
-            urlc.connect();
-            return (urlc.getResponseCode() == 204 &&
-                    urlc.getContentLength() == 0);
-        } catch (IOException e) {
-            Log.e("Error: ", "Error checking internet connection", e);
-        }
-        return false;
-    }
 
-    private boolean checkDataStatus() {
-        boolean isConnected = false;
-        try {
-            URL url = new URL("https://www.google.com");
-            HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
-            urlc.setConnectTimeout(3000);
-            urlc.connect();
-            if (urlc.getResponseCode() == 200) {
-                isConnected = true;
-            }
-        } catch (MalformedURLException e1) {
-            e1.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return isConnected;
-    }
 
     //Work through the trip stops, if any of them are too close to HomePoints we want to remove it.
     private List<TripRow> processHomePoints(List<TripRow> rows) {
-        java.util.List homes = HomePoints.listAll(HomePoints.class);
+        List homes = HomePoints.listAll(HomePoints.class);
         if (rows != null) {
             LinkedList<TripRow> linkedRows = new LinkedList<TripRow>();
             linkedRows.addAll(rows);
@@ -179,7 +144,7 @@ public class TripGroupProcessor {
     }
 
     /*
-    Process the TripRows we're.  It'll update the address as well as write in the encoded polyline.
+    Process the TripRows here.  It'll update the address as well as write in the encoded polyline.
      */
     private void updateData(List<TripRow> rows) {
         try {
