@@ -197,8 +197,10 @@ public class TripHandler  extends MapActivityHandler implements
                     if (row.businessRelated) {
                         color = Color.GREEN;
                     }
-                    Polyline polyline = map.addPolyline(new PolylineOptions().addAll(row.polyPoints)
-                            .width(5).color(color).geodesic(true));
+                    if (row.polyPoints != null) {
+                        Polyline polyline = map.addPolyline(new PolylineOptions().addAll(row.polyPoints)
+                                .width(5).color(color).geodesic(true));
+                    }
                 }
             }
             TripHandler.this.rows = rows;
