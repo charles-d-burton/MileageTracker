@@ -14,11 +14,9 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
-import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
+import com.charles.mileagetracker.app.processors.AddressDistanceServices;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationStatusCodes;

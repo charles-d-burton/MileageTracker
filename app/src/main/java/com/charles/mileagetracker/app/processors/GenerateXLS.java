@@ -1,4 +1,4 @@
-package com.charles.mileagetracker.app.processingservices;
+package com.charles.mileagetracker.app.processors;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -26,7 +26,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -36,7 +35,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.CSVWriter;
 
 /**
  * Created by charles on 2/18/15.

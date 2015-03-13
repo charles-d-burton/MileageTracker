@@ -10,7 +10,7 @@ import android.util.Log;
 import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.Status;
-import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
+import com.charles.mileagetracker.app.processors.GetCurrentLocation;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;

@@ -1,7 +1,6 @@
-package com.charles.mileagetracker.app.processingservices;
+package com.charles.mileagetracker.app.processors;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.charles.mileagetracker.app.database.orm.HomePoints;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
@@ -11,10 +10,6 @@ import com.google.android.gms.maps.model.LatLng;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;

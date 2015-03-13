@@ -5,7 +5,7 @@ import android.location.Location;
 
 import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.processingservices.GetCurrentLocation;
+import com.charles.mileagetracker.app.processors.GetCurrentLocation;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;

@@ -2,14 +2,13 @@ package com.charles.mileagetracker.app.maphandlers;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.location.Location;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
-import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
+import com.charles.mileagetracker.app.processors.AddressDistanceServices;
+import com.charles.mileagetracker.app.processors.TripGroupProcessor;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -17,7 +16,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 

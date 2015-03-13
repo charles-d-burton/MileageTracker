@@ -1,4 +1,4 @@
-package com.charles.mileagetracker.app.processingservices;
+package com.charles.mileagetracker.app.processors;
 
 import android.content.Context;
 import android.location.Address;
@@ -8,7 +8,6 @@ import android.util.Log;
 
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Polyline;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;

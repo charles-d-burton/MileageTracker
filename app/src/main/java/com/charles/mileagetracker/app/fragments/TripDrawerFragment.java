@@ -14,10 +14,10 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.adapter.TripListAdapter;
+import com.charles.mileagetracker.app.adapters.TripListAdapter;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
+import com.charles.mileagetracker.app.processors.AddressDistanceServices;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;

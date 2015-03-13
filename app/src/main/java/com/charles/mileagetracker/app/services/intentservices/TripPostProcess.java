@@ -12,10 +12,12 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.activities.MapDrawerActivity;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.processingservices.AddressDistanceServices;
-import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
+import com.charles.mileagetracker.app.processors.AddressDistanceServices;
+import com.charles.mileagetracker.app.processors.ConnectivityCheck;
+import com.charles.mileagetracker.app.processors.TripGroupProcessor;
 
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -37,8 +39,6 @@ public class TripPostProcess extends IntentService implements TripGroupProcessor
 
 
     /**
-     * Starts this service to perform action Baz with the given parameters. If
-     * the service is already performing a task this action will be queued.
      *
      * @see IntentService
      */
@@ -61,7 +61,6 @@ public class TripPostProcess extends IntentService implements TripGroupProcessor
             if (ACTION_PROCESS_GROUP.equals(action)) {
                 final Integer group_id = intent.getIntExtra(GROUP_PARAM, -1);
                 handleActionProcessGroup(group_id);
-
             }
         }
     }
@@ -75,19 +74,23 @@ public class TripPostProcess extends IntentService implements TripGroupProcessor
         if (group_id != -1) {
             group = TripGroup.findById(TripGroup.class, new Long(group_id));
             if (group != null) {
-                TripGroupProcessor processor = new TripGroupProcessor(getApplicationContext(), this);
-                processor.processTripGroup(group);
+                Executors.newSingleThreadExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        TripGroupProcessor processor = new TripGroupProcessor(context, TripPostProcess.this);
+                        processor.processTripGroup(group);
+                    }
+                });
             }
         }
     }
 
     @Override
     public void finishedGroupProcessing(List<TripRow> rows) {
-        if (rows != null) {
-            //group = rows.get(0).tgroup;
+        if (rows != null && rows.size() >= 2) {
+            group = rows.get(0).tgroup;
             generateNotification(complete, question, group.getId().intValue());
         }
-
     }
 
     @Override

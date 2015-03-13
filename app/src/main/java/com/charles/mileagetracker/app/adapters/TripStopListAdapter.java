@@ -1,4 +1,4 @@
-package com.charles.mileagetracker.app.adapter;
+package com.charles.mileagetracker.app.adapters;
 
 import android.app.Activity;
 import android.content.Context;
@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckedTextView;
-import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.database.orm.TripRow;

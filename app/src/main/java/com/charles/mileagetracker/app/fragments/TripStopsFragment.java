@@ -15,12 +15,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.adapter.TripStopListAdapter;
+import com.charles.mileagetracker.app.adapters.TripStopListAdapter;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.processingservices.TripGroupProcessor;
+import com.charles.mileagetracker.app.processors.TripGroupProcessor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

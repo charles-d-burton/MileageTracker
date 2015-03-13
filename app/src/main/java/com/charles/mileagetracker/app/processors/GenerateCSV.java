@@ -1,4 +1,4 @@
-package com.charles.mileagetracker.app.processingservices;
+package com.charles.mileagetracker.app.processors;
 
 //This queries the database to retrieve the business related trips for a given date range.  It
 //will then start a process to email the results as a CSV
@@ -15,10 +15,7 @@ import android.util.Log;
 import android.util.Patterns;
 import android.widget.Toast;
 
-import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.orm.query.Condition;
-import com.orm.query.Select;
 
 import java.io.File;
 import java.io.FileReader;

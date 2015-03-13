@@ -1,4 +1,4 @@
-package com.charles.mileagetracker.app.adapter;
+package com.charles.mileagetracker.app.adapters;
 
 import android.app.Activity;
 import android.content.Context;
@@ -9,7 +9,6 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.charles.mileagetracker.app.R;
-import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 
 import java.text.SimpleDateFormat;
