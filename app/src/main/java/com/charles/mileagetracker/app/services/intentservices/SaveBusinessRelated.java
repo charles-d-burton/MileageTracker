@@ -9,7 +9,6 @@ import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.processors.AddressDistanceServices;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.Executors;
 
 

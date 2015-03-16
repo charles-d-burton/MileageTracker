@@ -105,7 +105,7 @@ public class TripDrawerFragment extends Fragment {
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
-            mListener.onFragmentInteraction();
+            mListener.onDrawerFragmentInteraction();
         }
     }
 
@@ -132,7 +132,7 @@ public class TripDrawerFragment extends Fragment {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             TripRow row = adapter.getItem(position);
-            mListener.onItemTouched(row);
+            mListener.onDrawerFragmentItemTouch(row);
             //Log.v("Adapter Click Address:", row.address);
 
         }
@@ -142,7 +142,7 @@ public class TripDrawerFragment extends Fragment {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
             TripGroup group = adapter.getItem(position).tgroup;
-            mListener.onItemLongPressed(group);
+            mListener.onDrawerItemLongPress(group);
             return false;
         }
     }
@@ -157,7 +157,7 @@ public class TripDrawerFragment extends Fragment {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            mListener.onTripFragmentStartLoad();
+            mListener.onDrawerFragmentStartLoad();
         }
 
         /*
@@ -203,7 +203,7 @@ public class TripDrawerFragment extends Fragment {
             Float update = values[0];
             Log.v("Update %: ", update.toString());
             Integer percent = (int)((update/maxValue)*100);
-            mListener.onTripFragmentProgressUpdate(percent);
+            mListener.onDrawerFragmentProgressUpdate(percent);
         }
 
         @Override
@@ -214,7 +214,7 @@ public class TripDrawerFragment extends Fragment {
             adapter.setData(listRows);
             adapter.notifyDataSetChanged();
             if (mListener != null) {
-                mListener.onTripFragmentFinishLoad();
+                mListener.onDrawerFragmentFinishedLoad();
             }
         }
     }
@@ -230,12 +230,12 @@ public class TripDrawerFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnTripFragmentInteraction {
-        public void onFragmentInteraction();
-        public void onTripFragmentStartLoad();
-        public void onTripFragmentProgressUpdate(Integer tripNum);
-        public void onTripFragmentFinishLoad();
-        public void onItemTouched(TripRow row);
-        public void onItemLongPressed(TripGroup group);
+        public void onDrawerFragmentInteraction();
+        public void onDrawerFragmentStartLoad();
+        public void onDrawerFragmentProgressUpdate(Integer tripNum);
+        public void onDrawerFragmentFinishedLoad();
+        public void onDrawerFragmentItemTouch(TripRow row);
+        public void onDrawerItemLongPress(TripGroup group);
     }
 
 }

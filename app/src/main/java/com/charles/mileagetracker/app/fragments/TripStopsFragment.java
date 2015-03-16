@@ -18,7 +18,6 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.adapters.TripStopListAdapter;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
-import com.charles.mileagetracker.app.processors.ConnectivityCheck;
 import com.charles.mileagetracker.app.processors.TripGroupProcessor;
 
 import java.util.List;
@@ -159,7 +158,7 @@ public class TripStopsFragment extends Fragment {
             }
             updateMileage(row);
 
-            mListener.onStopClicked(adapter.getTripRows());
+            mListener.onTripStopSelect(adapter.getTripRows());
             Log.v("Item Clicked", "CLICK");
         }
 
@@ -233,7 +232,7 @@ public class TripStopsFragment extends Fragment {
                 adapter.notifyDataSetInvalidated();
                 adapter.notifyDataSetChanged();
                 loadingBar.setVisibility(ProgressBar.INVISIBLE);
-                mListener.tripStopsDataLoaded(tripRows);
+                mListener.onTripStopsDataLoaded(tripRows);
             }
         }
 
@@ -265,9 +264,9 @@ public class TripStopsFragment extends Fragment {
      */
     public interface OnStopInteractionListener {
         // TODO: Update argument type and name
-        public void onStopClicked(List<TripRow> rows);
-        public void onStopLongPress(TripRow row);
-        public void tripStopsDataLoaded(List<TripRow> rows);
+        public void onTripStopSelect(List<TripRow> rows);
+        public void onTripStopLongPress(TripRow row);
+        public void onTripStopsDataLoaded(List<TripRow> rows);
     }
 
 }

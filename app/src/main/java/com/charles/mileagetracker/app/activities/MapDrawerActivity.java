@@ -222,12 +222,12 @@ public class MapDrawerActivity extends ActionBarActivity
     }
 
     @Override
-    public void onFragmentInteraction() {
+    public void onDrawerFragmentInteraction() {
 
     }
 
     @Override
-    public void onTripFragmentStartLoad() {
+    public void onDrawerFragmentStartLoad() {
         Log.v("Loading Data: ", "Started");
         if (loadingDialog != null) {
             loadingDialog.dismiss();
@@ -243,18 +243,18 @@ public class MapDrawerActivity extends ActionBarActivity
     }
 
     @Override
-    public void onTripFragmentProgressUpdate(Integer tripNum) {
+    public void onDrawerFragmentProgressUpdate(Integer tripNum) {
         Log.v("Loaded %: ", tripNum.toString());
         loadingDialog.setProgress(tripNum);
     }
 
     @Override
-    public void onTripFragmentFinishLoad() {
+    public void onDrawerFragmentFinishedLoad() {
         Log.v("Loading Data: ", "Finished");
         loadingDialog.dismiss();
     }
 
-    public void onItemTouched(TripRow row) {
+    public void onDrawerFragmentItemTouch(TripRow row) {
         toolbar.setTitle("Trip Stops");
         currentWorkingGroup = row.tgroup;
         googleMap.clear();
@@ -271,7 +271,7 @@ public class MapDrawerActivity extends ActionBarActivity
     }
 
     @Override
-    public void onItemLongPressed(TripGroup group) {
+    public void onDrawerItemLongPress(TripGroup group) {
 
         currentWorkingGroup = group;
         googleMap.clear();
@@ -285,7 +285,7 @@ public class MapDrawerActivity extends ActionBarActivity
     }
 
     @Override
-    public void onStopClicked(List<TripRow> rows) {
+    public void onTripStopSelect(List<TripRow> rows) {
         if (mapHandlerInterface != null && rows != null) {
             mapHandlerInterface.setTripData(rows);
             new CalculateTotalMileage(this, this).execute();
@@ -293,12 +293,12 @@ public class MapDrawerActivity extends ActionBarActivity
     }
 
     @Override
-    public void onStopLongPress(TripRow row) {
+    public void onTripStopLongPress(TripRow row) {
 
     }
 
     @Override
-    public void tripStopsDataLoaded(List<TripRow> rows) {
+    public void onTripStopsDataLoaded(List<TripRow> rows) {
         mapHandlerInterface.setTripData(rows);
     }
 
