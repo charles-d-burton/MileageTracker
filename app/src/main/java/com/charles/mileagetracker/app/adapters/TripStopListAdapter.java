@@ -2,6 +2,7 @@ package com.charles.mileagetracker.app.adapters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,7 +11,9 @@ import android.widget.BaseAdapter;
 import android.widget.CheckedTextView;
 
 import com.charles.mileagetracker.app.R;
+import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
+import com.charles.mileagetracker.app.processors.TripGroupProcessor;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -75,6 +78,11 @@ public class TripStopListAdapter extends BaseAdapter {
         this.tripRows.clear();
         this.tripRows.addAll(tripRows);
     }
+
+    public void clear() {
+        tripRows.clear();
+    }
+
 
     private class OnListItemClickedListener implements CheckedTextView.OnClickListener{
         private CheckedTextView cvt = null;

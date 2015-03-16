@@ -18,6 +18,7 @@ import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.adapters.TripStopListAdapter;
 import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.TripRow;
+import com.charles.mileagetracker.app.processors.ConnectivityCheck;
 import com.charles.mileagetracker.app.processors.TripGroupProcessor;
 
 import java.util.List;
@@ -122,6 +123,10 @@ public class TripStopsFragment extends Fragment {
     }
 
     public void setData(TripRow row) {
+        if (adapter != null) {
+            adapter.clear();
+            adapter.notifyDataSetChanged();
+        }
         TripGroup group = row.tgroup;
         setData(group);
     }
@@ -195,16 +200,22 @@ public class TripStopsFragment extends Fragment {
             loadingBar.setVisibility(ProgressBar.VISIBLE);
         }
 
+        //TODO:  This along with a few other places need to be cleaned up from checking the data so much
         @Override
         protected List<TripRow> doInBackground(TripGroup... params) {
             TripGroup group = params[0];
-
             TripGroupProcessor processor = new TripGroupProcessor(TripStopsFragment.this.getActivity().getApplicationContext(), this);
             //processor.processTripGroup(group);
 
             String entries[] = {Long.toString(group.getId())};
             List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
-            processor.processTripGroup(rows);
+            if (!group.processed) {
+                try {
+                    processor.processTripGroup(rows);
+                } catch (Exception e) {
+
+                }
+            }
 
             miles = group.billableMileage;
             return rows;

@@ -25,12 +25,12 @@ import java.util.concurrent.Executors;
  * <p/>
  * helper methods.
  */
-public class TripPostProcess extends IntentService implements TripGroupProcessor.GroupProcessorInterface {
+public class TripPostProcess extends IntentService {
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
     private static final String ACTION_PROCESS_GROUP = "com.charles.mileagetracker.app.services.intentservices.action.proccess_group";
     private static final String GROUP_PARAM = "com.charles.mileagetracker.app.services.intentservices.extra.PARAM1";
 
-    private AddressDistanceServices addressDistanceServices = null;
+    //private AddressDistanceServices addressDistanceServices = null;
     private Context context;
 
     private TripGroup group = null;
@@ -71,45 +71,43 @@ public class TripPostProcess extends IntentService implements TripGroupProcessor
      */
     private void handleActionProcessGroup(Integer group_id) {
         //Verify that we have a validate group and access to the internet with data
+        final Context context = getApplicationContext();
         if (group_id != -1) {
             group = TripGroup.findById(TripGroup.class, new Long(group_id));
             if (group != null) {
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        TripGroupProcessor processor = new TripGroupProcessor(context, TripPostProcess.this);
-                        processor.processTripGroup(group);
+                        String entries[] = {Long.toString(group.getId())};
+                        List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+                        if (rows == null) {
+                            group.delete();
+                        } else if (rows.size() == 1) {
+                            if (rows.get(0) != null) {
+                                rows.get(0).delete();
+                            }
+                            group.delete();
+                        } else if (rows.size() == 2) {//Only two stops, need to see how close they are
+                            AddressDistanceServices addressDistanceServices1 = new AddressDistanceServices(context);
+                            TripRow row1 = rows.get(0);
+                            TripRow row2 = rows.get(1);
+                            double distance = addressDistanceServices1.getStraigtLineDistance(row1.lat, row1.lon, row2.lat, row2.lon);
+                            if (distance > 1500) {
+                                generateNotification(complete, question, group.getId().intValue());
+                            } else {
+                                row1.delete();
+                                row2.delete();
+                                group.delete();
+                            }
+                        } else {
+                            generateNotification(complete, question, group.getId().intValue());
+                        }
                     }
                 });
             }
         }
     }
 
-    @Override
-    public void finishedGroupProcessing(List<TripRow> rows) {
-        if (rows != null && rows.size() >= 2) {
-            group = rows.get(0).tgroup;
-            generateNotification(complete, question, group.getId().intValue());
-        }
-    }
-
-    @Override
-    public void unableToProcessGroup(int failCode) {
-        switch (failCode) {
-            case TripGroupProcessor.CONNECT_FAILED:
-                generateNotification(complete, question, group.getId().intValue());
-                break;
-            case TripGroupProcessor.INVALID_GROUP:
-                break;
-            case TripGroupProcessor.UNKOWN_FAILURE:
-                generateNotification(complete, question, group.getId().intValue());
-                break;
-            default:
-                generateNotification(complete, question, group.getId().intValue());
-                break;
-        }
-
-    }
 
     private void generateNotification(String title, String message, int groupId) {
 

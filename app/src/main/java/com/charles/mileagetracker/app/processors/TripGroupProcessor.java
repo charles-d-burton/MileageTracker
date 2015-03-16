@@ -27,26 +27,27 @@ public class TripGroupProcessor {
     private AddressDistanceServices addressDistanceServices = null;
     private GroupProcessorInterface callback;
 
+
     public static final int CONNECT_FAILED = 9000;
     public static final int INVALID_GROUP = 9001;
     public static final int UNKOWN_FAILURE = 9002;
+    public static boolean processing = false;
 
     public TripGroupProcessor(Context context, GroupProcessorInterface callback) {
         this.context = context;
         this.callback = callback;
+        addressDistanceServices = new AddressDistanceServices(context);
     }
 
-    public void processTripGroup(TripGroup group) {
+    public void processTripGroup(TripGroup group) throws Exception {
 
         this.group = group;
         if (group != null && !group.processed && context != null  && callback != null) {
-            addressDistanceServices = new AddressDistanceServices(context);
             String entries[] = {Long.toString(group.getId())};
             //Get the full list, check each stop to make sure it's not too close to a HomePoint
             List<TripRow> rowsList = processHomePoints(TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null));
             processTripGroup(rowsList);
-        } else if (group != null && group.processed) {
-            addressDistanceServices = new AddressDistanceServices(context);
+        } else if (group != null && group.processed && context != null) {
             String entries[] = {Long.toString(group.getId())};
             //Get the full list, check each stop to make sure it's not too close to a HomePoint
             List<TripRow> rowsList = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
@@ -59,20 +60,18 @@ public class TripGroupProcessor {
         }
     }
 
-    public void processTripGroup(List<TripRow> rowsList) {
+    public void processTripGroup(List<TripRow> rowsList) throws Exception {
         TripGroup group = null;
-        addressDistanceServices = new AddressDistanceServices(context);
         if (rowsList == null || rowsList.size() == 0) { //Null list of rows something went weird
             callback.unableToProcessGroup(INVALID_GROUP);
         } else if (rowsList.size() == 1) {//Only one or no stops, remove it all as invalid data
             group = rowsList.get(0).tgroup;
-            if (group.group_closed) {
+            if (group.group_closed) { //Safety check, sometimes you connect to wifi before your trip is completed
                 rowsList.get(0).delete();
                 group.delete();
                 callback.unableToProcessGroup(INVALID_GROUP);
             }
-
-        } else if (rowsList.size() == 2) {//Check if the start and and end are the same with no stops between
+        /*} else if (rowsList.size() == 2) {//Check if the start and and end are the same with no stops between
             group = rowsList.get(0).tgroup;
             if (group.group_closed) {
                 boolean isSameStop = sameStop(rowsList.get(0), rowsList.get(1));
@@ -80,13 +79,13 @@ public class TripGroupProcessor {
                     rowsList.get(0).delete();
                     rowsList.get(1).delete();
                     group.delete();
-                    callback.unableToProcessGroup(INVALID_GROUP);
+                    callback.unableToProcessGroup(INVALID_GROUP);//Exit point, no valid data
                 } else {
                     updateData(rowsList);
                 }
             } else {
                 updateData(rowsList);
-            }
+            }*/
 
         } else {
             updateData(rowsList);
@@ -126,14 +125,6 @@ public class TripGroupProcessor {
             if (distance < 1000) {
                 return true;
             }
-        }
-        return false;
-    }
-
-    private boolean sameStop(TripRow stop1, TripRow stop2) {
-        double distance = addressDistanceServices.getStraigtLineDistance(stop1.lat, stop1.lon, stop2.lat, stop2.lon);
-        if (distance < 1000) { //Within 1km of eachother
-            return true;
         }
         return false;
     }

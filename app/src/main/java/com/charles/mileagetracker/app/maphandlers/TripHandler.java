@@ -147,7 +147,11 @@ public class TripHandler  extends MapActivityHandler implements
 
             if (!group.processed) {
                 TripGroupProcessor processor = new TripGroupProcessor(context, this);
-                processor.processTripGroup(rows);
+                try {
+                    processor.processTripGroup(rows);
+                } catch (Exception e) {
+                    
+                }
                 Log.v("MATCH FOUND: ", "Processing Rows");
             }
 

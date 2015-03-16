@@ -1,6 +1,5 @@
 package com.charles.mileagetracker.app.receivers;
 
-import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,7 +10,6 @@ import com.charles.mileagetracker.app.database.orm.TripGroup;
 import com.charles.mileagetracker.app.database.orm.Status;
 import com.charles.mileagetracker.app.database.orm.TripRow;
 import com.charles.mileagetracker.app.services.ActivityRecognitionService;
-import com.charles.mileagetracker.app.services.intentservices.CalcMileageService;
 import com.charles.mileagetracker.app.services.intentservices.TripPostProcess;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
@@ -51,32 +49,6 @@ public class GeofenceReceiver extends BroadcastReceiver {
                 transitionEnter(id, center);
 
             }
-        }
-    }
-
-    private boolean isServiceRunning() {
-        ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
-            if (ActivityRecognitionService.class.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void calculateDistanceInBackground() {
-        boolean alreadyRunning = false;
-        ActivityManager activityManager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service: activityManager.getRunningServices(Integer.MAX_VALUE)) {
-            if (CalcMileageService.class.getName().equals(service.service.getClassName())){
-                alreadyRunning = true;
-                break;
-            }
-        }
-
-        if (!alreadyRunning) {
-            Intent connectedIntent = new Intent(context, CalcMileageService.class);
-            context.startService(connectedIntent);
         }
     }
 
