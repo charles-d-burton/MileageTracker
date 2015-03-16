@@ -83,9 +83,6 @@ public class TripPostProcess extends IntentService {
                         if (rows == null) {
                             group.delete();
                         } else if (rows.size() == 1) {
-                            if (rows.get(0) != null) {
-                                rows.get(0).delete();
-                            }
                             group.delete();
                         } else if (rows.size() == 2) {//Only two stops, need to see how close they are
                             AddressDistanceServices addressDistanceServices1 = new AddressDistanceServices(context);
