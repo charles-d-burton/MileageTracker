@@ -38,7 +38,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.orm.query.Select;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.text.SimpleDateFormat;
@@ -79,10 +78,13 @@ public class MapDrawerActivity extends ActionBarActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        int group = savedInstanceState.getInt("tgroup");
-        if (group > 0) {
-            currentWorkingGroup = TripGroup.findById(TripGroup.class, ((long)group));
+        if (savedInstanceState != null) {
+            int group = savedInstanceState.getInt("tgroup");
+            if (group > 0) {
+                currentWorkingGroup = TripGroup.findById(TripGroup.class, ((long)group));
+            }
         }
+
         this.context = this;
         setContentView(R.layout.activity_map_drawer);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -151,7 +153,7 @@ public class MapDrawerActivity extends ActionBarActivity
             tripStopsFragment.setData(currentWorkingGroup);
         } else {
             try {
-                //TripGroup row = TripGroup.find(TripGroup.class, null, null, null, " id DESC LIMIT 1", null).get(0);
+                //currentWorkingGroup = TripGroup.find(TripGroup.class, null, null, null, " id DESC LIMIT 1", null).get(0);
                 currentWorkingGroup = TripGroup.listAll(TripGroup.class).get(0);
                 if (currentWorkingGroup != null) {
                     tripStopsFragment.setData(currentWorkingGroup);
