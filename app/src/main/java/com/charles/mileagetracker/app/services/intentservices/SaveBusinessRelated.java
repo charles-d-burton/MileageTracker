@@ -27,16 +27,24 @@ public class SaveBusinessRelated extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
-            final Bundle bundle = intent.getExtras();
-            final int groupId = bundle.getInt("tgroup");
+            Bundle bundle = intent.getExtras();
+            int groupId = bundle.getInt("tgroup");
             if (groupId != -1) {
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        markAllAsBusiness(groupId);
-                    }
-                });
+                Executors.newSingleThreadExecutor().execute(new MarkBusinessRelated(groupId));
+                //markAllAsBusiness(groupId);
             }
+        }
+    }
+
+    private class MarkBusinessRelated implements Runnable {
+        private int group_id = 0;
+
+        public MarkBusinessRelated(int group_id) {
+            this.group_id = group_id;
+        }
+        @Override
+        public void run() {
+            markAllAsBusiness(group_id);
         }
     }
 

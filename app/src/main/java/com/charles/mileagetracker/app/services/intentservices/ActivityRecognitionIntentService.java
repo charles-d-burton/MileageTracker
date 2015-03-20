@@ -1,6 +1,7 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
@@ -97,11 +98,26 @@ public class ActivityRecognitionIntentService extends IntentService implements
             DetectedActivity mostProbableActivity = result.getMostProbableActivity();
 
             int confidence = mostProbableActivity.getConfidence();
-
-            activityUpdate(mostProbableActivity.getType(), confidence);
+            int activityType = mostProbableActivity.getType();
+            Runnable backgrounder = new ProcessResultInBackground(activityType, confidence);
+            Executors.newSingleThreadExecutor().execute(backgrounder);
 
         } else {
             Log.v("DEBUG: ", "Where is the Result Intent WTH?");
+        }
+    }
+
+    private class ProcessResultInBackground implements Runnable {
+        private int activityType = 0;
+        private int confidence = 0;
+        protected ProcessResultInBackground(int activityType, int confidence) {
+            this.activityType = activityType;
+            this.confidence = confidence;
+        }
+
+        @Override
+        public void run() {
+            activityUpdate(activityType, confidence);
         }
     }
 
@@ -115,7 +131,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
      * is actually happening.
      */
 
-    private void activityUpdate(int activityType, int confidence) {
+    private synchronized void activityUpdate(int activityType, int confidence) {
         //Log.v("DEBUG: ", "Confidence level: " + Integer.toString(confidence));
         /*if (confidence < 62) { //Less than really sure
             return;
@@ -131,10 +147,10 @@ public class ActivityRecognitionIntentService extends IntentService implements
                 //notDriving(confidence, "walking");
                 break;
             case DetectedActivity.UNKNOWN:
-                //Log.v("DEBUG: ", "Unknown");
+                Log.v("DEBUG: ", "Unknown");
                 break;
             case DetectedActivity.ON_BICYCLE:
-                //Log.v("DEBUG:", "Bike");
+                Log.v("DEBUG:", "Bike");
                 break;
             case DetectedActivity.STILL:
                 Log.v(CLASS, " Still");
@@ -149,6 +165,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
 
                 break;
         }
+        notify();
     }
 
     //If driving then we're going to set the variables to their least known values and write them
@@ -179,7 +196,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
     private void handleWalking(int confidence) {
         if (confidence > 75) {
             Status status = loadStatus();
-            Log.v(CLASS, " Walking Count=" + Integer.toString(status.notDrivingCount));
+            //Log.v(CLASS, " Walking Count=" + Integer.toString(status.notDrivingCount));
             status.driving = false;
 
             int counter = status.notDrivingCount;
@@ -203,7 +220,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
         Status status = loadStatus();
         status.driving = false;
         int counter = status.notDrivingCount;
-        Log.v(CLASS, " Still Count=" + Integer.toString(status.notDrivingCount));
+        //Log.v(CLASS, " Still Count=" + Integer.toString(status.notDrivingCount));
         counter = counter + 1;
         status.notDrivingCount = counter;
         if (counter >= 4 && !status.stopRecorded && !status.stopRecording) {
@@ -215,7 +232,7 @@ public class ActivityRecognitionIntentService extends IntentService implements
 
     private Status loadStatus() {
         Status status = Status.listAll(Status.class).get(0);
-        Log.v(CLASS, " STATUS LOADED");
+        //Log.v(CLASS, " STATUS LOADED");
         return status;
     }
 
@@ -224,9 +241,6 @@ public class ActivityRecognitionIntentService extends IntentService implements
     Start listening for location updates.
      */
     private void startLocationHandler() {
-
-        //Intent startLocationIntent = new Intent(getApplicationContext(), LogLocation.class);
-        //startService(startLocationIntent);
         getLocation = new GetCurrentLocation(getApplicationContext(), 10, GetCurrentLocation.PRECISION.HIGH);
         getLocation.updateLocation(this, false);
     }
