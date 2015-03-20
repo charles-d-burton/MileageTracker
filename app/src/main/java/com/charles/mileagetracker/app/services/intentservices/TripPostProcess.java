@@ -109,6 +109,7 @@ public class TripPostProcess extends IntentService {
     private void generateNotification(String title, String message, int groupId) {
 
         Intent pathIntent = new Intent(context, MapDrawerActivity.class);
+        pathIntent.putExtra("tgroup", groupId);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MapDrawerActivity.class);
         stackBuilder.addNextIntent(pathIntent);
