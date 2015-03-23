@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
@@ -33,9 +34,10 @@ public class TripPostProcess extends IntentService {
     //private AddressDistanceServices addressDistanceServices = null;
     private Context context;
 
-    private TripGroup group = null;
+    //private TripGroup group = null;
     private final String question = "Were all stops business related?";
     private final String complete = "Trip Complete";
+    public static final int TRIP_COMPLETE_NOTIFICATION_ID = 0;
 
 
     /**
@@ -71,36 +73,42 @@ public class TripPostProcess extends IntentService {
      */
     private void handleActionProcessGroup(Integer group_id) {
         //Verify that we have a validate group and access to the internet with data
-        final Context context = getApplicationContext();
+        context = getApplicationContext();
         if (group_id != -1) {
-            group = TripGroup.findById(TripGroup.class, new Long(group_id));
+            Executors.newSingleThreadExecutor().execute(new ProcessTripGroup((long)group_id));
+        }
+    }
+
+    private class ProcessTripGroup implements Runnable {
+        private long groupId = 0l;
+        public ProcessTripGroup(Long groupId) {
+            this.groupId = groupId;
+        }
+        @Override
+        public void run() {
+            TripGroup group = TripGroup.findById(TripGroup.class, groupId);
             if (group != null) {
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        String entries[] = {Long.toString(group.getId())};
-                        List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
-                        if (rows == null) {
-                            group.delete();
-                        } else if (rows.size() == 1) {
-                            group.delete();
-                        } else if (rows.size() == 2) {//Only two stops, need to see how close they are
-                            AddressDistanceServices addressDistanceServices1 = new AddressDistanceServices(context);
-                            TripRow row1 = rows.get(0);
-                            TripRow row2 = rows.get(1);
-                            double distance = addressDistanceServices1.getStraigtLineDistance(row1.lat, row1.lon, row2.lat, row2.lon);
-                            if (distance > 1500) {
-                                generateNotification(complete, question, group.getId().intValue());
-                            } else {
-                                row1.delete();
-                                row2.delete();
-                                group.delete();
-                            }
-                        } else {
-                            generateNotification(complete, question, group.getId().intValue());
-                        }
+                String entries[] = {Long.toString(group.getId())};
+                List<TripRow> rows = TripRow.find(TripRow.class, "tgroup = ? ", entries, null, " id ASC", null);
+                if (rows == null) {
+                    group.delete();
+                } else if (rows.size() == 1) {
+                    group.delete();
+                } else if (rows.size() == 2) {//Only two stops, need to see how close they are
+                    AddressDistanceServices addressDistanceServices1 = new AddressDistanceServices(context);
+                    TripRow row1 = rows.get(0);
+                    TripRow row2 = rows.get(1);
+                    double distance = addressDistanceServices1.getStraigtLineDistance(row1.lat, row1.lon, row2.lat, row2.lon);
+                    if (distance > 1500) {
+                        generateNotification(complete, question, group.getId().intValue());
+                    } else {
+                        row1.delete();
+                        row2.delete();
+                        group.delete();
                     }
-                });
+                } else {
+                    generateNotification(complete, question, group.getId().intValue());
+                }
             }
         }
     }
@@ -114,18 +122,21 @@ public class TripPostProcess extends IntentService {
         stackBuilder.addParentStack(MapDrawerActivity.class);
         stackBuilder.addNextIntent(pathIntent);
 
-        PendingIntent selectPathSegments = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent selectPathSegments = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
 
         //Intent to record all trip segments
         Intent saveTripService = new Intent(context, SaveBusinessRelated.class);
         saveTripService.putExtra("tgroup", groupId);
         PendingIntent saveTrip = PendingIntent.getService(context, 0, saveTripService,PendingIntent.FLAG_ONE_SHOT);
 
-        PendingIntent doNothing = PendingIntent.getService(context, 0, new Intent(), PendingIntent.FLAG_ONE_SHOT);
+        Intent cancelNotificationService = new Intent(context, NotificationCancelService.class);
+        cancelNotificationService.putExtra("nId", TRIP_COMPLETE_NOTIFICATION_ID);
+        PendingIntent doNothing = PendingIntent.getService(context, 0, cancelNotificationService, PendingIntent.FLAG_ONE_SHOT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setAutoCancel(true)
+                .setOngoing(false)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setContentIntent(selectPathSegments)
@@ -133,9 +144,8 @@ public class TripPostProcess extends IntentService {
                 .addAction(R.drawable.ic_action_accept, "Select", selectPathSegments)
                 .addAction(R.drawable.ic_action_cancel, "No", doNothing );
 
-
         NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(0, builder.build());
+        manager.notify(TRIP_COMPLETE_NOTIFICATION_ID, builder.build());
 
     }
 }

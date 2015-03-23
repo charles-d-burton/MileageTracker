@@ -85,7 +85,6 @@
             android:name=".activities.ReportGenerateActivity"
             android:label="@string/title_activity_report_generate" >
         </activity>
-
         <activity
             android:name=".activities.MapDrawerActivity"
             android:label="@string/title_activity_map_drawer" >
@@ -98,6 +97,10 @@
 
         <service
             android:name=".services.intentservices.TripPostProcess"
+            android:exported="false" >
+        </service>
+        <service
+            android:name=".services.intentservices.NotificationCancelService"
             android:exported="false" >
         </service>
     </application>

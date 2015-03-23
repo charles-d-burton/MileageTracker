@@ -3,6 +3,7 @@ package com.charles.mileagetracker.app.activities;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.FragmentManager;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -32,6 +33,7 @@ import com.charles.mileagetracker.app.maphandlers.HomeHandler;
 import com.charles.mileagetracker.app.maphandlers.TripHandler;
 import com.charles.mileagetracker.app.processors.CalculateTotalMileage;
 import com.charles.mileagetracker.app.processors.GenerateXLS;
+import com.charles.mileagetracker.app.services.intentservices.TripPostProcess;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -138,6 +140,8 @@ public class MapDrawerActivity extends ActionBarActivity
     @Override
     protected void onResume() {
         super.onResume();
+        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(TripPostProcess.TRIP_COMPLETE_NOTIFICATION_ID);
         if (checkPlayServices()) {
             Log.v("Services Check: ", "Good!");
         }

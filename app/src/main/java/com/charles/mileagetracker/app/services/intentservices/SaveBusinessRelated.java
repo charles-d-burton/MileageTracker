@@ -1,6 +1,8 @@
 package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -26,10 +28,13 @@ public class SaveBusinessRelated extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        NotificationManager notificationManager = (NotificationManager)getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(TripPostProcess.TRIP_COMPLETE_NOTIFICATION_ID);
         if (intent != null) {
             Bundle bundle = intent.getExtras();
             int groupId = bundle.getInt("tgroup");
             if (groupId != -1) {
+
                 Executors.newSingleThreadExecutor().execute(new MarkBusinessRelated(groupId));
                 //markAllAsBusiness(groupId);
             }
