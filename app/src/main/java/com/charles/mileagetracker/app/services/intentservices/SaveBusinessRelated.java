@@ -2,6 +2,7 @@ package com.charles.mileagetracker.app.services.intentservices;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
+import android.app.backup.BackupManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -74,5 +75,8 @@ public class SaveBusinessRelated extends IntentService {
         TripGroup tripGroup = lastRow.tgroup;
         tripGroup.totalMileage = totalDistance;
         tripGroup.billableMileage = totalDistance;
+        tripGroup.save();
+        BackupManager bm = new BackupManager(this.getApplicationContext());
+        bm.dataChanged();
     }
 }

@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.app.FragmentManager;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
+import android.app.backup.BackupManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -33,6 +34,7 @@ import com.charles.mileagetracker.app.maphandlers.HomeHandler;
 import com.charles.mileagetracker.app.maphandlers.TripHandler;
 import com.charles.mileagetracker.app.processors.CalculateTotalMileage;
 import com.charles.mileagetracker.app.processors.GenerateXLS;
+import com.charles.mileagetracker.app.services.BackupDB;
 import com.charles.mileagetracker.app.services.intentservices.TripPostProcess;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -180,6 +182,8 @@ public class MapDrawerActivity extends ActionBarActivity
         if (loadingDialog != null) {
             loadingDialog.dismiss();
         }
+        BackupManager bm = new BackupManager(this);
+        bm.dataChanged();
     }
 
     @Override

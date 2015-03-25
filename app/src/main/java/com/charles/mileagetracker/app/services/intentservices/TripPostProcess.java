@@ -3,6 +3,7 @@ package com.charles.mileagetracker.app.services.intentservices;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.backup.BackupManager;
 import android.content.Intent;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -108,6 +109,8 @@ public class TripPostProcess extends IntentService {
                     }
                 } else {
                     generateNotification(complete, question, group.getId().intValue());
+                    BackupManager bm = new BackupManager(context);
+                    bm.dataChanged();
                 }
             }
         }
@@ -141,7 +144,7 @@ public class TripPostProcess extends IntentService {
                 .setContentText(message)
                 .setContentIntent(selectPathSegments)
                 .addAction(R.drawable.ic_action_accept, "Yes", saveTrip)
-                .addAction(R.drawable.ic_action_accept, "Select", selectPathSegments)
+                .addAction(R.drawable.ic_directions_black_48dp, "Select", selectPathSegments)
                 .addAction(R.drawable.ic_action_cancel, "No", doNothing );
 
         NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
