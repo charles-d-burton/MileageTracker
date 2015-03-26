@@ -138,7 +138,7 @@ public class TripDrawerFragment extends Fragment {
         }
     }
 
-    private class OnListItemLongPressListener implements AdapterView.OnItemLongClickListener{
+    private class OnListItemLongPressListener implements AdapterView.OnItemLongClickListener {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
             TripGroup group = adapter.getItem(position).tgroup;

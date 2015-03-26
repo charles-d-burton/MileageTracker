@@ -315,12 +315,7 @@ public class MapDrawerActivity extends ActionBarActivity
                         }
                         currentWorkingGroup.delete();
                         currentWorkingGroup = getNewestGroup();
-                        if (currentWorkingGroup != null) {
-                            tripStopsFragment.setData(currentWorkingGroup);
-                            TripHandler tripHandler = new TripHandler(MapDrawerActivity.this, googleMap);
-                            mapHandlerInterface = tripHandler;
-                            mapHandlerInterface.connect();
-                        }
+
                         break;
 
                     case DialogInterface.BUTTON_NEGATIVE:
