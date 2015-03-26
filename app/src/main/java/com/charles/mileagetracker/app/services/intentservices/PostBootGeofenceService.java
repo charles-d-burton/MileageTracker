@@ -48,7 +48,7 @@ public class PostBootGeofenceService extends IntentService implements
     protected void onHandleIntent(Intent intent) {
         context = getApplicationContext();
         if (intent != null) {
-            final String action = intent.getAction();
+            //final String action = intent.getAction();
             homePointsList = HomePoints.listAll(HomePoints.class);
             if (!homePointsList.isEmpty()) {
                 getCurrentLocation = new GetCurrentLocation(context, 10, GetCurrentLocation.PRECISION.HIGH);

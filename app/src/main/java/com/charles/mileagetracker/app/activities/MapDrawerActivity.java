@@ -1,5 +1,6 @@
 package com.charles.mileagetracker.app.activities;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.FragmentManager;
@@ -7,6 +8,7 @@ import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.app.backup.BackupManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.location.Location;
@@ -160,7 +162,7 @@ public class MapDrawerActivity extends ActionBarActivity
         } else {
             try {
                 //currentWorkingGroup = TripGroup.find(TripGroup.class, null, null, null, " id DESC LIMIT 1", null).get(0);
-                currentWorkingGroup = TripGroup.listAll(TripGroup.class).get(0);
+                currentWorkingGroup = getNewestGroup();
                 if (currentWorkingGroup != null) {
                     tripStopsFragment.setData(currentWorkingGroup);
                 }
@@ -271,6 +273,7 @@ public class MapDrawerActivity extends ActionBarActivity
         loadingDialog.dismiss();
     }
 
+    @Override
     public void onDrawerFragmentItemTouch(TripRow row) {
         toolbar.setTitle("Trip Stops");
         currentWorkingGroup = row.tgroup;
@@ -287,17 +290,55 @@ public class MapDrawerActivity extends ActionBarActivity
         tripStopsFragment.setData(row);
     }
 
+    /*
+    Show dialog to delete trip
+     */
     @Override
     public void onDrawerItemLongPress(TripGroup group) {
 
         currentWorkingGroup = group;
-        googleMap.clear();
+        /*googleMap.clear();
         if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
             drawerLayout.closeDrawers();
         }
         TripHandler tripHandler = new TripHandler(this, googleMap);
         mapHandlerInterface = tripHandler;
-        mapHandlerInterface.connect();
+        mapHandlerInterface.connect();*/
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which){
+                    case DialogInterface.BUTTON_POSITIVE:
+                        //Yes button clicked
+                        if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
+                            drawerLayout.closeDrawers();
+                        }
+                        currentWorkingGroup.delete();
+                        currentWorkingGroup = getNewestGroup();
+                        if (currentWorkingGroup != null) {
+                            tripStopsFragment.setData(currentWorkingGroup);
+                            TripHandler tripHandler = new TripHandler(MapDrawerActivity.this, googleMap);
+                            mapHandlerInterface = tripHandler;
+                            mapHandlerInterface.connect();
+                        }
+                        break;
+
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
+                            drawerLayout.closeDrawers();
+                        }
+                        TripHandler tripHandler = new TripHandler(MapDrawerActivity.this, googleMap);
+                        mapHandlerInterface = tripHandler;
+                        mapHandlerInterface.connect();
+                        //No button clicked
+                        break;
+                }
+            }
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setMessage("Delete trip?").setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show();
 
     }
 
@@ -345,6 +386,15 @@ public class MapDrawerActivity extends ActionBarActivity
 
         }
     }
+
+    private TripGroup getNewestGroup() {
+        List<TripGroup> groups = TripGroup.listAll(TripGroup.class);
+        if (groups != null) {
+            return groups.get(0);
+        }
+        return null;
+    }
+
 
     private boolean checkPlayServices() {
         int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
