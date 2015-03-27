@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 
 import com.charles.mileagetracker.app.R;
 import com.charles.mileagetracker.app.adapters.TripListAdapter;
@@ -43,6 +44,8 @@ public class TripDrawerFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    private ProgressBar loadingBar;
 
     private OnTripFragmentInteraction mListener;
     private TripListAdapter adapter = null;
@@ -85,13 +88,16 @@ public class TripDrawerFragment extends Fragment {
         if (container == null) {
             view = inflater.inflate(R.layout.trip_drawer_fragment, container, false);
         }
+        loadingBar = (ProgressBar)view.findViewById(R.id.trip_load_progress);
         adapter = new TripListAdapter(this.getActivity(), R.layout.trip_list_item);
         tripList = (ListView)view.findViewById(R.id.trip_list);
         tripList.setAdapter(adapter);
         tripList.setOnItemClickListener(new OnListItemClickedListener());
         tripList.setOnItemLongClickListener(new OnListItemLongPressListener());
         // Inflate the layout for this fragment
+        new LoadTripData().execute();
         this.setRetainInstance(true);
+
         return view;
     }
 
@@ -118,7 +124,7 @@ public class TripDrawerFragment extends Fragment {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
-        new LoadTripData().execute();
+
     }
 
     @Override
@@ -131,7 +137,11 @@ public class TripDrawerFragment extends Fragment {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
             TripRow row = adapter.getItem(position);
+            if (row.tgroup == null) {
+                new LoadTripData().execute();
+            }
             mListener.onDrawerFragmentItemTouch(row);
             //Log.v("Adapter Click Address:", row.address);
 
@@ -142,9 +152,16 @@ public class TripDrawerFragment extends Fragment {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
             TripGroup group = adapter.getItem(position).tgroup;
-            mListener.onDrawerItemLongPress(group);
-            return false;
+            TripRow row = adapter.getItem(position);
+            mListener.onDrawerItemLongPress(row, TripDrawerFragment.this);
+            return true;
         }
+    }
+
+    public void tripDeleted(TripRow row) {
+        adapter.getAllRows().remove(row);
+        adapter.notifyDataSetChanged();
+        row.tgroup.delete();
     }
 
     private class LoadTripData extends AsyncTask<Void, Float, Void>{
@@ -157,7 +174,10 @@ public class TripDrawerFragment extends Fragment {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            mListener.onDrawerFragmentStartLoad();
+            loadingBar.setVisibility(ProgressBar.VISIBLE);
+            /*if (showLoadingDialog) {
+                mListener.onDrawerFragmentStartLoad();
+            }*/
         }
 
         /*
@@ -203,7 +223,7 @@ public class TripDrawerFragment extends Fragment {
             Float update = values[0];
             Log.v("Update %: ", update.toString());
             Integer percent = (int)((update/maxValue)*100);
-            mListener.onDrawerFragmentProgressUpdate(percent);
+            //mListener.onDrawerFragmentProgressUpdate(percent);
         }
 
         @Override
@@ -213,9 +233,10 @@ public class TripDrawerFragment extends Fragment {
             //Log.v("Address Post Execute List Size: ", Integer.toString(listRows.size()));
             adapter.setData(listRows);
             adapter.notifyDataSetChanged();
-            if (mListener != null) {
+            loadingBar.setVisibility(ProgressBar.INVISIBLE);
+            /*if (mListener != null) {
                 mListener.onDrawerFragmentFinishedLoad();
-            }
+            }*/
         }
     }
 
@@ -235,7 +256,7 @@ public class TripDrawerFragment extends Fragment {
         public void onDrawerFragmentProgressUpdate(Integer tripNum);
         public void onDrawerFragmentFinishedLoad();
         public void onDrawerFragmentItemTouch(TripRow row);
-        public void onDrawerItemLongPress(TripGroup group);
+        public void onDrawerItemLongPress(TripRow row, TripDrawerFragment callback);
     }
 
 }

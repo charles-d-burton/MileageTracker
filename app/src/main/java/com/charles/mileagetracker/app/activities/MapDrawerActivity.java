@@ -294,38 +294,31 @@ public class MapDrawerActivity extends ActionBarActivity
     Show dialog to delete trip
      */
     @Override
-    public void onDrawerItemLongPress(TripGroup group) {
+    public void onDrawerItemLongPress(final TripRow row, final TripDrawerFragment callback) {
 
-        currentWorkingGroup = group;
-        /*googleMap.clear();
+        currentWorkingGroup = row.tgroup;
         if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
             drawerLayout.closeDrawers();
         }
-        TripHandler tripHandler = new TripHandler(this, googleMap);
-        mapHandlerInterface = tripHandler;
-        mapHandlerInterface.connect();*/
+
         DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                TripHandler tripHandler = new TripHandler(MapDrawerActivity.this, googleMap);
                 switch (which){
                     case DialogInterface.BUTTON_POSITIVE:
                         //Yes button clicked
-                        if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
-                            drawerLayout.closeDrawers();
-                        }
-                        currentWorkingGroup.delete();
-                        currentWorkingGroup = getNewestGroup();
 
+                        callback.tripDeleted(row);
+                        //currentWorkingGroup.delete();
+                        currentWorkingGroup = getNewestGroup();
+                        mapHandlerInterface = tripHandler;
+                        mapHandlerInterface.connect();
                         break;
 
                     case DialogInterface.BUTTON_NEGATIVE:
-                        if (drawerLayout.isDrawerOpen(Gravity.START | Gravity.LEFT)) {
-                            drawerLayout.closeDrawers();
-                        }
-                        TripHandler tripHandler = new TripHandler(MapDrawerActivity.this, googleMap);
                         mapHandlerInterface = tripHandler;
                         mapHandlerInterface.connect();
-                        //No button clicked
                         break;
                 }
             }
